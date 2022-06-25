@@ -9,7 +9,7 @@ npx create-react-app project-name
 npm i --save @fortawesome/fontawesome-svg-core
 npm i --save @fortawesome/free-solid-svg-icons
 npm i --save @fortawesome/free-regular-svg-icons
-npm i --save @fortawesome/free-brand-svg-icons
+npm i --save @fortawesome/free-brands-svg-icons
 npm i --save @fortawesome/react-fontawesome@latest
 ```
 ### Fontes Robot (https://mui.com/pt/material-ui/getting-started/installation/)
