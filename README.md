@@ -48,6 +48,15 @@ npm install material-table
 ```
 npm install framer-motion
 ```
+### Plugin Validação de Formulários
+<ins>_Formik_</ins> (https://formik.org/docs/overview)
+```
+npm install formik
+```
+<ins>_Yup_</ins> (https://github.com/jquense/yup)
+```
+npm install yup
+```
 ### Usando SASS (Optional)
 ```
 npm install node-sass
