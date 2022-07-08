@@ -57,7 +57,11 @@ npm install formik
 ```
 npm install yup
 ```
-### Usando SASS (Optional)
+### Plugin Axios wrapper de Request http (https://axios-http.com/docs/api_intro)
 ```
-npm install node-sass
+npm install axios
+```
+### Plugin Cript-JS para bibliotecas de encriptação (https://www.code-sample.com/2019/12/react-encryption-decryption-data-text.html)
+```
+npm install cripto-js
 ```
