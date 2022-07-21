@@ -1,11 +1,11 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import LandingLogin from '../pages/landing/Login';
-import BackDaytrade from '../pages/back/daytrade/Home';
-import { LoginContext } from '../ctx/AuthContext';
+import BackDaytradeDashboard from '../pages/back/daytrade/Dashboard';
 
 const MainRoutes = () => {
-    const { user } = useContext(LoginContext);
+    const { user } = useSelector((store) => store.auth);
 
     return (
         <Routes>
@@ -16,7 +16,7 @@ const MainRoutes = () => {
                 </>
             ) : (
                 <>
-                    <Route path='/' exact element={<BackDaytrade />} />
+                    <Route path='/' exact element={<BackDaytradeDashboard />} />
                     <Route path='*' element={<Navigate replace to='/' />} />
                 </>
             )}

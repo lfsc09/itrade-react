@@ -1,13 +1,13 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { Stack, TextField } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { Send } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import SnackOverlay from '../ui/SnackOverlay';
 import * as yup from 'yup';
-import axiosCon from '../../helpers/axiosCon';
-import cryptoJS from 'crypto-js';
-import { LoginContext } from '../../ctx/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../../store/auth/auth-thunk';
+import { remove } from '../../store/snack-messages/snack-messages-slice';
 
 const validationLoginSchema = yup.object({
     usuario: yup.string().trim().required('Informe seu usuário'),
@@ -16,24 +16,15 @@ const validationLoginSchema = yup.object({
 
 const LoginForm = () => {
     /**********
-     * CONTEXT
+     * DISPATCH
      **********/
-    const { handleLogin } = useContext(LoginContext);
+    const dispatch = useDispatch();
 
     /*********
      * STATES
      *********/
-    //Gerenciar 'loading' no botao de Submit
-    const [sendLoading, setSendLoading] = useState(false);
-    //Gerenciar overlay snack de resposta do Axios
-    const [openAxiosSnack, setOpenAxiosSnack] = useState({});
-
-    /************
-     * HANDLERS
-     ************/
-    const handlerCloseSnack = () => {
-        setOpenAxiosSnack({});
-    };
+    const { isLoading } = useSelector((store) => store.auth);
+    const { snacks } = useSelector((store) => store.snackMessages);
 
     /********
      * FORMS
@@ -45,39 +36,17 @@ const LoginForm = () => {
         },
         validationSchema: validationLoginSchema,
         onSubmit: (values) => {
-            setSendLoading(true);
-            axiosCon
-                .post('/auth', {
-                    usuario: values.usuario,
-                    password: cryptoJS.SHA256(values.password).toString(),
-                })
-                .then((resp) => {
-                    setSendLoading(false);
-                    handleLogin(resp.data.token);
-                })
-                .catch((error) => {
-                    setSendLoading(false);
-                    if (error.response) {
-                        if (error.response.status === 401)
-                            setOpenAxiosSnack({
-                                message: 'Credenciais inexistentes',
-                            });
-                    } else {
-                        setOpenAxiosSnack({
-                            message: error.message,
-                        });
-                    }
-                });
+            dispatch(login(values));
         },
     });
 
     return (
         <>
-            {Object.keys(openAxiosSnack).length > 0 && (
-                <SnackOverlay open={true} severity='error' onClose={handlerCloseSnack}>
-                    {openAxiosSnack.message}
+            {snacks.map((item) => (
+                <SnackOverlay key={item.key} open={true} severity={item.severity} onClose={() => dispatch(remove(item.key))}>
+                    {item.message}
                 </SnackOverlay>
-            )}
+            ))}
             <form onSubmit={formik.handleSubmit}>
                 <Stack spacing={2} minWidth={250}>
                     <TextField
@@ -102,7 +71,7 @@ const LoginForm = () => {
                         error={formik.touched.password && Boolean(formik.errors.password)}
                         helperText={formik.touched.password && formik.errors.password}
                     />
-                    <LoadingButton loading={sendLoading} variant='contained' color='primary' type='submit' endIcon={<Send />}>
+                    <LoadingButton loading={isLoading} variant='contained' color='primary' type='submit' endIcon={<Send />}>
                         Enviar
                     </LoadingButton>
                 </Stack>

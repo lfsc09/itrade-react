@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 import jwtDecode from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
-import axiosCon from '../helpers/axiosCon';
+import axiosCon from '../helpers/axios-con';
 
 const LoginContext = createContext();
 
@@ -41,4 +41,4 @@ const AuthProvider = ({ children }) => {
     return <LoginContext.Provider value={{ user, handleLogin, handleLogout }}>{children}</LoginContext.Provider>;
 };
 
-export { LoginContext, AuthProvider };
+// export { LoginContext, AuthProvider };

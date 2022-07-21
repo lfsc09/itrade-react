@@ -1,0 +1,14 @@
+.nav_container {
+    background: #1f4356;
+    color: #fff;
+    padding: 1rem;
+    min-height: 600px;
+}
+
+.nav_logo {
+    width: 90px;
+}
+
+.nav_button {
+    color: #ebf0f5;
+}
