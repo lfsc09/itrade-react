@@ -1,14 +1,39 @@
 .nav_container {
-    background: #1f4356;
+    background: linear-gradient(0deg, #3358f4, #1d8cf8);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
     color: #fff;
-    padding: 1rem;
-    min-height: 600px;
+    height: 100%;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav_header {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .nav_logo {
-    width: 90px;
+    width: 120px;
 }
 
-.nav_button {
+.nav_user {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav_username {
+    word-break: break-word;
+}
+
+.nav_divider {
+    background: hsla(0, 0%, 100%, 0.5);
+}
+
+.nav_button svg {
     color: #ebf0f5;
 }
