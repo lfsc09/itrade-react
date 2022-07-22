@@ -2,14 +2,24 @@ import styles from './navside.module.css';
 import { Analytics, CandlestickChart, Euro, ExpandLess, ExpandMore, Grading, Layers, LocalAtm, Logout, Science, Storage } from '@mui/icons-material';
 import { Divider, Paper, Box, Typography, List, ListItemButton, ListItemIcon, ListItemText, Collapse } from '@mui/material';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../../../store/auth/auth-slice';
 
 const NavSide = () => {
+    const dispatch = useDispatch();
     /*********
      * STATES
      *********/
     const { user } = useSelector((store) => store.auth);
     const [openDaytrade, setOpenDaytrade] = useState(false);
+
+    /***********
+     * HANDLERS
+     ***********/
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        dispatch(logout());
+    };
 
     return (
         <Paper className={styles.nav_container}>
@@ -77,7 +87,7 @@ const NavSide = () => {
                         </ListItemButton>
                     </List>
                 </Collapse>
-                <ListItemButton className={styles.nav_button} sx={{ marginTop: 'auto' }}>
+                <ListItemButton className={styles.nav_button} sx={{ marginTop: 'auto' }} onClick={handleLogout}>
                     <ListItemIcon>
                         <Logout />
                     </ListItemIcon>

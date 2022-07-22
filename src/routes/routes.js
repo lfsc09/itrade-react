@@ -11,13 +11,13 @@ const MainRoutes = () => {
         <Routes>
             {user === null ? (
                 <>
-                    <Route path='/' exact element={<LandingLogin />} />
-                    <Route path='*' element={<Navigate replace to='/' />} />
+                    <Route path='/login' exact element={<LandingLogin />} />
+                    <Route path='*' element={<Navigate replace to='/login' />} />
                 </>
             ) : (
                 <>
-                    <Route path='/' exact element={<BackDaytradeDashboard />} />
-                    <Route path='*' element={<Navigate replace to='/' />} />
+                    <Route path='/dashboard' exact element={<BackDaytradeDashboard />} />
+                    <Route path='*' element={<Navigate replace to='/dashboard' />} />
                 </>
             )}
         </Routes>
