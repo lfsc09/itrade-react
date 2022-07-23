@@ -1,36 +1,23 @@
 import styles from './navside.module.css';
-import { Analytics, CandlestickChart, Euro, ExpandLess, ExpandMore, Grading, Layers, LocalAtm, Logout, Science, Storage } from '@mui/icons-material';
-import { Divider, Paper, Box, Typography, List, ListItemButton, ListItemIcon, ListItemText, Collapse } from '@mui/material';
+import { Analytics, CandlestickChart, CloudUpload, DataThresholding, Euro, ExpandLess, ExpandMore, Grading, Layers, LocalAtm, Logout, Science, Storage } from '@mui/icons-material';
+import { Divider, Paper, Box, List, ListItemButton, ListItemIcon, ListItemText, Collapse } from '@mui/material';
 import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../../../store/auth/auth-slice';
+import { Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { handleLogout } from '../../../store/auth/auth-action';
 
 const NavSide = () => {
     const dispatch = useDispatch();
     /*********
      * STATES
      *********/
-    const { user } = useSelector((store) => store.auth);
     const [openDaytrade, setOpenDaytrade] = useState(false);
-
-    /***********
-     * HANDLERS
-     ***********/
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        dispatch(logout());
-    };
+    const [openRendaFixa, setOpenRendaFixa] = useState(false);
 
     return (
         <Paper className={styles.nav_container}>
             <Box className={styles.nav_header}>
-                <img className={styles.nav_logo} src={require('../../../assets/back/img/mascot.png')} alt='' />
-                <div className={styles.nav_user}>
-                    <Typography variant='button'>Bom dia</Typography>
-                    <Typography className={styles.nav_username} variant='overline'>
-                        {user.nome}
-                    </Typography>
-                </div>
+                <img className={styles.nav_logo} src={require('../../../assets/back/img/logo.png')} alt='' />
             </Box>
             <Divider variant='middle' className={styles.nav_divider} sx={{ mb: 1 }} />
             <List component='nav' sx={{ flexGrow: 1 }}>
@@ -43,51 +30,70 @@ const NavSide = () => {
                 </ListItemButton>
                 <Collapse in={openDaytrade} timeout='auto' unmountOnExit>
                     <List component='div' disablePadding>
-                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }}>
+                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/dashboard'>
                             <ListItemIcon>
                                 <Analytics />
                             </ListItemIcon>
                             <ListItemText primary='Dashboard' primaryTypographyProps={{ variant: 'overline' }} />
                         </ListItemButton>
-                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }}>
+                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/datasets'>
                             <ListItemIcon>
                                 <Storage />
                             </ListItemIcon>
                             <ListItemText primary='Datasets' primaryTypographyProps={{ variant: 'overline' }} />
                         </ListItemButton>
-                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }}>
+                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/ativos'>
                             <ListItemIcon>
                                 <Euro />
                             </ListItemIcon>
                             <ListItemText primary='Ativos' primaryTypographyProps={{ variant: 'overline' }} />
                         </ListItemButton>
-                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }}>
+                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/gerenciamentos'>
                             <ListItemIcon>
                                 <LocalAtm />
                             </ListItemIcon>
                             <ListItemText primary='Gerenciamentos' primaryTypographyProps={{ variant: 'overline' }} />
                         </ListItemButton>
-                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }}>
+                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/cenarios'>
                             <ListItemIcon>
                                 <Grading />
                             </ListItemIcon>
                             <ListItemText primary='Cenarios' primaryTypographyProps={{ variant: 'overline' }} />
                         </ListItemButton>
-                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }}>
+                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/builds'>
                             <ListItemIcon>
                                 <Science />
                             </ListItemIcon>
                             <ListItemText primary='Builds' primaryTypographyProps={{ variant: 'overline' }} />
                         </ListItemButton>
-                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }}>
+                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/novas_operacoes'>
                             <ListItemIcon>
                                 <Layers />
                             </ListItemIcon>
-                            <ListItemText primary='Adiconar Operações' primaryTypographyProps={{ variant: 'overline' }} />
+                            <ListItemText primary='Novas Operações' primaryTypographyProps={{ variant: 'overline' }} />
+                        </ListItemButton>
+                        <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/importar_operacoes'>
+                            <ListItemIcon>
+                                <CloudUpload />
+                            </ListItemIcon>
+                            <ListItemText primary='Importar Operações' primaryTypographyProps={{ variant: 'overline' }} />
                         </ListItemButton>
                     </List>
                 </Collapse>
-                <ListItemButton className={styles.nav_button} sx={{ marginTop: 'auto' }} onClick={handleLogout}>
+                <ListItemButton className={styles.nav_button} onClick={() => setOpenRendaFixa(!openRendaFixa)}>
+                    <ListItemIcon>
+                        <DataThresholding />
+                    </ListItemIcon>
+                    <ListItemText primary='Renda Fixa' primaryTypographyProps={{ variant: 'overline' }} />
+                    {openRendaFixa ? <ExpandLess /> : <ExpandMore />}
+                </ListItemButton>
+                <ListItemButton
+                    className={styles.nav_button}
+                    sx={{ marginTop: 'auto' }}
+                    onClick={() => {
+                        dispatch(handleLogout());
+                    }}
+                >
                     <ListItemIcon>
                         <Logout />
                     </ListItemIcon>

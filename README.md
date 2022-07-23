@@ -100,3 +100,15 @@ npm install cripto-js
 ```
 npm install jwt-decode
 ```
+
+### Plugin REDUX (https://redux-toolkit.js.org/introduction/getting-started)
+
+```
+npm install @reduxjs/toolkit react-redux
+```
+
+### Plugin SASS
+
+```
+npm install sass
+```

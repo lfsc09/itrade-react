@@ -2,8 +2,8 @@ import { createSlice } from '@reduxjs/toolkit';
 import * as asyncThunk from './auth-thunk';
 
 const initialState = {
-    user: null,
-    token: null,
+    user: undefined,
+    token: undefined,
     isLoading: false,
 };
 

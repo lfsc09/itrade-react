@@ -1,0 +1,27 @@
+.greetings_panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .greetings_user {
+        font-size: 1rem;
+    }
+
+    .dataset_form {
+        min-width: 400px;
+    }
+}
+
+.filter_panel {
+    display: flex;
+
+    .filter_panel__button {
+        margin-right: 16px;
+    }
+
+    .filter_container {
+    }
+
+    .simulation_container {
+    }
+}
