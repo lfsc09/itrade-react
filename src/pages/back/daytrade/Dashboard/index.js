@@ -11,7 +11,13 @@ const Dashboard = () => {
     const { user } = useSelector((store) => store.auth);
 
     return (
-        <Box sx={{ height: '100%' }} component={motion.div} initial={{ y: '-100vh' }} animate={{ y: 0, transition: { duration: 0.25 } }} exit={{ transition: { duration: 0.1 } }}>
+        <Box
+            className={styles.wrapper}
+            component={motion.div}
+            initial={{ y: '-100vh' }}
+            animate={{ y: 0, transition: { duration: 0.25 } }}
+            exit={{ transition: { duration: 0.1 } }}
+        >
             <Grid container spacing={2}>
                 <Grid className={styles.greetings_panel} item xs={12} sx={{ px: 2 }}>
                     <Typography className={styles.greetings_user} variant='overline'>

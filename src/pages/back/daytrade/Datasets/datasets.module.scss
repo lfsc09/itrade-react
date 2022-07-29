@@ -1,0 +1,40 @@
+.wrapper {
+    max-height: calc(100vh - 16px);
+    flex-grow: 1;
+    padding: 16px 16px 16px 0;
+}
+
+.title_panel {
+    display: flex;
+    align-items: center;
+}
+
+.filter_panel {
+    display: flex;
+
+    .filter_container {
+    }
+}
+
+.table_panel {
+    flex-grow: 1;
+
+    .table_container {
+        height: 100%;
+
+        .table_cell__nome {
+            font-weight: bold;
+        }
+        .table_cell__dataCriacao {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .table_cell__dataAtualizacao {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .table_cell__qtdOps {
+            font-weight: bold;
+        }
+    }
+}

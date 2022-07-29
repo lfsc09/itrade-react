@@ -1,10 +1,17 @@
+.wrapper {
+    max-height: calc(100vh - 16px);
+    width: 300px;
+    max-width: 300px;
+    padding: 16px 0 0 16px;
+}
+
 .nav_container {
     background: linear-gradient(0deg, #222, #4a3d8c);
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     color: #fff;
     height: 100%;
-    width: 300px;
+    width: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -22,6 +29,11 @@
 
 .nav_divider {
     background: hsla(0, 0%, 100%, 0.5);
+}
+
+.nav_list {
+    flex-grow: 1;
+    overflow-y: auto;
 }
 
 .nav_button svg {
