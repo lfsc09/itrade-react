@@ -6,10 +6,12 @@ import NavSide from '../../components/back/NavSide';
 import NoContent from '../../components/ui/NoContent';
 import DaytradeDashboard from './daytrade/Dashboard';
 import DaytradeDatasets from './daytrade/Datasets';
+import DaytradeDatasetsNovo from './daytrade/Datasets/Novo';
 
 const content_switch = (url) => {
-    if (url.includes('/daytrade/dashboard')) return <DaytradeDashboard />;
-    if (url.includes('/daytrade/datasets')) return <DaytradeDatasets />;
+    if (url.match(/^.*\/daytrade\/dashboard$/)) return <DaytradeDashboard />;
+    if (url.match(/^.*\/daytrade\/datasets$/)) return <DaytradeDatasets />;
+    if (url.match(/^.*\/daytrade\/datasets\/novo$/)) return <DaytradeDatasetsNovo />;
     return <NoContent type='under-construction' />;
 };
 

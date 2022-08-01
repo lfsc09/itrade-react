@@ -2,8 +2,9 @@ import styles from './datasets.module.scss';
 import { formatValue_fromRaw } from '../../../../helpers/global';
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Box, Grid, Paper, Stack, TextField, Typography, Chip } from '@mui/material';
-import { ThreeSixty, Check, VideoLibrary, Tv, InsertDriveFile } from '@mui/icons-material';
+import { Box, Grid, Paper, Stack, TextField, Typography, Chip, Breadcrumbs, Button, Divider } from '@mui/material';
+import { ThreeSixty, Check, VideoLibrary, Tv, InsertDriveFile, Add, NavigateNext } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
 import { DataGrid } from '@mui/x-data-grid';
 import { DUMMY_DATASETS } from './dummy-data';
 
@@ -44,8 +45,19 @@ const Datasets = () => {
         >
             <Stack direction='column' spacing={2} alignItems='strech' sx={{ height: '100%' }}>
                 <div className={styles.title_panel}>
-                    <Typography variant='h5'>Datasets</Typography>
+                    <Breadcrumbs separator={<NavigateNext fontSize='small' />}>
+                        <Typography className={styles.title_link} variant='overline' component={Link} to='/daytrade/dashboard' replace={true}>
+                            Daytrade
+                        </Typography>
+                        <Typography className={styles.title} variant='overline'>
+                            Datasets
+                        </Typography>
+                    </Breadcrumbs>
+                    <Button variant='outlined' endIcon={<Add />} component={Link} to='novo' replace={true}>
+                        Novo Dataset
+                    </Button>
                 </div>
+                <Divider />
                 <div className={styles.filter_panel}>
                     <Grid container spacing={1}>
                         <Grid item xs={12}>
@@ -91,7 +103,6 @@ const Datasets = () => {
                                 { field: 'usuarios', headerName: 'Usuários', flex: 2, align: 'right', headerAlign: 'right', renderCell: usuariosCell },
                             ]}
                             rows={DUMMY_DATASETS}
-                            sortModel={[{ field: 'data_atualizacao', sort: 'desc' }]}
                         />
                     </Paper>
                 </div>

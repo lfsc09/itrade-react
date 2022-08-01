@@ -1,0 +1,28 @@
+.wrapper {
+    max-height: calc(100vh - 16px);
+    flex-grow: 1;
+    padding: 16px 16px 16px 0;
+}
+
+.title_panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .title {
+        font-weight: bold;
+        font-size: 0.9em;
+        color: rgba(0, 0, 0, 0.4);
+    }
+
+    .title_link {
+        font-weight: bold;
+        font-size: 0.9em;
+        text-decoration: none;
+        color: inherit;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}

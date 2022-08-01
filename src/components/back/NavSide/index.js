@@ -32,49 +32,49 @@ const NavSide = () => {
                     </ListItemButton>
                     <Collapse in={openDaytrade} timeout='auto' unmountOnExit>
                         <List component='div' disablePadding>
-                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/dashboard'>
+                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/dashboard' replace={true}>
                                 <ListItemIcon>
                                     <Analytics />
                                 </ListItemIcon>
                                 <ListItemText primary='Dashboard' primaryTypographyProps={{ variant: 'overline' }} />
                             </ListItemButton>
-                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/datasets'>
+                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/datasets' replace={true}>
                                 <ListItemIcon>
                                     <Storage />
                                 </ListItemIcon>
                                 <ListItemText primary='Datasets' primaryTypographyProps={{ variant: 'overline' }} />
                             </ListItemButton>
-                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/ativos'>
+                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/ativos' replace={true}>
                                 <ListItemIcon>
                                     <Euro />
                                 </ListItemIcon>
                                 <ListItemText primary='Ativos' primaryTypographyProps={{ variant: 'overline' }} />
                             </ListItemButton>
-                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/gerenciamentos'>
+                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/gerenciamentos' replace={true}>
                                 <ListItemIcon>
                                     <LocalAtm />
                                 </ListItemIcon>
                                 <ListItemText primary='Gerenciamentos' primaryTypographyProps={{ variant: 'overline' }} />
                             </ListItemButton>
-                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/cenarios'>
+                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/cenarios' replace={true}>
                                 <ListItemIcon>
                                     <Grading />
                                 </ListItemIcon>
                                 <ListItemText primary='Cenarios' primaryTypographyProps={{ variant: 'overline' }} />
                             </ListItemButton>
-                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/builds'>
+                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/builds' replace={true}>
                                 <ListItemIcon>
                                     <Science />
                                 </ListItemIcon>
                                 <ListItemText primary='Builds' primaryTypographyProps={{ variant: 'overline' }} />
                             </ListItemButton>
-                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/novas_operacoes'>
+                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/novas_operacoes' replace={true}>
                                 <ListItemIcon>
                                     <Layers />
                                 </ListItemIcon>
                                 <ListItemText primary='Novas Operações' primaryTypographyProps={{ variant: 'overline' }} />
                             </ListItemButton>
-                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/importar_operacoes'>
+                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/importar_operacoes' replace={true}>
                                 <ListItemIcon>
                                     <CloudUpload />
                                 </ListItemIcon>

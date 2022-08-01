@@ -13,20 +13,25 @@ const MainRoutes = () => {
         <Routes>
             {user === null ? (
                 <>
-                    <Route path='/login' element={<LandingLogin />} />
-                    <Route path='*' element={<Navigate replace to='/login' />} />
+                    <Route path='login' element={<LandingLogin />} />
+                    <Route path='*' element={<Navigate replace to='login' />} />
                 </>
             ) : (
                 <>
-                    <Route path='/daytrade/dashboard' element={<BackWrapper />} />
-                    <Route path='/daytrade/datasets' element={<BackWrapper />} />
-                    <Route path='/daytrade/ativos' element={<BackWrapper />} />
-                    <Route path='/daytrade/gerenciamentos' element={<BackWrapper />} />
-                    <Route path='/daytrade/cenarios' element={<BackWrapper />} />
-                    <Route path='/daytrade/builds' element={<BackWrapper />} />
-                    <Route path='/daytrade/novas_operacoes' element={<BackWrapper />} />
-                    <Route path='/daytrade/importar_operacoes' element={<BackWrapper />} />
-                    <Route path='*' element={<Navigate replace to='/daytrade/dashboard' />} />
+                    <Route path='daytrade/dashboard' element={<BackWrapper />} />
+                    <Route path='daytrade/datasets'>
+                        <Route path='' element={<BackWrapper />} />
+                        <Route path='novo' element={<BackWrapper />} />
+                        <Route path='editar/:id' element={<BackWrapper />} />
+                        <Route path='*' element={<Navigate replace to='/daytrade/datasets' />} />
+                    </Route>
+                    <Route path='daytrade/ativos' element={<BackWrapper />} />
+                    <Route path='daytrade/gerenciamentos' element={<BackWrapper />} />
+                    <Route path='daytrade/cenarios' element={<BackWrapper />} />
+                    <Route path='daytrade/builds' element={<BackWrapper />} />
+                    <Route path='daytrade/novas_operacoes' element={<BackWrapper />} />
+                    <Route path='daytrade/importar_operacoes' element={<BackWrapper />} />
+                    <Route path='*' element={<Navigate replace to='daytrade/dashboard' />} />
                 </>
             )}
         </Routes>

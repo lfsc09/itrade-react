@@ -7,6 +7,24 @@
 .title_panel {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+
+    .title {
+        font-weight: bold;
+        font-size: 0.9em;
+        color: rgba(0, 0, 0, 0.4);
+    }
+
+    .title_link {
+        font-weight: bold;
+        font-size: 0.9em;
+        text-decoration: none;
+        color: inherit;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
 }
 
 .filter_panel {
