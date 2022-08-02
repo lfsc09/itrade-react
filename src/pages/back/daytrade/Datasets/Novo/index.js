@@ -1,7 +1,7 @@
 import styles from './datasets-novo.module.scss';
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Box, Grid, Paper, Stack, TextField, Typography, Breadcrumbs, Button, Divider } from '@mui/material';
+import { Box, Grid, Paper, Stack, TextField, Typography, Breadcrumbs, Button, Divider, Select } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { NavigateNext } from '@mui/icons-material';
 
@@ -29,6 +29,21 @@ const index = () => {
                     </Breadcrumbs>
                 </div>
                 <Divider />
+                <div className={styles.form_panel}>
+                    <Paper className={styles.form_container} sx={{ p: 2 }}>
+                        <Grid container>
+                            <Grid item xs={12}>
+                                <TextField label='Nome' variant='outlined' name='nome' />
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Select label='Nome' variant='outlined' name='nome' />
+                            </Grid>
+                            <Grid item xs={6}>
+                                <TextField label='Nome' variant='outlined' name='nome' />
+                            </Grid>
+                        </Grid>
+                    </Paper>
+                </div>
             </Stack>
         </Box>
     );
