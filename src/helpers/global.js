@@ -5,6 +5,12 @@ const generateHash = (len) => {
     return Math.random().toString(16).substr(2, len);
 };
 
+const sleep = (delay) => {
+    return new Promise((resolve) => {
+        setTimeout(resolve, delay);
+    });
+};
+
 /**
  * Utilizados em @formatValue_fromRaw
  */
@@ -63,4 +69,4 @@ const formatValue_fromRaw = (options, value) => {
     }
 };
 
-export { generateHash, formatValue_fromRaw };
+export { generateHash, sleep, formatValue_fromRaw };

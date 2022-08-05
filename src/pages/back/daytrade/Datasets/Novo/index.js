@@ -1,10 +1,30 @@
 import styles from './datasets-novo.module.scss';
-import React, { useState } from 'react';
+import DatasetNovoSkeleton from './Skeleton';
+import { sleep } from '../../../../../helpers/global';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LoadingButton } from '@mui/lab';
-import { Box, Grid, Paper, Stack, TextField, Typography, Breadcrumbs, Divider, Select, FormControl, InputLabel, MenuItem, ListItemText, OutlinedInput, Chip } from '@mui/material';
+import {
+    Box,
+    Grid,
+    Paper,
+    Stack,
+    TextField,
+    Typography,
+    Breadcrumbs,
+    Divider,
+    Select,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Autocomplete,
+    Checkbox,
+    ListItemText,
+} from '@mui/material';
 import { Link } from 'react-router-dom';
-import { NavigateNext, KeyboardDoubleArrowUp, CheckBox } from '@mui/icons-material';
+import { NavigateNext, KeyboardDoubleArrowUp, CheckBoxOutlineBlank, CheckBox } from '@mui/icons-material';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import Editor from 'ckeditor5-custom-build/build/ckeditor';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,7 +35,9 @@ const validationSchema = yup.object({
     nome: yup.string().trim().required('Informe nome do Dataset'),
 });
 
-const NovoDataset = () => {
+const NovoDataset = (props) => {
+    const [isEdit, editID] = [props.editar !== undefined, props.editar];
+
     /**********
      * DISPATCH
      **********/
@@ -24,23 +46,57 @@ const NovoDataset = () => {
     /*********
      * STATES
      *********/
-    const [isLoading, setIsLoading] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [isSendLoading, setIsSendLoading] = useState(false);
+    const [asyncData, setAsyncData] = useState(null);
     const { snacks } = useSelector((store) => store.snackMessages);
+
+    useEffect(() => {
+        (async () => {
+            await sleep(2000); // For demo purposes.
+
+            let usuarios = [
+                { id: 1, login: 'convidado', nome: 'Convidado' },
+                { id: 2, login: 'kamilla', nome: 'Kamilla Delfino' },
+            ];
+            if (isEdit) {
+                setAsyncData({
+                    usuarios: usuarios,
+                    dataset: {
+                        nome: 'Dataset Example',
+                        situacao: 2,
+                        tipo: 3,
+                        usuarios: [usuarios[1]],
+                        observacao: '<p>Pau no cu de quem ta lendo</p>',
+                    },
+                });
+            } else {
+                setAsyncData({
+                    usuarios: usuarios,
+                });
+            }
+
+            setIsInitialLoading(false);
+        })();
+    }, [isEdit]);
 
     /********
      * FORMS
      ********/
     const formik = useFormik({
         initialValues: {
-            nome: '',
-            situacao: 2,
-            tipo: 1,
-            usuarios: [],
+            nome: asyncData?.dataset?.nome ?? '',
+            situacao: asyncData?.dataset?.situacao ?? 2,
+            tipo: asyncData?.dataset?.tipo ?? 1,
+            usuarios: asyncData?.dataset?.usuarios ?? [],
+            observacao: asyncData?.dataset?.observacao ?? '',
         },
+        enableReinitialize: true,
         validationSchema: validationSchema,
         onSubmit: (values) => {
-            dispatch(add({ key: '000', message: JSON.stringify(values), severity: 'warning' }));
-            setIsLoading(true);
+            // dispatch(add({ key: '000', message: JSON.stringify(values), severity: 'warning' }));
+            console.log(values);
+            setIsSendLoading(true);
         },
     });
 
@@ -68,91 +124,109 @@ const NovoDataset = () => {
                                 Datasets
                             </Typography>
                             <Typography className={styles.title} variant='overline'>
-                                Novo
+                                {isEdit ? `Editar` : 'Novo'}
                             </Typography>
                         </Breadcrumbs>
                     </div>
                     <Divider />
                     <div className={styles.form_panel}>
                         <Paper className={styles.form_container} sx={{ p: 5 }}>
-                            <form onSubmit={formik.handleSubmit}>
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label='Nome'
-                                            variant='outlined'
-                                            name='nome'
-                                            autoFocus
-                                            sx={{ width: '100%' }}
-                                            value={formik.values.nome}
-                                            onChange={formik.handleChange}
-                                            onBlur={formik.handleBlur}
-                                            error={formik.touched.nome && Boolean(formik.errors.nome)}
-                                            helperText={formik.touched.nome && formik.errors.nome}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <FormControl sx={{ width: '100%' }}>
-                                            <InputLabel id='situacao_select_label'>Situação</InputLabel>
-                                            <Select label='Situação' labelId='situacao_select_label' name='situacao' value={formik.values.situacao} onChange={formik.handleChange}>
-                                                <MenuItem value={2}>Pendente</MenuItem>
-                                                <MenuItem value={3}>Fazendo</MenuItem>
-                                                <MenuItem value={1}>Fechado</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <FormControl sx={{ width: '100%' }}>
-                                            <InputLabel id='tipo_select_label'>Tipo</InputLabel>
-                                            <Select label='Tipo' labelId='tipo_select_label' name='tipo' value={formik.values.tipo} onChange={formik.handleChange}>
-                                                <MenuItem value={1}>Live</MenuItem>
-                                                <MenuItem value={2}>Replay</MenuItem>
-                                                <MenuItem value={3}>Paper Trade</MenuItem>
-                                                <MenuItem value={4}>Misto</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <FormControl sx={{ width: '100%' }}>
-                                            <InputLabel id='usuarios_select_label'>Usuários</InputLabel>
-                                            <Select
-                                                labelId='usuarios_select_label'
+                            {isInitialLoading ? (
+                                <DatasetNovoSkeleton />
+                            ) : (
+                                <form onSubmit={formik.handleSubmit}>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12}>
+                                            <TextField
+                                                label='Nome'
+                                                variant='outlined'
+                                                name='nome'
+                                                autoFocus
+                                                sx={{ width: '100%' }}
+                                                value={formik.values.nome}
+                                                onChange={formik.handleChange}
+                                                error={formik.touched.nome && Boolean(formik.errors.nome)}
+                                                helperText={formik.touched.nome && formik.errors.nome}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <FormControl sx={{ width: '100%' }}>
+                                                <InputLabel id='situacao_select_label'>Situação</InputLabel>
+                                                <Select
+                                                    label='Situação'
+                                                    labelId='situacao_select_label'
+                                                    name='situacao'
+                                                    value={formik.values.situacao}
+                                                    onChange={formik.handleChange}
+                                                >
+                                                    <MenuItem value={2}>Pendente</MenuItem>
+                                                    <MenuItem value={3}>Fazendo</MenuItem>
+                                                    <MenuItem value={1}>Fechado</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <FormControl sx={{ width: '100%' }}>
+                                                <InputLabel id='tipo_select_label'>Tipo</InputLabel>
+                                                <Select label='Tipo' labelId='tipo_select_label' name='tipo' value={formik.values.tipo} onChange={formik.handleChange}>
+                                                    <MenuItem value={1}>Live</MenuItem>
+                                                    <MenuItem value={2}>Replay</MenuItem>
+                                                    <MenuItem value={3}>Paper Trade</MenuItem>
+                                                    <MenuItem value={4}>Misto</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <Autocomplete
                                                 multiple
                                                 name='usuarios'
+                                                options={asyncData.usuarios}
                                                 value={formik.values.usuarios}
-                                                onChange={formik.handleChange}
-                                                input={<OutlinedInput label='Usuários' />}
-                                                renderValue={(selected) => (
-                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                        {selected.map((value, idx) => (
-                                                            <Chip key={idx} label={value.nome} />
-                                                        ))}
-                                                    </Box>
+                                                onChange={(e, value) => {
+                                                    formik.setFieldValue('usuarios', value);
+                                                }}
+                                                disableCloseOnSelect
+                                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                                getOptionLabel={(option) => option.login}
+                                                renderOption={(props, option, { selected }) => (
+                                                    <li {...props}>
+                                                        <Checkbox
+                                                            icon={<CheckBoxOutlineBlank fontSize='small' />}
+                                                            checkedIcon={<CheckBox fontSize='small' />}
+                                                            style={{ marginRight: 8 }}
+                                                            checked={selected}
+                                                        />
+                                                        <ListItemText primary={option.nome} secondary={option.login} />
+                                                    </li>
                                                 )}
+                                                style={{ width: '100%' }}
+                                                renderInput={(params) => <TextField {...params} label='Usuarios com Acesso' placeholder='' />}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <CKEditor
+                                                editor={Editor}
+                                                data={formik.values.observacao}
+                                                onChange={(event, editor) => {
+                                                    formik.setFieldValue('observacao', editor.getData());
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <LoadingButton
+                                                loading={isSendLoading}
+                                                variant='contained'
+                                                color='primary'
+                                                type='submit'
+                                                endIcon={<KeyboardDoubleArrowUp />}
+                                                sx={{ width: '100%' }}
                                             >
-                                                <MenuItem key={0} value={{ id: 1, nome: 'Convidado' }}>
-                                                    Convidado
-                                                </MenuItem>
-                                                <MenuItem key={1} value={{ id: 2, nome: 'Kamilla' }}>
-                                                    Kamilla
-                                                </MenuItem>
-                                            </Select>
-                                        </FormControl>
+                                                {isEdit ? 'Atualizar' : 'Enviar'}
+                                            </LoadingButton>
+                                        </Grid>
                                     </Grid>
-                                    <Grid item xs={12}>
-                                        <LoadingButton
-                                            loading={isLoading}
-                                            variant='contained'
-                                            color='primary'
-                                            type='submit'
-                                            endIcon={<KeyboardDoubleArrowUp />}
-                                            sx={{ width: '100%' }}
-                                        >
-                                            Enviar
-                                        </LoadingButton>
-                                    </Grid>
-                                </Grid>
-                            </form>
+                                </form>
+                            )}
                         </Paper>
                     </div>
                 </Stack>
