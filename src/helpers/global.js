@@ -5,6 +5,9 @@ const generateHash = (len) => {
     return Math.random().toString(16).substr(2, len);
 };
 
+/**
+ * Gera um setTimout de @delay milisegundos (Para simulações apenas)
+ */
 const sleep = (delay) => {
     return new Promise((resolve) => {
         setTimeout(resolve, delay);

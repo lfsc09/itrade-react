@@ -25,3 +25,6 @@ yarn-error.log*
 
 # others
 dummy-data.js
+
+# Manual Plugins
+/ckeditor5
