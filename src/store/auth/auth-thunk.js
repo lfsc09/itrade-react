@@ -3,7 +3,6 @@ import { add } from '../snack-messages/snack-messages-slice';
 import cryptoJS from 'crypto-js';
 import jwtDecode from 'jwt-decode';
 import axiosCon from '../../helpers/axios-con';
-import { generateHash } from '../../helpers/global';
 
 const login = createAsyncThunk('auth/login', async ({ usuario, password }, { dispatch, rejectWithValue }) => {
     return axiosCon
@@ -27,7 +26,6 @@ const login = createAsyncThunk('auth/login', async ({ usuario, password }, { dis
                 if (error.response.status === 401)
                     dispatch(
                         add({
-                            key: generateHash(8),
                             message: 'Credenciais inexistentes',
                             severity: 'error',
                         })
@@ -35,7 +33,6 @@ const login = createAsyncThunk('auth/login', async ({ usuario, password }, { dis
             } else {
                 dispatch(
                     add({
-                        key: generateHash(8),
                         message: error.message,
                         severity: 'error',
                     })

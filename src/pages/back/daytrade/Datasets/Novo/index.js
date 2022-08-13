@@ -1,6 +1,5 @@
 import styles from './datasets-novo.module.scss';
 import DatasetNovoSkeleton from './Skeleton';
-import { sleep } from '../../../../../helpers/global';
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LoadingButton } from '@mui/lab';
@@ -30,13 +29,14 @@ import * as yup from 'yup';
 import { useDispatch, useSelector } from 'react-redux';
 import { add, remove } from '../../../../../store/snack-messages/snack-messages-slice';
 import SnackOverlay from '../../../../../components/ui/SnackOverlay';
+import axiosCon from '../../../../../helpers/axios-con';
 
 const validationSchema = yup.object({
     nome: yup.string().trim().required('Informe nome do Dataset'),
 });
 
 const NovoDataset = (props) => {
-    const [isEdit, editID] = [props.editar !== undefined, props.editar];
+    const [isEdit, editID] = [props.editar !== undefined, props.editar?.id];
 
     /**********
      * DISPATCH
@@ -52,33 +52,62 @@ const NovoDataset = (props) => {
     const { snacks } = useSelector((store) => store.snackMessages);
 
     useEffect(() => {
-        (async () => {
-            await sleep(2000); // For demo purposes.
+        axiosCon
+            .get(isEdit ? `/dataset/list_edita/${editID}` : '/dataset/list_novo')
+            .then((resp) => {
+                // Se por algum motivo veio sem os dados do Dataset
+                if (isEdit && resp.data.dataset === null) {
+                    dispatch(
+                        add({
+                            message: 'Informações do Dataset inexistentes',
+                            severity: 'error',
+                        })
+                    );
+                    return;
+                }
 
-            let usuarios = [
-                { id: 1, login: 'convidado', nome: 'Convidado' },
-                { id: 2, login: 'kamilla', nome: 'Kamilla Delfino' },
-            ];
-            if (isEdit) {
-                setAsyncData({
-                    usuarios: usuarios,
-                    dataset: {
-                        nome: 'Dataset Example',
-                        situacao: 2,
-                        tipo: 3,
-                        usuarios: [usuarios[1]],
-                        observacao: '<p>Pau no cu de quem ta lendo</p>',
-                    },
-                });
-            } else {
-                setAsyncData({
-                    usuarios: usuarios,
-                });
-            }
+                const newState = { usuarios: resp.data.usuarios };
 
-            setIsInitialLoading(false);
-        })();
-    }, [isEdit]);
+                // Aloca e prepara os dados para o formulario de Dataset
+                if (resp.data.dataset !== null) {
+                    let dataset_usuarios__raw = resp.data.dataset.usuarios.split(';').map((val) => parseInt(val)),
+                        dataset_usuarios = [];
+                    for (let d_u of dataset_usuarios__raw) {
+                        for (let u = 0; u < newState.usuarios.length; u++) {
+                            if (newState.usuarios[u].id === d_u) {
+                                dataset_usuarios.push(newState.usuarios[u]);
+                                break;
+                            }
+                        }
+                    }
+                    newState.dataset = {
+                        ...resp.data.dataset,
+                        usuarios: dataset_usuarios,
+                    };
+                }
+
+                setAsyncData((prevState) => newState);
+                setIsInitialLoading(false);
+            })
+            .catch((error) => {
+                if (error.response) {
+                    if (error.response.status === 401)
+                        dispatch(
+                            add({
+                                message: 'Não Autorizado',
+                                severity: 'error',
+                            })
+                        );
+                } else {
+                    dispatch(
+                        add({
+                            message: error.message,
+                            severity: 'error',
+                        })
+                    );
+                }
+            });
+    }, [isEdit, editID, dispatch]);
 
     /********
      * FORMS
@@ -94,7 +123,6 @@ const NovoDataset = (props) => {
         enableReinitialize: true,
         validationSchema: validationSchema,
         onSubmit: (values) => {
-            // dispatch(add({ key: '000', message: JSON.stringify(values), severity: 'warning' }));
             console.log(values);
             setIsSendLoading(true);
         },
@@ -187,7 +215,7 @@ const NovoDataset = (props) => {
                                                 }}
                                                 disableCloseOnSelect
                                                 isOptionEqualToValue={(option, value) => option.id === value.id}
-                                                getOptionLabel={(option) => option.login}
+                                                getOptionLabel={(option) => option.usuario}
                                                 renderOption={(props, option, { selected }) => (
                                                     <li {...props}>
                                                         <Checkbox
@@ -196,7 +224,7 @@ const NovoDataset = (props) => {
                                                             style={{ marginRight: 8 }}
                                                             checked={selected}
                                                         />
-                                                        <ListItemText primary={option.nome} secondary={option.login} />
+                                                        <ListItemText primary={option.nome} secondary={option.usuario} />
                                                     </li>
                                                 )}
                                                 style={{ width: '100%' }}

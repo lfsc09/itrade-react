@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { generateHash } from '../../helpers/global';
 
 const initialState = {
     snacks: [],
@@ -8,9 +9,9 @@ const snackMessagesSlice = createSlice({
     name: 'snackMessages',
     initialState: initialState,
     reducers: {
-        add: (state, { payload: { key, message, severity } }) => {
+        add: (state, { payload: { message, severity } }) => {
             state.snacks.push({
-                key: key,
+                key: generateHash(8),
                 message: message,
                 severity: severity,
             });
