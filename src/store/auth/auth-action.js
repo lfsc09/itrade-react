@@ -14,8 +14,8 @@ export const readTokenFromLocal = () => {
         const token = localStorage.getItem('token');
         if (token) {
             const user = jwtDecode(token);
-            console.log(sig);
-            if (true) {
+            const token_exp_date = new Date(user.exp * 1000);
+            if (token_exp_date >= new Date()) {
                 axiosCon.defaults.headers.Authorization = `Bearer ${token}`;
                 dispatch(setUserFromLocalToken({ token: token, user: user }));
             } else {

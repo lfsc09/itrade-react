@@ -10,6 +10,7 @@ import axiosCon from '../../../../helpers/axios-con';
 import { useDispatch, useSelector } from 'react-redux/es/exports';
 import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
 import SnackOverlay from '../../../../components/ui/SnackOverlay';
+import { handleLogout } from '../../../../store/auth/auth-action';
 
 const situacaoCell = ({ value }) => {
     // Fechado
@@ -160,13 +161,8 @@ const Datasets = () => {
             })
             .catch((error) => {
                 if (error.response) {
-                    if (error.response.status === 401)
-                        dispatch(
-                            add({
-                                message: 'Credenciais inexistentes',
-                                severity: 'error',
-                            })
-                        );
+                    if (error.response.status === 401) dispatch(handleLogout());
+                    else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
                 } else {
                     dispatch(
                         add({
@@ -177,7 +173,7 @@ const Datasets = () => {
                 }
                 setISDGLoading(false);
             });
-    }, [pageInfo, dgFiltros, dgSortingModel, dispatch]);
+    }, [pageInfo, dgFiltros, dgSortingModel, dispatch, navigate]);
 
     console.log(pageInfo, dgRemoteData);
 
