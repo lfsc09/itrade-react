@@ -1,16 +1,21 @@
-import styles from './datasets.module.scss';
-import { formatValue_fromRaw } from '../../../../helpers/global';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Box, Grid, Paper, Stack, TextField, Typography, Chip, Breadcrumbs, Button, Divider, LinearProgress } from '@mui/material';
-import { ThreeSixty, Check, VideoLibrary, Tv, InsertDriveFile, Add, NavigateNext, DriveFileRenameOutline, Delete } from '@mui/icons-material';
-import { Link, useNavigate } from 'react-router-dom';
+import { Add, Check, Delete, DriveFileRenameOutline, FilterList, InsertDriveFile, NavigateNext, ThreeSixty, Tv, VideoLibrary } from '@mui/icons-material';
+import { Box, Breadcrumbs, Button, Chip, Divider, Grid, IconButton, LinearProgress, Paper, Stack, Typography } from '@mui/material';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
-import axiosCon from '../../../../helpers/axios-con';
+import { motion } from 'framer-motion';
+import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useDispatch, useSelector } from 'react-redux/es/exports';
-import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
+import { Link, useNavigate } from 'react-router-dom';
+
+import gStyles from '../../../../assets/back/scss/global.module.scss';
+import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import SnackOverlay from '../../../../components/ui/SnackOverlay';
+import axiosCon from '../../../../helpers/axios-con';
+import { formatValue_fromRaw, isObjectEmpty } from '../../../../helpers/global';
 import { handleLogout } from '../../../../store/auth/auth-action';
+import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
+import { reducer as datagridReducer, INI_STATE as DGR_INI_STATE, TYPES as DGR_TYPES } from './datagridReducer';
+import styles from './datasets.module.scss';
+import FilterDataset from './Filter';
 
 const situacaoCell = ({ value }) => {
     // Fechado
@@ -58,38 +63,101 @@ const Datasets = () => {
      ***********/
     const navigate = useNavigate();
 
-    /*********
-     * STATES
-     *********/
+    /******************
+     * SNACKS SELECTOR
+     ******************/
     const { snacks } = useSelector((store) => store.snackMessages);
-    const [dgRemoteData, setDGRemoteData] = useState({
-        rows: [],
-        rowCount: 0,
-    });
-    const [isDGLoading, setISDGLoading] = useState(true);
-    const [pageInfo, setPageInfo] = useState({
-        page: 0,
-        pageSize: 100,
-    });
-    const [dgFiltros, setDGFiltros] = useState([]);
-    const [dgSortingModel, setDGSortingModel] = useState([{ field: 'data_atualizacao', sort: 'desc' }]);
 
-    /***********
-     * DATAGRID
-     ***********/
-    const editarDataset = useCallback(
+    /*******************
+     * DATAGRID REDUCER
+     *******************/
+    const [datagridState, datagridDispatch] = useReducer(datagridReducer, DGR_INI_STATE);
+
+    /******************
+     * FILTER HANDLERS
+     ******************/
+    const handleFilterModalOpen = useCallback(() => {
+        datagridDispatch({ type: DGR_TYPES.CHANGE_FILTER_MODAL_STATE, payload: true });
+    }, []);
+
+    const handleFilterRemove = useCallback(
+        (obj) => {
+            const newFilters = { ...datagridState.filters };
+            newFilters[obj.filter] = newFilters[obj.filter].filter((val) => val.value !== obj.value);
+            if (newFilters[obj.filter].length === 0) delete newFilters[obj.filter];
+            datagridDispatch({ type: DGR_TYPES.FILTERS_CHANGED, payload: newFilters });
+        },
+        [datagridState.filters]
+    );
+
+    /********************
+     * DATAGRID HANDLERS
+     ********************/
+    const handlerEditaDatagridAction = useCallback(
         (id) => () => {
             navigate(`editar/${id}`, { replace: true });
         },
         [navigate]
     );
-    const apagarDataset = useCallback(
+
+    const handlerDeletaDatagridAction = useCallback(
         (id) => () => {
-            console.log(id);
+            datagridDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: id });
         },
         []
     );
 
+    const handlePageChangeDatagrid = useCallback((newPage) => {
+        datagridDispatch({ type: DGR_TYPES.PAGE_CHANGE, payload: newPage });
+    }, []);
+
+    const handleSortModelChangeDatagrid = useCallback((sortModel) => {
+        datagridDispatch({ type: DGR_TYPES.SORTMODEL_CHANGE, payload: sortModel });
+    }, []);
+
+    const handleDeleteConfirm_No = useCallback(() => {
+        datagridDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: null });
+    }, []);
+
+    const handleDeleteConfirm_Yes = useCallback(() => {
+        axiosCon
+            .delete(`/dataset/deleta/${datagridState.idRowDeleteConfirm}`)
+            .then((resp) => {
+                dispatch(
+                    add({
+                        message: 'Dataset removido',
+                        severity: 'success',
+                    })
+                );
+                datagridDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: null });
+            })
+            .catch((error) => {
+                if (error.response) {
+                    if (error.response.status === 401) dispatch(handleLogout());
+                    else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
+                    else if (error.response.status === 500) {
+                        dispatch(
+                            add({
+                                message: error.response.data,
+                                severity: 'error',
+                            })
+                        );
+                    }
+                } else {
+                    dispatch(
+                        add({
+                            message: error.message,
+                            severity: 'error',
+                        })
+                    );
+                }
+                // setIsSendLoading(false);
+            });
+    }, [dispatch, navigate, datagridState.idRowDeleteConfirm]);
+
+    /****************
+     * DATAGRID MISC
+     ****************/
     const columns = useMemo(
         () => [
             { field: 'situacao', headerName: 'Sit.', width: 70, disableColumnMenu: true, renderCell: situacaoCell, align: 'center', headerAlign: 'center' },
@@ -103,7 +171,7 @@ const Datasets = () => {
                 align: 'center',
                 headerAlign: 'center',
             },
-            { field: 'nome', headerName: 'Nome', flex: 2, cellClassName: styles.table_cell__nome },
+            { field: 'nome', headerName: 'Nome', flex: 3, cellClassName: styles.table_cell__nome },
             {
                 field: 'data_criacao',
                 headerName: 'Criado Em',
@@ -116,7 +184,7 @@ const Datasets = () => {
                 field: 'data_atualizacao',
                 headerName: 'Atualizado',
                 type: 'dateTime',
-                flex: 1,
+                flex: 2,
                 cellClassName: styles.table_cell__dataAtualizacao,
                 valueFormatter: dataAtualizacaoFormatter,
             },
@@ -127,37 +195,32 @@ const Datasets = () => {
                 type: 'actions',
                 width: 120,
                 getActions: (params) => [
-                    <GridActionsCellItem icon={<DriveFileRenameOutline />} label='Editar' onClick={editarDataset(params.id)} />,
-                    <GridActionsCellItem icon={<Delete />} label='Apagar' onClick={apagarDataset(params.id)} />,
+                    <GridActionsCellItem icon={<DriveFileRenameOutline />} label='Editar' onClick={handlerEditaDatagridAction(params.id)} />,
+                    <GridActionsCellItem icon={<Delete />} label='Apagar' onClick={handlerDeletaDatagridAction(params.id)} />,
                 ],
             },
         ],
-        [editarDataset, apagarDataset]
+        [handlerEditaDatagridAction, handlerDeletaDatagridAction]
     );
 
-    /***********
-     * HANDLERS
-     ***********/
-    const handlePageChange = useCallback((newPage) => {
-        setISDGLoading(true);
-        setPageInfo((prevState) => ({ ...prevState, page: newPage }));
-    }, []);
-
-    const handleSortModelChange = useCallback((sortModel) => {
-        setISDGLoading(true);
-        setDGSortingModel((prevState) => sortModel);
-    }, []);
-
+    /****************
+     * DATAGRID LOAD
+     ****************/
     useEffect(() => {
+        // Trata o state dos filtros para passar apenas os valores
+        const treatedFilters = {};
+        Object.keys(datagridState.filters).forEach((fName) => {
+            treatedFilters[fName] = datagridState.filters[fName].map((fVal) => fVal.value);
+        });
         axiosCon
             .post('/dataset/list_datagrid', {
-                ...pageInfo,
-                filters: dgFiltros,
-                sorting: dgSortingModel,
+                page: datagridState.page,
+                pageSize: datagridState.pageSize,
+                filters: treatedFilters,
+                sorting: datagridState.sortingModel,
             })
             .then((resp) => {
-                setDGRemoteData((prevState) => resp.data.datagrid);
-                setISDGLoading(false);
+                datagridDispatch({ type: DGR_TYPES.ROWS_UPDATED, payload: resp.data.datagrid });
             })
             .catch((error) => {
                 if (error.response) {
@@ -171,11 +234,9 @@ const Datasets = () => {
                         })
                     );
                 }
-                setISDGLoading(false);
+                datagridDispatch({ type: DGR_TYPES.STOP_LOADING });
             });
-    }, [pageInfo, dgFiltros, dgSortingModel, dispatch, navigate]);
-
-    console.log(pageInfo, dgRemoteData);
+    }, [datagridState.page, datagridState.pageSize, datagridState.filters, datagridState.sortingModel, dispatch, navigate]);
 
     return (
         <>
@@ -184,6 +245,14 @@ const Datasets = () => {
                     {item.message}
                 </SnackOverlay>
             ))}
+            <ConfirmDialog
+                open={datagridState.idRowDeleteConfirm !== null}
+                title='Deseja apagar mesmo?'
+                content='Todas as operações deste Dataset serão removidas.'
+                handleNo={handleDeleteConfirm_No}
+                handleYes={handleDeleteConfirm_Yes}
+            />
+            <FilterDataset open={datagridState.isFilterModalOpen} filterState={datagridState.filters} datagridDispatch={datagridDispatch} />
             <Box
                 className={styles.wrapper}
                 component={motion.div}
@@ -192,31 +261,57 @@ const Datasets = () => {
                 exit={{ transition: { duration: 0.1 } }}
             >
                 <Stack direction='column' spacing={2} alignItems='strech' sx={{ height: '100%' }}>
-                    <div className={styles.title_panel}>
+                    <div className={gStyles.title_panel}>
                         <Breadcrumbs separator={<NavigateNext fontSize='small' />}>
-                            <Typography className={styles.title_link} variant='overline' component={Link} to='/daytrade/dashboard' replace={true}>
+                            <Typography className={gStyles.title_link} variant='overline' component={Link} to='/daytrade/dashboard' replace={true}>
                                 Daytrade
                             </Typography>
-                            <Typography className={styles.title} variant='overline'>
+                            <Typography className={gStyles.title} variant='overline'>
                                 Datasets
                             </Typography>
                         </Breadcrumbs>
-                        <Button variant='outlined' endIcon={<Add />} component={Link} to='novo' replace={true}>
-                            Novo Dataset
-                        </Button>
+                        <Stack direction='row' spacing={2}>
+                            <IconButton color='primary' onClick={handleFilterModalOpen}>
+                                <FilterList />
+                            </IconButton>
+                            <Button variant='outlined' endIcon={<Add />} component={Link} to='novo' replace={true}>
+                                Novo Dataset
+                            </Button>
+                        </Stack>
                     </div>
                     <Divider />
-                    <div className={styles.filter_panel}>
-                        <Grid container spacing={1}>
-                            <Grid item xs={12}>
-                                <Paper className={styles.filter_container} sx={{ p: 2 }}>
-                                    <TextField label='Filtrar Data' variant='outlined' size='small' />
-                                </Paper>
+                    {!isObjectEmpty(datagridState.filters) ? (
+                        <div className={gStyles.filter_panel}>
+                            <Grid container spacing={1}>
+                                <Grid item xs={12}>
+                                    <Paper elevation={0} className={gStyles.filter_container} sx={{ p: 1 }}>
+                                        <Stack spacing={1} direction='row'>
+                                            {Object.keys(datagridState.filters).map((fName) =>
+                                                datagridState.filters[fName].map((fVal, fI) => (
+                                                    <Chip
+                                                        key={`${fName}_${fI}`}
+                                                        label={
+                                                            <div className={gStyles.filter_chip}>
+                                                                <div className={gStyles.filter_chip__title}>{datagridState.filters_lib[fName]}: </div>
+                                                                <div className={gStyles.filter_chip__content}>{fVal.label}</div>
+                                                            </div>
+                                                        }
+                                                        onDelete={() => {
+                                                            handleFilterRemove({ filter: fName, value: fVal.value });
+                                                        }}
+                                                    />
+                                                ))
+                                            )}
+                                        </Stack>
+                                    </Paper>
+                                </Grid>
                             </Grid>
-                        </Grid>
-                    </div>
-                    <div className={styles.table_panel}>
-                        <Paper className={styles.table_container}>
+                        </div>
+                    ) : (
+                        <></>
+                    )}
+                    <div className={gStyles.table_panel}>
+                        <Paper className={gStyles.table_container}>
                             <DataGrid
                                 components={{
                                     LoadingOverlay: LinearProgress,
@@ -224,20 +319,20 @@ const Datasets = () => {
                                 sortingOrder={['asc', 'desc']}
                                 disableColumnFilter
                                 disableSelectionOnClick
-                                rowsPerPageOptions={[pageInfo.pageSize]}
+                                rowsPerPageOptions={[datagridState.pageSize]}
                                 columns={columns}
-                                rows={dgRemoteData.rows}
-                                rowCount={dgRemoteData.rowCount}
-                                loading={isDGLoading}
-                                page={pageInfo.page}
-                                pageSize={pageInfo.pageSize}
+                                rows={datagridState.rows}
+                                rowCount={datagridState.rowCount}
+                                loading={datagridState.isLoading}
+                                page={datagridState.page}
+                                pageSize={datagridState.pageSize}
                                 paginationMode='server'
-                                onPageChange={handlePageChange}
+                                onPageChange={handlePageChangeDatagrid}
                                 sortingMode='server'
-                                onSortModelChange={handleSortModelChange}
+                                onSortModelChange={handleSortModelChangeDatagrid}
                                 initialState={{
                                     sorting: {
-                                        sortModel: dgSortingModel,
+                                        sortModel: datagridState.sortingModel,
                                     },
                                 }}
                             />

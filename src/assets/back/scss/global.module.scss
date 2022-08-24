@@ -1,0 +1,68 @@
+/********************
+*
+* GLOBAL DEFINITIONS
+*
+*********************/
+/***************** GLOBAL TITLE ***************/
+/**
+* Referente ao breadcrumbs que fazem as rotas nas paginas
+*/
+.title_panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .title {
+        font-weight: bold;
+        font-size: 0.9em;
+        color: rgba(0, 0, 0, 0.4);
+    }
+
+    .title_link {
+        font-weight: bold;
+        font-size: 0.9em;
+        text-decoration: none;
+        color: inherit;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+/**************** GLOBAL FILTERS **************/
+/**
+* Referente a seção de Chips que compem os filtros escolhidos
+*/
+.filter_panel {
+    display: flex;
+
+    .filter_container {
+        background-color: transparent;
+
+        .filter_chip {
+            display: flex;
+            align-items: center;
+
+            .filter_chip__title {
+                font-weight: bold;
+            }
+
+            .filter_chip__content {
+                margin-left: 5px;
+                text-transform: uppercase;
+            }
+        }
+    }
+}
+/************ GLOBAL DATAGRID TABLE ***********/
+/**
+* Referente as areas mais genéricas dos Datagrids. 
+* Coisas mais especificas como Cells serão especificadas nos scss de cada módulo.
+*/
+.table_panel {
+    flex-grow: 1;
+
+    .table_container {
+        height: 100%;
+    }
+}

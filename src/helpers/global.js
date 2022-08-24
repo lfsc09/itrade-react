@@ -15,6 +15,14 @@ const sleep = (delay) => {
 };
 
 /**
+ * Verifica se um Object @obj é vazio
+ */
+const isObjectEmpty = (obj) => {
+    for (let key in obj) return false;
+    return true;
+};
+
+/**
  * Utilizados em @formatValue_fromRaw
  */
 const currencyFormatter_toB1 = new Intl.NumberFormat('pt-BR', {
@@ -27,6 +35,7 @@ const percentFormatter = new Intl.NumberFormat('pt-BR', {
     maximumFractionDigits: 2,
 });
 const datetimeFormatter = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'UTC',
     year: 'numeric',
     month: 'numeric',
     day: 'numeric',
@@ -72,4 +81,4 @@ const formatValue_fromRaw = (options, value) => {
     }
 };
 
-export { generateHash, sleep, formatValue_fromRaw };
+export { generateHash, sleep, isObjectEmpty, formatValue_fromRaw };
