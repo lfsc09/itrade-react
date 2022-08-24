@@ -1,9 +1,9 @@
-import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid, InputLabel, ListItemText, MenuItem, Select } from '@mui/material';
-import React, { useCallback, useState } from 'react';
+import { CheckBox, CheckBoxOutlineBlank, FilterListOff } from '@mui/icons-material';
+import { Autocomplete, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Grid, ListItemText, TextField } from '@mui/material';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import styles from './datasets-filter.module.scss';
 import { TYPES as DGR_TYPES } from '../datagridReducer';
-import { FilterListOff } from '@mui/icons-material';
+import styles from './datasets-filter.module.scss';
 
 const tipos = [
     { value: 1, label: 'Live' },
@@ -28,24 +28,12 @@ const FilterDataset = (props) => {
     /***********
      * HANDLERS
      ***********/
-    const handleSituacaoSelect = useCallback(({ target: { value: values } }) => {
+    const handleSituacaoAutocomplete = useCallback((e, values) => {
         setSituacao((prevState) => values);
     }, []);
 
-    const renderSituacaoSelect = useCallback((selected) => {
-        return selected.length > 2
-            ? `${selected.length} Itens selecionados`
-            : situacoes.reduce((t, v) => t + (selected.includes(v.value) ? `, ${v.label}` : ''), '').replace(/^, /, '');
-    }, []);
-
-    const handleTipoSelect = useCallback(({ target: { value: values } }) => {
+    const handleTipoAutocomplete = useCallback((e, values) => {
         setTipo((prevState) => values);
-    }, []);
-
-    const renderTipoSelect = useCallback((selected) => {
-        return selected.length > 2
-            ? `${selected.length} Itens selecionados`
-            : tipos.reduce((t, v) => t + (selected.includes(v.value) ? `, ${v.label}` : ''), '').replace(/^, /, '');
     }, []);
 
     const handleClose = useCallback(() => {
@@ -54,8 +42,8 @@ const FilterDataset = (props) => {
 
     const handleSave = useCallback(() => {
         let newFilters = {};
-        if (tipo.length) newFilters['tipo'] = [...tipo].map((val) => ({ value: val, label: tipos.filter((fTipo) => fTipo.value === val)[0].label }));
-        if (situacao.length) newFilters['situacao'] = [...situacao].map((val) => ({ value: val, label: situacoes.filter((fSit) => fSit.value === val)[0].label }));
+        if (tipo.length) newFilters['tipo'] = [...tipo];
+        if (situacao.length) newFilters['situacao'] = [...situacao];
         props.datagridDispatch({ type: DGR_TYPES.FILTERS_CHANGED, payload: newFilters });
     }, [tipo, situacao, props]);
 
@@ -65,44 +53,70 @@ const FilterDataset = (props) => {
         props.datagridDispatch({ type: DGR_TYPES.FILTERS_CLEAR });
     }, [props]);
 
+    /***************
+     * RESET INPUTS
+     ***************/
+    useEffect(() => {
+        if (props.open) {
+            setSituacao((prevState) => props.filterState?.situacao ?? []);
+            setTipo((prevState) => props.filterState?.tipo ?? []);
+        }
+    }, [props.open]);
+
     return (
         <Dialog open={props.open} onClose={handleClose} maxWidth='md' fullWidth>
             <DialogTitle>Filtros</DialogTitle>
             <DialogContent dividers={true}>
                 <Grid container spacing={2}>
-                    <Grid item md={6} xs={12}>
-                        <FormControl sx={{ width: '100%' }}>
-                            <InputLabel id='situacao_select_label'>Situação</InputLabel>
-                            <Select
-                                multiple
-                                label='Situação'
-                                labelId='situacao_select_label'
-                                name='situacao'
-                                value={situacao}
-                                onChange={handleSituacaoSelect}
-                                renderValue={renderSituacaoSelect}
-                            >
-                                {situacoes.map((val, index) => (
-                                    <MenuItem key={index} value={val.value}>
-                                        <Checkbox checked={situacao.includes(val.value)} />
-                                        <ListItemText primary={val.label} />
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                    <Grid item xs={12}>
+                        <Autocomplete
+                            multiple
+                            name='situacao'
+                            options={situacoes}
+                            value={situacao}
+                            onChange={handleSituacaoAutocomplete}
+                            disableCloseOnSelect
+                            isOptionEqualToValue={(option, value) => option.value === value.value}
+                            getOptionLabel={(option) => option.label}
+                            renderOption={(props, option, { selected }) => (
+                                <li {...props}>
+                                    <Checkbox
+                                        icon={<CheckBoxOutlineBlank fontSize='small' />}
+                                        checkedIcon={<CheckBox fontSize='small' />}
+                                        style={{ marginRight: 8 }}
+                                        checked={selected}
+                                    />
+                                    <ListItemText primary={option.label} />
+                                </li>
+                            )}
+                            style={{ width: '100%' }}
+                            renderInput={(params) => <TextField {...params} label='Situação' placeholder='' />}
+                        />
                     </Grid>
-                    <Grid item md={6} xs={12}>
-                        <FormControl sx={{ width: '100%' }}>
-                            <InputLabel id='tipo_select_label'>Tipo</InputLabel>
-                            <Select multiple label='Tipo' labelId='tipo_select_label' name='tipo' value={tipo} onChange={handleTipoSelect} renderValue={renderTipoSelect}>
-                                {tipos.map((val, index) => (
-                                    <MenuItem key={index} value={val.value}>
-                                        <Checkbox checked={tipo.includes(val.value)} />
-                                        <ListItemText primary={val.label} />
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                    <Grid item xs={12}>
+                        <Autocomplete
+                            multiple
+                            name='tipo'
+                            options={tipos}
+                            value={tipo}
+                            onChange={handleTipoAutocomplete}
+                            disableCloseOnSelect
+                            isOptionEqualToValue={(option, value) => option.value === value.value}
+                            getOptionLabel={(option) => option.label}
+                            renderOption={(props, option, { selected }) => (
+                                <li {...props}>
+                                    <Checkbox
+                                        icon={<CheckBoxOutlineBlank fontSize='small' />}
+                                        checkedIcon={<CheckBox fontSize='small' />}
+                                        style={{ marginRight: 8 }}
+                                        checked={selected}
+                                    />
+                                    <ListItemText primary={option.label} />
+                                </li>
+                            )}
+                            style={{ width: '100%' }}
+                            renderInput={(params) => <TextField {...params} label='Tipos' placeholder='' />}
+                        />
                     </Grid>
                 </Grid>
             </DialogContent>
