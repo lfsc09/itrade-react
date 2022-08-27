@@ -1,8 +1,8 @@
-import { Add, Check, Delete, DriveFileRenameOutline, FilterList, InsertDriveFile, NavigateNext, ThreeSixty, Tv, VideoLibrary } from '@mui/icons-material';
-import { Box, Breadcrumbs, Button, Chip, Divider, Grid, IconButton, LinearProgress, Paper, Stack, Typography } from '@mui/material';
+import { Add, Delete, DriveFileRenameOutline, FilterList, NavigateNext } from '@mui/icons-material';
+import { Box, Breadcrumbs, Button, Chip, Divider, Grid, IconButton, LinearProgress, Paper, Stack, Tab, Tabs, Typography } from '@mui/material';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { motion } from 'framer-motion';
-import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useDispatch, useSelector, batch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -16,6 +16,7 @@ import { add, remove } from '../../../../store/snack-messages/snack-messages-sli
 import styles from './ativos.module.scss';
 import { reducer as datagridReducer, INI_STATE as DGR_INI_STATE, TYPES as DGR_TYPES } from './datagridReducer';
 import FilterAtivo from './Filter';
+import VencTable from './VencTable';
 
 const Ativos = () => {
     /***********
@@ -32,6 +33,11 @@ const Ativos = () => {
      * SNACKS SELECTOR
      ******************/
     const { snacks } = useSelector((store) => store.snackMessages);
+
+    /*********
+     * STATES
+     *********/
+    const [vencTabControl, setVencTaBControl] = useState(0);
 
     /*******************
      * DATAGRID REDUCER
@@ -122,6 +128,13 @@ const Ativos = () => {
                 // setIsSendLoading(false);
             });
     }, [dispatch, navigate, datagridState.idRowDeleteConfirm]);
+
+    /***********************
+     * VENCIMENTOS HANDLERS
+     ***********************/
+    const handleVencTabControl = useCallback((event, value) => {
+        setVencTaBControl(value);
+    }, []);
 
     /****************
      * DATAGRID MISC
@@ -255,32 +268,56 @@ const Ativos = () => {
                         <></>
                     )}
                     <div className={gStyles.table_panel}>
-                        <Paper className={gStyles.table_container}>
-                            <DataGrid
-                                components={{
-                                    LoadingOverlay: LinearProgress,
-                                }}
-                                sortingOrder={['asc', 'desc']}
-                                disableColumnFilter
-                                disableSelectionOnClick
-                                rowsPerPageOptions={[datagridState.pageSize]}
-                                columns={columns}
-                                rows={datagridState.rows}
-                                rowCount={datagridState.rowCount}
-                                loading={datagridState.isLoading}
-                                page={datagridState.page}
-                                pageSize={datagridState.pageSize}
-                                paginationMode='server'
-                                onPageChange={handlePageChangeDatagrid}
-                                sortingMode='server'
-                                onSortModelChange={handleSortModelChangeDatagrid}
-                                initialState={{
-                                    sorting: {
-                                        sortModel: datagridState.sortingModel,
-                                    },
-                                }}
-                            />
-                        </Paper>
+                        <Grid container spacing={2} sx={{ height: '100%' }}>
+                            <Grid item md={6} xs={12}>
+                                <Paper className={gStyles.table_container}>
+                                    <DataGrid
+                                        components={{
+                                            LoadingOverlay: LinearProgress,
+                                        }}
+                                        sortingOrder={['asc', 'desc']}
+                                        disableColumnFilter
+                                        disableSelectionOnClick
+                                        rowsPerPageOptions={[datagridState.pageSize]}
+                                        columns={columns}
+                                        rows={datagridState.rows}
+                                        rowCount={datagridState.rowCount}
+                                        loading={datagridState.isLoading}
+                                        page={datagridState.page}
+                                        pageSize={datagridState.pageSize}
+                                        paginationMode='server'
+                                        onPageChange={handlePageChangeDatagrid}
+                                        sortingMode='server'
+                                        onSortModelChange={handleSortModelChangeDatagrid}
+                                        initialState={{
+                                            sorting: {
+                                                sortModel: datagridState.sortingModel,
+                                            },
+                                        }}
+                                    />
+                                </Paper>
+                            </Grid>
+                            <Grid item md={6} xs={12}>
+                                <Paper className={styles.venc_container}>
+                                    <Tabs
+                                        orientation='vertical'
+                                        variant='scrollable'
+                                        value={vencTabControl}
+                                        onChange={handleVencTabControl}
+                                        sx={{ borderRight: 1, borderColor: 'divider', overflow: 'unset' }}
+                                    >
+                                        <Tab label='WIN' />
+                                        <Tab label='WDO' />
+                                    </Tabs>
+                                    <div className={styles.venc_tab_container} role='tabpanel' hidden={vencTabControl !== 0}>
+                                        <VencTable rows={[]} />
+                                    </div>
+                                    <div className={styles.venc_tab_container} role='tabpanel' hidden={vencTabControl !== 1}>
+                                        Item Two
+                                    </div>
+                                </Paper>
+                            </Grid>
+                        </Grid>
                     </div>
                 </Stack>
             </Box>
