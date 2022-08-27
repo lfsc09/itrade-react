@@ -24,12 +24,11 @@ export const INI_STATE = {
     isFilterModalOpen: false,
     // Conversão dos nomes de cada tipo de filtro (Usado apenas na construção dos 'Chips')
     filters_lib: {
-        tipo: 'Tipo',
-        situacao: 'Situação',
+        nome: 'Ativo',
     },
     filters: {},
     // Modelo inicial de ordenação
-    sortingModel: [{ field: 'data_atualizacao', sort: 'desc' }],
+    sortingModel: [{ field: 'nome', sort: 'asc' }],
     // ID da row a ser deletada (Usado no Confirm Dialog)
     idRowDeleteConfirm: null,
     // Para forçar o recarregamento

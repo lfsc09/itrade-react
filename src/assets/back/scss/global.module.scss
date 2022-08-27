@@ -3,6 +3,12 @@
 * GLOBAL DEFINITIONS
 *
 *********************/
+/************** GLOBAL PAGE WRAPPER ***********/
+.wrapper {
+    max-height: calc(100vh - 16px);
+    flex-grow: 1;
+    padding: 16px 16px 16px 0;
+}
 /***************** GLOBAL TITLE ***************/
 /**
 * Referente ao breadcrumbs que fazem as rotas nas paginas

@@ -10,49 +10,14 @@ import gStyles from '../../../../assets/back/scss/global.module.scss';
 import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import SnackOverlay from '../../../../components/ui/SnackOverlay';
 import axiosCon from '../../../../helpers/axios-con';
-import { formatValue_fromRaw, isObjectEmpty } from '../../../../helpers/global';
+import { isObjectEmpty } from '../../../../helpers/global';
 import { handleLogout } from '../../../../store/auth/auth-action';
 import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
+import styles from './ativos.module.scss';
 import { reducer as datagridReducer, INI_STATE as DGR_INI_STATE, TYPES as DGR_TYPES } from './datagridReducer';
-import styles from './datasets.module.scss';
-import FilterDataset from './Filter';
+import FilterAtivo from './Filter';
 
-const situacaoCell = ({ value }) => {
-    // Fechado
-    if (value === 1) return <Check color='success' fontSize='small' />;
-    // Pendente
-    if (value === 2) return '';
-    // Fazendo
-    if (value === 3) return <ThreeSixty color='primary' fontSize='small' />;
-};
-
-const tipoCell = ({ value }) => {
-    // Live
-    if (value === 1) return <Tv color='error' fontSize='small' />;
-    // Replay
-    if (value === 2) return <VideoLibrary fontSize='small' />;
-    // Paper Trade
-    if (value === 3) return <InsertDriveFile fontSize='small' />;
-    // Misto
-    if (value === 4) return;
-};
-
-const usuariosCell = ({ value }) => {
-    return (
-        <Stack direction='row' spacing={0.5}>
-            {value
-                .sort((a, b) => b.criador - a.criador)
-                .map((usuario, i) => (
-                    <Chip key={i} label={usuario.usuario} color={usuario.criador === 1 ? 'primary' : 'default'} size='small' />
-                ))}
-        </Stack>
-    );
-};
-
-const dataAtualizacaoFormatter = ({ value }) => formatValue_fromRaw({ style: 'datetime' }, value);
-const dataCriacaoFormatter = ({ value }) => formatValue_fromRaw({ style: 'date' }, value);
-
-const Datasets = () => {
+const Ativos = () => {
     /***********
      * DISPATCH
      ***********/
@@ -121,11 +86,11 @@ const Datasets = () => {
 
     const handleDeleteConfirm_Yes = useCallback(() => {
         axiosCon
-            .delete(`/dataset/deleta/${datagridState.idRowDeleteConfirm}`)
+            .delete(`/ativo/deleta/${datagridState.idRowDeleteConfirm}`)
             .then((resp) => {
                 dispatch(
                     add({
-                        message: 'Dataset removido',
+                        message: 'Ativo removido',
                         severity: 'success',
                     })
                 );
@@ -163,36 +128,10 @@ const Datasets = () => {
      ****************/
     const columns = useMemo(
         () => [
-            { field: 'situacao', headerName: 'Sit.', width: 70, disableColumnMenu: true, renderCell: situacaoCell, align: 'center', headerAlign: 'center' },
-            {
-                field: 'tipo',
-                headerName: 'Tipo',
-                width: 70,
-                disableColumnMenu: true,
-                sortable: false,
-                renderCell: tipoCell,
-                align: 'center',
-                headerAlign: 'center',
-            },
-            { field: 'nome', headerName: 'Nome', flex: 3, cellClassName: styles.table_cell__nome },
-            {
-                field: 'data_criacao',
-                headerName: 'Criado Em',
-                type: 'date',
-                flex: 1,
-                cellClassName: styles.table_cell__dataCriacao,
-                valueFormatter: dataCriacaoFormatter,
-            },
-            {
-                field: 'data_atualizacao',
-                headerName: 'Atualizado',
-                type: 'dateTime',
-                flex: 2,
-                cellClassName: styles.table_cell__dataAtualizacao,
-                valueFormatter: dataAtualizacaoFormatter,
-            },
-            { field: 'qtd_ops', headerName: 'Trades', type: 'number', flex: 1, cellClassName: styles.table_cell__qtdOps },
-            { field: 'usuarios', headerName: 'Usuários', flex: 2, align: 'right', headerAlign: 'right', renderCell: usuariosCell },
+            { field: 'nome', headerName: 'Nome', flex: 1, cellClassName: styles.table_cell__nome },
+            { field: 'custo', headerName: 'Custo ( Abert. + Fech.)', type: 'number', flex: 1, align: 'center', headerAlign: 'center', cellClassName: styles.table_cell__custo },
+            { field: 'valor_tick', headerName: 'Valor por Tick', type: 'number', flex: 1, align: 'center', headerAlign: 'center', cellClassName: styles.table_cell__valorTick },
+            { field: 'pts_tick', headerName: 'Pts por Tick', type: 'number', flex: 1, align: 'center', headerAlign: 'center', cellClassName: styles.table_cell__ptsTick },
             {
                 field: 'actions',
                 type: 'actions',
@@ -216,7 +155,7 @@ const Datasets = () => {
             treatedFilters[fName] = datagridState.filters[fName].map((fVal) => fVal.value);
         });
         axiosCon
-            .post('/dataset/list_datagrid', {
+            .post('/ativo/list_datagrid', {
                 page: datagridState.page,
                 pageSize: datagridState.pageSize,
                 filters: treatedFilters,
@@ -256,14 +195,8 @@ const Datasets = () => {
                     {item.message}
                 </SnackOverlay>
             ))}
-            <ConfirmDialog
-                open={datagridState.idRowDeleteConfirm !== null}
-                title='Deseja apagar mesmo?'
-                content='Todas as operações deste Dataset serão removidas.'
-                handleNo={handleDeleteConfirm_No}
-                handleYes={handleDeleteConfirm_Yes}
-            />
-            <FilterDataset open={datagridState.isFilterModalOpen} filterState={datagridState.filters} datagridDispatch={datagridDispatch} />
+            <ConfirmDialog open={datagridState.idRowDeleteConfirm !== null} title='Deseja apagar mesmo?' handleNo={handleDeleteConfirm_No} handleYes={handleDeleteConfirm_Yes} />
+            <FilterAtivo open={datagridState.isFilterModalOpen} filterState={datagridState.filters} datagridDispatch={datagridDispatch} />
             <Box
                 className={gStyles.wrapper}
                 component={motion.div}
@@ -278,7 +211,7 @@ const Datasets = () => {
                                 Daytrade
                             </Typography>
                             <Typography className={gStyles.title} variant='overline'>
-                                Datasets
+                                Ativos
                             </Typography>
                         </Breadcrumbs>
                         <Stack direction='row' spacing={2}>
@@ -286,7 +219,7 @@ const Datasets = () => {
                                 <FilterList />
                             </IconButton>
                             <Button variant='outlined' endIcon={<Add />} component={Link} to='novo' replace={true}>
-                                Novo Dataset
+                                Novo Ativo
                             </Button>
                         </Stack>
                     </div>
@@ -355,4 +288,4 @@ const Datasets = () => {
     );
 };
 
-export default Datasets;
+export default Ativos;

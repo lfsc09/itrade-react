@@ -1,0 +1,30 @@
+.table_cell__nome {
+    font-weight: bold;
+}
+
+.table_cell__custo {
+    font-weight: bold;
+}
+.table_cell__custo:after {
+    content: 'BRL';
+    font-size: 10px;
+    margin-left: 3px;
+}
+
+.table_cell__valorTick {
+    font-weight: bold;
+}
+.table_cell__valorTick:after {
+    content: 'BRL';
+    font-size: 10px;
+    margin-left: 3px;
+}
+
+.table_cell__ptsTick {
+    font-weight: bold;
+}
+.table_cell__ptsTick:after {
+    content: 'pts';
+    font-size: 10px;
+    margin-left: 3px;
+}

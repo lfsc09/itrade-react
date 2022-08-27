@@ -7,12 +7,17 @@ import NoContent from '../../components/ui/NoContent';
 import DaytradeDashboard from './daytrade/Dashboard';
 import DaytradeDatasets from './daytrade/Datasets';
 import DaytradeDatasetsNovo from './daytrade/Datasets/Novo';
+import DaytradeAtivos from './daytrade/Ativos';
+import DaytradeAtivosNovo from './daytrade/Ativos/Novo';
 
 const content_switch = (url, urlParams) => {
     if (url.match(/^.*\/daytrade\/dashboard$/)) return <DaytradeDashboard />;
     if (url.match(/^.*\/daytrade\/datasets$/)) return <DaytradeDatasets />;
     if (url.match(/^.*\/daytrade\/datasets\/novo$/)) return <DaytradeDatasetsNovo />;
     if (url.match(/^.*\/daytrade\/datasets\/editar\/\d*$/)) return <DaytradeDatasetsNovo editar={urlParams} />;
+    if (url.match(/^.*\/daytrade\/ativos$/)) return <DaytradeAtivos />;
+    if (url.match(/^.*\/daytrade\/ativos\/novo$/)) return <DaytradeAtivosNovo />;
+    if (url.match(/^.*\/daytrade\/ativos\/editar\/\d*$/)) return <DaytradeAtivosNovo editar={urlParams} />;
     return <NoContent type='under-construction' />;
 };
 

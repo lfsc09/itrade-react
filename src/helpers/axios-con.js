@@ -1,5 +1,7 @@
 import axios from 'axios';
 
-export default axios.create({
+const axiosCon = axios.create({
     baseUrl: 'http://dev.api.itrade-dongs.net',
 });
+
+export default axiosCon;

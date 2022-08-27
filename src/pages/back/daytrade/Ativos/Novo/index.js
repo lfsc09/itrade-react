@@ -1,24 +1,6 @@
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import { CheckBox, CheckBoxOutlineBlank, KeyboardDoubleArrowUp, NavigateNext } from '@mui/icons-material';
+import { KeyboardDoubleArrowUp, NavigateNext } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
-import {
-    Autocomplete,
-    Box,
-    Breadcrumbs,
-    Checkbox,
-    Divider,
-    FormControl,
-    Grid,
-    InputLabel,
-    ListItemText,
-    MenuItem,
-    Paper,
-    Select,
-    Stack,
-    TextField,
-    Typography,
-} from '@mui/material';
-import Editor from 'ckeditor5-custom-build/build/ckeditor';
+import { Box, Breadcrumbs, Divider, Grid, Paper, Stack, TextField, Typography } from '@mui/material';
 import { useFormik } from 'formik';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -33,14 +15,17 @@ import axiosCon from '../../../../../helpers/axios-con';
 import { isObjectEmpty } from '../../../../../helpers/global';
 import { handleLogout } from '../../../../../store/auth/auth-action';
 import { add, remove } from '../../../../../store/snack-messages/snack-messages-slice';
-import styles from './datasets-novo.module.scss';
-import DatasetNovoSkeleton from './Skeleton';
+import styles from './ativos-novo.module.scss';
+import AtivoNovoSkeleton from './Skeleton';
 
 const validationSchema = yup.object({
-    nome: yup.string().trim().required('Informe nome do Dataset'),
+    nome: yup.string().trim().required('Informe nome do Ativo'),
+    custo: yup.number().required('Informe o Custo'),
+    valor_tick: yup.number().required('Informe o Valor de cada Tick'),
+    pts_tick: yup.number().required('Informe quantos Pts move cada Tick'),
 });
 
-const NovoDataset = (props) => {
+const NovoAtivo = (props) => {
     const [isEdit, editID] = [props.editar !== undefined, props.editar?.id];
 
     /**********
@@ -68,32 +53,15 @@ const NovoDataset = (props) => {
     /***********
      * HANDLERS
      ***********/
-    const asyncData__processDataset = useCallback((usuarios, dataset) => {
-        let dataset_usuarios__raw = dataset.usuarios.split(';').map((val) => parseInt(val)),
-            dataset_usuarios = [];
-        for (let d_u of dataset_usuarios__raw) {
-            for (let u = 0; u < usuarios.length; u++) {
-                if (usuarios[u].id === d_u) {
-                    dataset_usuarios.push(usuarios[u]);
-                    break;
-                }
-            }
-        }
-        return {
-            ...dataset,
-            usuarios: dataset_usuarios,
-        };
-    }, []);
-
     const handleFormikSubmit__Novo = useCallback(
         (values) => {
             setIsSendLoading(true);
             axiosCon
-                .post('/dataset/novo', values)
+                .post('/ativo/novo', values)
                 .then((resp) => {
                     dispatch(
                         add({
-                            message: 'Dataset criado',
+                            message: 'Ativo cadastrado',
                             severity: 'success',
                         })
                     );
@@ -130,17 +98,6 @@ const NovoDataset = (props) => {
         (values) => {
             // Busca apenas campos alterados
             let changedKeys = Object.keys(values).filter((key) => {
-                if (key === 'usuarios') {
-                    if (values[key].length !== asyncData.dataset[key].length) return true;
-                    const initial_sel_id_usuarios = asyncData.dataset[key].reduce((l, cur) => {
-                        l.push(cur.id);
-                        return l;
-                    }, []);
-                    for (let u_i = 0; u_i < values[key].length; u_i++) {
-                        if (!initial_sel_id_usuarios.includes(values[key][u_i].id)) return true;
-                    }
-                    return false;
-                }
                 return values[key] !== asyncData.dataset[key];
             });
             const changedValues = {};
@@ -150,18 +107,15 @@ const NovoDataset = (props) => {
             if (!isObjectEmpty(changedValues)) {
                 setIsSendLoading(true);
                 axiosCon
-                    .put(`/dataset/edita/${editID}`, changedValues)
+                    .put(`/ativo/edita/${editID}`, changedValues)
                     .then((resp) => {
                         dispatch(
                             add({
-                                message: 'Dataset alterado',
+                                message: 'Ativo alterado',
                                 severity: 'success',
                             })
                         );
-                        setAsyncData((prevState) => ({
-                            ...prevState,
-                            dataset: asyncData__processDataset(prevState.usuarios, resp.data.dataset),
-                        }));
+                        setAsyncData((prevState) => resp.data.ativo);
                         setIsSendLoading(false);
                     })
                     .catch((error) => {
@@ -188,61 +142,56 @@ const NovoDataset = (props) => {
                     });
             }
         },
-        [editID, dispatch, navigate, asyncData__processDataset, asyncData]
+        [editID, dispatch, navigate, asyncData]
     );
 
     /*******************
      * FORMIK DATA LOAD
      *******************/
     useEffect(() => {
-        axiosCon
-            .get(isEdit ? `/dataset/list_edita/${editID}` : '/dataset/list_novo')
-            .then((resp) => {
-                // Se por algum motivo veio sem os dados do Dataset
-                if (isEdit && resp.data.dataset === null) {
-                    dispatch(
-                        add({
-                            message: 'Informações do Dataset inexistentes',
-                            severity: 'error',
-                        })
-                    );
-                    return;
-                }
+        if (isEdit) {
+            axiosCon
+                .get(`/ativo/list_edita/${editID}`)
+                .then((resp) => {
+                    // Se por algum motivo veio sem os dados do Ativo
+                    if (resp.data.ativo === null) {
+                        dispatch(
+                            add({
+                                message: 'Informações do Ativo inexistentes',
+                                severity: 'error',
+                            })
+                        );
+                        return;
+                    }
 
-                // Ja aloca os a lista de usuarios disponiveis para serem alocados nos Datasets
-                const newState = { usuarios: resp.data.usuarios };
-
-                // Aloca e prepara o resto dos dados para o formulario de Dataset
-                if (resp.data.dataset !== null) newState.dataset = asyncData__processDataset(newState.usuarios, resp.data.dataset);
-
-                setAsyncData((prevState) => newState);
-                setIsInitialLoading(false);
-            })
-            .catch((error) => {
-                if (error.response) {
-                    if (error.response.status === 401) dispatch(handleLogout());
-                    else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
-                } else {
-                    dispatch(
-                        add({
-                            message: error.message,
-                            severity: 'error',
-                        })
-                    );
-                }
-            });
-    }, [isEdit, editID, dispatch, navigate, asyncData__processDataset]);
+                    setAsyncData((prevState) => resp.data.ativo);
+                    setIsInitialLoading(false);
+                })
+                .catch((error) => {
+                    if (error.response) {
+                        if (error.response.status === 401) dispatch(handleLogout());
+                        else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
+                    } else {
+                        dispatch(
+                            add({
+                                message: error.message,
+                                severity: 'error',
+                            })
+                        );
+                    }
+                });
+        } else setIsInitialLoading(false);
+    }, [isEdit, editID, dispatch, navigate]);
 
     /*********
      * FORMIK
      *********/
     const formik = useFormik({
         initialValues: {
-            nome: asyncData?.dataset?.nome ?? '',
-            situacao: asyncData?.dataset?.situacao ?? 2,
-            tipo: asyncData?.dataset?.tipo ?? 1,
-            usuarios: asyncData?.dataset?.usuarios ?? [],
-            observacao: asyncData?.dataset?.observacao ?? '',
+            nome: asyncData?.nome ?? '',
+            custo: asyncData?.custo ?? '',
+            valor_tick: asyncData?.valor_tick ?? '',
+            pts_tick: asyncData?.pts_tick ?? '',
         },
         enableReinitialize: true,
         validationSchema: validationSchema,
@@ -269,8 +218,8 @@ const NovoDataset = (props) => {
                             <Typography className={gStyles.title_link} variant='overline' component={Link} to='/daytrade/dashboard' replace={true}>
                                 Daytrade
                             </Typography>
-                            <Typography className={gStyles.title_link} variant='overline' component={Link} to='/daytrade/datasets' replace={true}>
-                                Datasets
+                            <Typography className={gStyles.title_link} variant='overline' component={Link} to='/daytrade/ativos' replace={true}>
+                                Ativos
                             </Typography>
                             <Typography className={gStyles.title} variant='overline'>
                                 {isEdit ? `Editar` : 'Novo'}
@@ -281,7 +230,7 @@ const NovoDataset = (props) => {
                     <div className={styles.form_panel}>
                         <Paper className={styles.form_container} sx={{ p: 5 }}>
                             {isInitialLoading ? (
-                                <DatasetNovoSkeleton />
+                                <AtivoNovoSkeleton />
                             ) : (
                                 <form onSubmit={formik.handleSubmit}>
                                     <Grid container spacing={2}>
@@ -298,67 +247,43 @@ const NovoDataset = (props) => {
                                                 helperText={formik.touched.nome && formik.errors.nome}
                                             />
                                         </Grid>
-                                        <Grid item xs={6}>
-                                            <FormControl sx={{ width: '100%' }}>
-                                                <InputLabel id='situacao_select_label'>Situação</InputLabel>
-                                                <Select
-                                                    label='Situação'
-                                                    labelId='situacao_select_label'
-                                                    name='situacao'
-                                                    value={formik.values.situacao}
-                                                    onChange={formik.handleChange}
-                                                >
-                                                    <MenuItem value={2}>Pendente</MenuItem>
-                                                    <MenuItem value={3}>Fazendo</MenuItem>
-                                                    <MenuItem value={1}>Fechado</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            <FormControl sx={{ width: '100%' }}>
-                                                <InputLabel id='tipo_select_label'>Tipo</InputLabel>
-                                                <Select label='Tipo' labelId='tipo_select_label' name='tipo' value={formik.values.tipo} onChange={formik.handleChange}>
-                                                    <MenuItem value={1}>Live</MenuItem>
-                                                    <MenuItem value={2}>Replay</MenuItem>
-                                                    <MenuItem value={3}>Paper Trade</MenuItem>
-                                                    <MenuItem value={4}>Misto</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Grid>
                                         <Grid item xs={12}>
-                                            <Autocomplete
-                                                multiple
-                                                name='usuarios'
-                                                options={asyncData.usuarios}
-                                                value={formik.values.usuarios}
-                                                onChange={(e, value) => {
-                                                    formik.setFieldValue('usuarios', value);
-                                                }}
-                                                disableCloseOnSelect
-                                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                                                getOptionLabel={(option) => option.usuario}
-                                                renderOption={(props, option, { selected }) => (
-                                                    <li {...props}>
-                                                        <Checkbox
-                                                            icon={<CheckBoxOutlineBlank fontSize='small' />}
-                                                            checkedIcon={<CheckBox fontSize='small' />}
-                                                            style={{ marginRight: 8 }}
-                                                            checked={selected}
-                                                        />
-                                                        <ListItemText primary={option.nome} secondary={option.usuario} />
-                                                    </li>
-                                                )}
-                                                style={{ width: '100%' }}
-                                                renderInput={(params) => <TextField {...params} label='Usuarios com Acesso' placeholder='' />}
+                                            <TextField
+                                                label='Custo'
+                                                variant='outlined'
+                                                name='custo'
+                                                autoFocus
+                                                sx={{ width: '100%' }}
+                                                value={formik.values.custo}
+                                                onChange={formik.handleChange}
+                                                error={formik.touched.custo && Boolean(formik.errors.custo)}
+                                                helperText={formik.touched.custo && formik.errors.custo}
                                             />
                                         </Grid>
                                         <Grid item xs={12}>
-                                            <CKEditor
-                                                editor={Editor}
-                                                data={formik.values.observacao}
-                                                onChange={(event, editor) => {
-                                                    formik.setFieldValue('observacao', editor.getData());
-                                                }}
+                                            <TextField
+                                                label='Valor do Tick'
+                                                variant='outlined'
+                                                name='valor_tick'
+                                                autoFocus
+                                                sx={{ width: '100%' }}
+                                                value={formik.values.valor_tick}
+                                                onChange={formik.handleChange}
+                                                error={formik.touched.valor_tick && Boolean(formik.errors.valor_tick)}
+                                                helperText={formik.touched.valor_tick && formik.errors.valor_tick}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <TextField
+                                                label='Pts por Tick'
+                                                variant='outlined'
+                                                name='pts_tick'
+                                                autoFocus
+                                                sx={{ width: '100%' }}
+                                                value={formik.values.pts_tick}
+                                                onChange={formik.handleChange}
+                                                error={formik.touched.pts_tick && Boolean(formik.errors.pts_tick)}
+                                                helperText={formik.touched.pts_tick && formik.errors.pts_tick}
                                             />
                                         </Grid>
                                         <Grid item xs={12}>
@@ -384,4 +309,4 @@ const NovoDataset = (props) => {
     );
 };
 
-export default NovoDataset;
+export default NovoAtivo;

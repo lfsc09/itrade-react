@@ -115,7 +115,7 @@ const FilterDataset = (props) => {
                                 </li>
                             )}
                             style={{ width: '100%' }}
-                            renderInput={(params) => <TextField {...params} label='Tipos' placeholder='' />}
+                            renderInput={(params) => <TextField {...params} label='Tipo' placeholder='' />}
                         />
                     </Grid>
                 </Grid>
