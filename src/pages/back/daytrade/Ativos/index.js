@@ -3,7 +3,7 @@ import { Box, Breadcrumbs, Button, Chip, Divider, Grid, IconButton, LinearProgre
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { useDispatch, useSelector, batch } from 'react-redux';
+import { batch, useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 
 import gStyles from '../../../../assets/back/scss/global.module.scss';
@@ -14,9 +14,14 @@ import { isObjectEmpty } from '../../../../helpers/global';
 import { handleLogout } from '../../../../store/auth/auth-action';
 import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
 import styles from './ativos.module.scss';
+import { wdoSeries, winSeries } from './calcVencimentos';
 import { reducer as datagridReducer, INI_STATE as DGR_INI_STATE, TYPES as DGR_TYPES } from './datagridReducer';
 import FilterAtivo from './Filter';
 import VencTable from './VencTable';
+
+const currYear = new Date().getFullYear();
+const vencWinSeries = winSeries(currYear);
+const vencWdoSeries = wdoSeries(currYear);
 
 const Ativos = () => {
     /***********
@@ -294,6 +299,7 @@ const Ativos = () => {
                                                 sortModel: datagridState.sortingModel,
                                             },
                                         }}
+                                        sx={{ px: 2 }}
                                     />
                                 </Paper>
                             </Grid>
@@ -310,10 +316,10 @@ const Ativos = () => {
                                         <Tab label='WDO' />
                                     </Tabs>
                                     <div className={styles.venc_tab_container} role='tabpanel' hidden={vencTabControl !== 0}>
-                                        <VencTable rows={[]} />
+                                        <VencTable rows={vencWinSeries} />
                                     </div>
                                     <div className={styles.venc_tab_container} role='tabpanel' hidden={vencTabControl !== 1}>
-                                        Item Two
+                                        <VencTable rows={vencWdoSeries} />
                                     </div>
                                 </Paper>
                             </Grid>

@@ -1,8 +1,5 @@
 /**
  * Retorna a quarta-feira do mes mais próxima do dia 15 (Para o WIN)
- * @param int ano
- * @param int mes
- * @returns int
  */
 const winSeries__getQuartas15 = (ano, mes) => {
     let d = new Date(ano, mes, 1),
@@ -27,31 +24,94 @@ const winSeries__getQuartas15 = (ano, mes) => {
 };
 
 /**
- * Constroi a tabela de vencimentos do WIN
- * @param int ano
+ * Gera os contratos de vencimentos do WIN para o @ano
  */
 const winSeries = (ano) => {
     let today = new Date(),
-        first_day = null,
-        last_day = null,
+        p = {},
         periods = [];
-    //Dez - Fev
-    first_day = winSeries__getQuartas15(ano - 1, 11);
-    last_day = winSeries__getQuartas15(ano, 1) - 1;
-    data = `<span class="badge bg-light text-capitalize text-dark">${new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(
-        new Date(ano - 1, 11, 1)
-    )} <span class="daylish">${first_day}</span><span class="mx-2">-</span>${new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(
-        new Date(ano, 1, 1)
-    )} <span class="daylish">${last_day}</span>`;
-    if (today.getFullYear() == ano) {
-        serie_class = '';
-        //Para segunda parte de Dezembro
-        if (today.getMonth() == 11 && today.getDate() >= winSeries__getQuartas15(ano, 11)) serie_class = ' class="table-success"';
-        //Para Janeiro
-        else if (today.getMonth() == 0) serie_class = ' class="table-success"';
-        //Para primeira parte de Fevereiro
-        else if (today.getMonth() == 1 && today.getDate() <= last_day) serie_class = ' class="table-success"';
-    }
+
+    p = { start: {}, end: {}, isCurrent: false, letter: 'G' };
+    p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(today.getMonth() === 11 ? ano : ano - 1, 11, 1));
+    p.start.d = winSeries__getQuartas15(today.getMonth() === 11 ? ano : ano - 1, 11);
+    p.end.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(today.getMonth() === 11 ? ano + 1 : ano, 1, 1));
+    p.end.d = winSeries__getQuartas15(today.getMonth() === 11 ? ano + 1 : ano, 1) - 1;
+    // Para segunda parte de Dezembro OU Para Janeiro OU Para primeira parte de Fevereiro
+    if (today.getFullYear() === ano)
+        p.isCurrent = (today.getMonth() === 11 && today.getDate() >= p.start.d) || today.getMonth() === 0 || (today.getMonth() === 1 && today.getDate() <= p.end.d);
+    periods.push(p);
+    //Fev - Abr
+    p = { start: {}, end: {}, isCurrent: false, letter: 'J' };
+    p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 1, 1));
+    p.start.d = winSeries__getQuartas15(ano, 1);
+    p.end.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 3, 1));
+    p.end.d = winSeries__getQuartas15(ano, 3) - 1;
+    // Para segunda parte de Fevereiro OU Para Março OU Para primeira parte de Abril
+    if (today.getFullYear() === ano)
+        p.isCurrent = (today.getMonth() === 1 && today.getDate() >= p.start.d) || today.getMonth() === 2 || (today.getMonth() === 3 && today.getDate() <= p.end.d);
+    periods.push(p);
+    //Abr - Jun
+    p = { start: {}, end: {}, isCurrent: false, letter: 'M' };
+    p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 3, 1));
+    p.start.d = winSeries__getQuartas15(ano, 3);
+    p.end.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 5, 1));
+    p.end.d = winSeries__getQuartas15(ano, 5) - 1;
+    // Para segunda parte de Abril OU Para Maio OU Para primeira parte de Junho
+    if (today.getFullYear() === ano)
+        p.isCurrent = (today.getMonth() === 3 && today.getDate() >= p.start.d) || today.getMonth() === 4 || (today.getMonth() === 5 && today.getDate() <= p.end.d);
+    periods.push(p);
+    //Jun - Ago
+    p = { start: {}, end: {}, isCurrent: false, letter: 'Q' };
+    p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 5, 1));
+    p.start.d = winSeries__getQuartas15(ano, 5);
+    p.end.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 7, 1));
+    p.end.d = winSeries__getQuartas15(ano, 7) - 1;
+    // Para segunda parte de Junho OU Para Julho OU Para primeira parte de Agosto
+    if (today.getFullYear() === ano)
+        p.isCurrent = (today.getMonth() === 5 && today.getDate() >= p.start.d) || today.getMonth() === 6 || (today.getMonth() === 7 && today.getDate() <= p.end.d);
+    periods.push(p);
+    //Ago - Out
+    p = { start: {}, end: {}, isCurrent: false, letter: 'V' };
+    p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 7, 1));
+    p.start.d = winSeries__getQuartas15(ano, 7);
+    p.end.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 9, 1));
+    p.end.d = winSeries__getQuartas15(ano, 9) - 1;
+    // Para segunda parte de Agosto OU Para Setembro OU Para primeira parte de Outubro
+    if (today.getFullYear() === ano)
+        p.isCurrent = (today.getMonth() === 7 && today.getDate() >= p.start.d) || today.getMonth() === 8 || (today.getMonth() === 9 && today.getDate() <= p.end.d);
+    periods.push(p);
+    //Out - Dez
+    p = { start: {}, end: {}, isCurrent: false, letter: 'Z' };
+    p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 9, 1));
+    p.start.d = winSeries__getQuartas15(ano, 9);
+    p.end.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 11, 1));
+    p.end.d = winSeries__getQuartas15(ano, 11) - 1;
+    // Para segunda parte de Outubro OU Para Novembro OU Para primeira parte de Dezembro
+    if (today.getFullYear() === ano)
+        p.isCurrent = (today.getMonth() === 9 && today.getDate() >= p.start.d) || today.getMonth() === 10 || (today.getMonth() === 11 && today.getDate() <= p.end.d);
+    periods.push(p);
+    return periods;
 };
 
-export { winSeries };
+/**
+ * Gera os contratos de vencimentos do WDO para o @ano
+ */
+const wdoSeries = (ano) => {
+    let today = new Date(),
+        p = {},
+        periods = [],
+        series = ['G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z', 'F'];
+
+    for (let m = 0; m < 12; m++) {
+        p = { start: {}, end: {}, isCurrent: false, letter: series[m] };
+        p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, m, 1));
+        p.start.d = new Date(ano, m, 1).getDate();
+        p.end.m = p.start.m;
+        p.end.d = new Date(ano, m + 1, 0).getDate();
+        p.isCurrent = today.getFullYear() === ano && today.getMonth() === m;
+        periods.push(p);
+    }
+    return periods;
+};
+
+export { winSeries, wdoSeries };

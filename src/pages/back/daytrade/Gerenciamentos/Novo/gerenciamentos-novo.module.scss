@@ -1,0 +1,31 @@
+.form_panel {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .form_container {
+        width: 75%;
+    }
+}
+
+.btn_group {
+    width: 100%;
+    display: flex;
+
+    .btn {
+        flex-grow: 1;
+    }
+
+    .positive {
+        color: #212529;
+        background-color: #bce1d0;
+        border-color: #fff !important;
+    }
+
+    .negative {
+        color: #212529;
+        background-color: #f1bac0;
+        border-color: #fff !important;
+    }
+}

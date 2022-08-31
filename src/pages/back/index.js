@@ -9,6 +9,8 @@ import DaytradeDatasets from './daytrade/Datasets';
 import DaytradeDatasetsNovo from './daytrade/Datasets/Novo';
 import DaytradeAtivos from './daytrade/Ativos';
 import DaytradeAtivosNovo from './daytrade/Ativos/Novo';
+import DaytradeGerenciamentos from './daytrade/Gerenciamentos';
+import DaytradeGerenciamentosNovo from './daytrade/Gerenciamentos/Novo';
 
 const content_switch = (url, urlParams) => {
     if (url.match(/^.*\/daytrade\/dashboard$/)) return <DaytradeDashboard />;
@@ -18,6 +20,9 @@ const content_switch = (url, urlParams) => {
     if (url.match(/^.*\/daytrade\/ativos$/)) return <DaytradeAtivos />;
     if (url.match(/^.*\/daytrade\/ativos\/novo$/)) return <DaytradeAtivosNovo />;
     if (url.match(/^.*\/daytrade\/ativos\/editar\/\d*$/)) return <DaytradeAtivosNovo editar={urlParams} />;
+    if (url.match(/^.*\/daytrade\/gerenciamentos$/)) return <DaytradeGerenciamentos />;
+    if (url.match(/^.*\/daytrade\/gerenciamentos\/novo$/)) return <DaytradeGerenciamentosNovo />;
+    if (url.match(/^.*\/daytrade\/gerenciamentos\/editar\/\d*$/)) return <DaytradeGerenciamentosNovo editar={urlParams} />;
     return <NoContent type='under-construction' />;
 };
 

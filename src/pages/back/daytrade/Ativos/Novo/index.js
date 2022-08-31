@@ -98,7 +98,7 @@ const NovoAtivo = (props) => {
         (values) => {
             // Busca apenas campos alterados
             let changedKeys = Object.keys(values).filter((key) => {
-                return values[key] !== asyncData.dataset[key];
+                return values[key] !== asyncData[key];
             });
             const changedValues = {};
             changedKeys.forEach((key) => {
@@ -252,7 +252,6 @@ const NovoAtivo = (props) => {
                                                 label='Custo'
                                                 variant='outlined'
                                                 name='custo'
-                                                autoFocus
                                                 sx={{ width: '100%' }}
                                                 value={formik.values.custo}
                                                 onChange={formik.handleChange}
@@ -265,7 +264,6 @@ const NovoAtivo = (props) => {
                                                 label='Valor do Tick'
                                                 variant='outlined'
                                                 name='valor_tick'
-                                                autoFocus
                                                 sx={{ width: '100%' }}
                                                 value={formik.values.valor_tick}
                                                 onChange={formik.handleChange}
@@ -278,7 +276,6 @@ const NovoAtivo = (props) => {
                                                 label='Pts por Tick'
                                                 variant='outlined'
                                                 name='pts_tick'
-                                                autoFocus
                                                 sx={{ width: '100%' }}
                                                 value={formik.values.pts_tick}
                                                 onChange={formik.handleChange}

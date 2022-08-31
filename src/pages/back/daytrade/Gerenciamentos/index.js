@@ -1,58 +1,35 @@
-import { Add, Check, Delete, DriveFileRenameOutline, FilterList, InsertDriveFile, NavigateNext, ThreeSixty, Tv, VideoLibrary } from '@mui/icons-material';
-import { Box, Breadcrumbs, Button, Chip, Divider, Grid, IconButton, LinearProgress, Paper, Stack, Typography } from '@mui/material';
+import { Add, Delete, DriveFileRenameOutline, NavigateNext } from '@mui/icons-material';
+import { Box, Breadcrumbs, Button, ButtonGroup, Divider, LinearProgress, Paper, Stack, Typography } from '@mui/material';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
-import { useDispatch, useSelector, batch } from 'react-redux';
+import { batch, useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 
 import gStyles from '../../../../assets/back/scss/global.module.scss';
 import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import SnackOverlay from '../../../../components/ui/SnackOverlay';
 import axiosCon from '../../../../helpers/axios-con';
-import { formatValue_fromRaw, isObjectEmpty } from '../../../../helpers/global';
 import { handleLogout } from '../../../../store/auth/auth-action';
 import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
+import styles from './gerenciamentos.module.scss';
 import { reducer as datagridReducer, INI_STATE as DGR_INI_STATE, TYPES as DGR_TYPES } from './datagridReducer';
-import styles from './datasets.module.scss';
-import FilterDataset from './Filter';
 
-const situacaoCell = ({ value }) => {
-    // Fechado
-    if (value === 1) return <Check color='success' fontSize='small' />;
-    // Pendente
-    if (value === 2) return '';
-    // Fazendo
-    if (value === 3) return <ThreeSixty color='primary' fontSize='small' />;
-};
-
-const tipoCell = ({ value }) => {
-    // Live
-    if (value === 1) return <Tv color='error' fontSize='small' />;
-    // Replay
-    if (value === 2) return <VideoLibrary fontSize='small' />;
-    // Paper Trade
-    if (value === 3) return <InsertDriveFile fontSize='small' />;
-    // Misto
-    if (value === 4) return;
-};
-
-const usuariosCell = ({ value }) => {
+const acoesCell = ({ value }) => {
     return (
-        <Stack direction='row' spacing={0.5}>
+        <ButtonGroup variant='contained' size='small' className={styles.btn_group}>
             {value
-                .sort((a, b) => b.criador - a.criador)
-                .map((usuario, i) => (
-                    <Chip key={i} label={usuario.usuario} color={usuario.criador === 1 ? 'primary' : 'default'} size='small' />
+                .sort((a, b) => b.acao - a.acao)
+                .map((gerenc, i) => (
+                    <Button key={i} className={`${styles.btn} ${gerenc.acao > 0 ? styles.positive : styles.negative}`}>
+                        {Math.abs(gerenc.acao)}S{gerenc.escalada !== 0 ? ` E${gerenc.escalada}` : ''}
+                    </Button>
                 ))}
-        </Stack>
+        </ButtonGroup>
     );
 };
 
-const dataAtualizacaoFormatter = ({ value }) => formatValue_fromRaw({ style: 'datetime' }, value);
-const dataCriacaoFormatter = ({ value }) => formatValue_fromRaw({ style: 'date' }, value);
-
-const Datasets = () => {
+const Gerenciamentos = () => {
     /***********
      * DISPATCH
      ***********/
@@ -72,23 +49,6 @@ const Datasets = () => {
      * DATAGRID REDUCER
      *******************/
     const [datagridState, datagridDispatch] = useReducer(datagridReducer, DGR_INI_STATE);
-
-    /******************
-     * FILTER HANDLERS
-     ******************/
-    const handleFilterModalOpen = useCallback(() => {
-        datagridDispatch({ type: DGR_TYPES.CHANGE_FILTER_MODAL_STATE, payload: true });
-    }, []);
-
-    const handleFilterRemove = useCallback(
-        (obj) => {
-            const newFilters = { ...datagridState.filters };
-            newFilters[obj.filter] = newFilters[obj.filter].filter((val) => val.value !== obj.value);
-            if (newFilters[obj.filter].length === 0) delete newFilters[obj.filter];
-            datagridDispatch({ type: DGR_TYPES.FILTERS_CHANGED, payload: newFilters });
-        },
-        [datagridState.filters]
-    );
 
     /********************
      * DATAGRID HANDLERS
@@ -121,11 +81,11 @@ const Datasets = () => {
 
     const handleDeleteConfirm_Yes = useCallback(() => {
         axiosCon
-            .delete(`/dataset/deleta/${datagridState.idRowDeleteConfirm}`)
+            .delete(`/gerenciamento/deleta/${datagridState.idRowDeleteConfirm}`)
             .then((resp) => {
                 dispatch(
                     add({
-                        message: 'Dataset removido',
+                        message: 'Gerenciamento removido',
                         severity: 'success',
                     })
                 );
@@ -163,36 +123,8 @@ const Datasets = () => {
      ****************/
     const columns = useMemo(
         () => [
-            { field: 'situacao', headerName: 'Sit.', width: 70, disableColumnMenu: true, renderCell: situacaoCell, align: 'center', headerAlign: 'center' },
-            {
-                field: 'tipo',
-                headerName: 'Tipo',
-                width: 70,
-                disableColumnMenu: true,
-                sortable: false,
-                renderCell: tipoCell,
-                align: 'center',
-                headerAlign: 'center',
-            },
-            { field: 'nome', headerName: 'Nome', flex: 3, cellClassName: styles.table_cell__nome },
-            {
-                field: 'data_criacao',
-                headerName: 'Criado Em',
-                type: 'date',
-                flex: 1,
-                cellClassName: styles.table_cell__dataCriacao,
-                valueFormatter: dataCriacaoFormatter,
-            },
-            {
-                field: 'data_atualizacao',
-                headerName: 'Atualizado',
-                type: 'dateTime',
-                flex: 2,
-                cellClassName: styles.table_cell__dataAtualizacao,
-                valueFormatter: dataAtualizacaoFormatter,
-            },
-            { field: 'qtd_ops', headerName: 'Trades', type: 'number', flex: 1, cellClassName: styles.table_cell__qtdOps },
-            { field: 'usuarios', headerName: 'Usuários', flex: 2, align: 'right', headerAlign: 'right', renderCell: usuariosCell },
+            { field: 'nome', headerName: 'Nome', flex: 1, cellClassName: styles.table_cell__nome },
+            { field: 'acoes', headerName: 'Ações', type: 'number', flex: 1, cellClassName: styles.table_cell__acoes, renderCell: acoesCell },
             {
                 field: 'actions',
                 type: 'actions',
@@ -216,7 +148,7 @@ const Datasets = () => {
             treatedFilters[fName] = datagridState.filters[fName].map((fVal) => fVal.value);
         });
         axiosCon
-            .post('/dataset/list_datagrid', {
+            .post('/gerenciamento/list_datagrid', {
                 page: datagridState.page,
                 pageSize: datagridState.pageSize,
                 filters: treatedFilters,
@@ -256,14 +188,7 @@ const Datasets = () => {
                     {item.message}
                 </SnackOverlay>
             ))}
-            <ConfirmDialog
-                open={datagridState.idRowDeleteConfirm !== null}
-                title='Deseja apagar mesmo?'
-                content='Todas as operações deste Dataset serão removidas.'
-                handleNo={handleDeleteConfirm_No}
-                handleYes={handleDeleteConfirm_Yes}
-            />
-            <FilterDataset open={datagridState.isFilterModalOpen} filterState={datagridState.filters} datagridDispatch={datagridDispatch} />
+            <ConfirmDialog open={datagridState.idRowDeleteConfirm !== null} title='Deseja apagar mesmo?' handleNo={handleDeleteConfirm_No} handleYes={handleDeleteConfirm_Yes} />
             <Box
                 className={gStyles.wrapper}
                 component={motion.div}
@@ -278,49 +203,16 @@ const Datasets = () => {
                                 Daytrade
                             </Typography>
                             <Typography className={gStyles.title} variant='overline'>
-                                Datasets
+                                Gerenciamentos
                             </Typography>
                         </Breadcrumbs>
                         <Stack direction='row' spacing={2}>
-                            <IconButton color='primary' onClick={handleFilterModalOpen}>
-                                <FilterList />
-                            </IconButton>
                             <Button variant='outlined' endIcon={<Add />} component={Link} to='novo' replace={true}>
-                                Novo Dataset
+                                Novo Gerenciamento
                             </Button>
                         </Stack>
                     </div>
                     <Divider />
-                    {!isObjectEmpty(datagridState.filters) ? (
-                        <div className={gStyles.filter_panel}>
-                            <Grid container spacing={1}>
-                                <Grid item xs={12}>
-                                    <Paper elevation={0} className={gStyles.filter_container} sx={{ p: 1 }}>
-                                        <Stack spacing={1} direction='row'>
-                                            {Object.keys(datagridState.filters).map((fName) =>
-                                                datagridState.filters[fName].map((fVal, fI) => (
-                                                    <Chip
-                                                        key={`${fName}_${fI}`}
-                                                        label={
-                                                            <div className={gStyles.filter_chip}>
-                                                                <div className={gStyles.filter_chip__title}>{datagridState.filters_lib[fName]}: </div>
-                                                                <div className={gStyles.filter_chip__content}>{fVal.label}</div>
-                                                            </div>
-                                                        }
-                                                        onDelete={() => {
-                                                            handleFilterRemove({ filter: fName, value: fVal.value });
-                                                        }}
-                                                    />
-                                                ))
-                                            )}
-                                        </Stack>
-                                    </Paper>
-                                </Grid>
-                            </Grid>
-                        </div>
-                    ) : (
-                        <></>
-                    )}
                     <div className={gStyles.table_panel}>
                         <Paper className={gStyles.table_container}>
                             <DataGrid
@@ -356,4 +248,4 @@ const Datasets = () => {
     );
 };
 
-export default Datasets;
+export default Gerenciamentos;
