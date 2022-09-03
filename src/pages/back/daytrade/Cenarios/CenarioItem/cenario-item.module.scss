@@ -1,6 +1,19 @@
 .row_container {
     cursor: pointer;
     align-items: center;
+
+    .row_input {
+        width: 25%;
+    }
+
+    .row_chip {
+        font-weight: bold;
+        border-radius: 8px;
+    }
+
+    .row_button__last {
+        margin-left: auto !important;
+    }
 }
 
 .collapsed_container {

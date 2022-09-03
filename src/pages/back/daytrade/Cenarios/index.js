@@ -1,4 +1,5 @@
-import { Add, CheckBox, CheckBoxOutlineBlank, ContentCopy, NavigateNext } from '@mui/icons-material';
+import { Add, CheckBox, CheckBoxOutlineBlank, ContentCopy, KeyboardDoubleArrowUp, NavigateNext } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
     Autocomplete,
     Box,
@@ -231,7 +232,7 @@ const Cenarios = () => {
                 animate={{ y: 0, transition: { duration: 0.25 } }}
                 exit={{ transition: { duration: 0.1 } }}
             >
-                <Stack direction='column' spacing={2} alignItems='strech' sx={{ height: '100%' }}>
+                <Stack direction='column' spacing={2} sx={{ height: '100%' }}>
                     <div className={gStyles.title_panel}>
                         <Breadcrumbs separator={<NavigateNext fontSize='small' />}>
                             <Typography className={gStyles.title_link} variant='overline' component={Link} to='/daytrade/dashboard' replace={true}>
@@ -334,13 +335,20 @@ const Cenarios = () => {
                                 </Grid>
                             </Paper>
                             {dataState.rows.length > 0 ? (
-                                <div className={styles.cenarios_panel}>
-                                    <Stack spacing={3}>
-                                        {dataState.rows.map((row, i) => (
-                                            <CenarioItem key={row.id} row={row} />
-                                        ))}
-                                    </Stack>
-                                </div>
+                                <>
+                                    <div className={styles.cenarios_panel}>
+                                        <Stack spacing={3}>
+                                            {dataState.rows.map((row, i) => (
+                                                <CenarioItem key={row.id} row={row} />
+                                            ))}
+                                        </Stack>
+                                    </div>
+                                    <div className={styles.send_panel}>
+                                        <LoadingButton loading={false} variant='contained' color='primary' type='submit' endIcon={<KeyboardDoubleArrowUp />} sx={{ width: '100%' }}>
+                                            Atualizar Cenário
+                                        </LoadingButton>
+                                    </div>
+                                </>
                             ) : (
                                 <NoContent type='empty-data' empty_text='Não há cenários ainda' />
                             )}
