@@ -12,7 +12,7 @@
 
 .date {
     font-weight: 700;
-    font-size: 0.75em;
+    font-size: 0.75rem;
     text-transform: capitalize;
     letter-spacing: 0.05em;
 
@@ -22,6 +22,6 @@
 
     .daylish::after {
         content: 'th';
-        font-size: 9px;
+        font-size: 0.6rem;
     }
 }

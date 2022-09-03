@@ -11,6 +11,7 @@ import DaytradeAtivos from './daytrade/Ativos';
 import DaytradeAtivosNovo from './daytrade/Ativos/Novo';
 import DaytradeGerenciamentos from './daytrade/Gerenciamentos';
 import DaytradeGerenciamentosNovo from './daytrade/Gerenciamentos/Novo';
+import DaytradeCenarios from './daytrade/Cenarios';
 
 const content_switch = (url, urlParams) => {
     if (url.match(/^.*\/daytrade\/dashboard$/)) return <DaytradeDashboard />;
@@ -23,6 +24,7 @@ const content_switch = (url, urlParams) => {
     if (url.match(/^.*\/daytrade\/gerenciamentos$/)) return <DaytradeGerenciamentos />;
     if (url.match(/^.*\/daytrade\/gerenciamentos\/novo$/)) return <DaytradeGerenciamentosNovo />;
     if (url.match(/^.*\/daytrade\/gerenciamentos\/editar\/\d*$/)) return <DaytradeGerenciamentosNovo editar={urlParams} />;
+    if (url.match(/^.*\/daytrade\/cenarios$/)) return <DaytradeCenarios />;
     return <NoContent type='under-construction' />;
 };
 
@@ -32,7 +34,7 @@ const BackWrapper = () => {
 
     return (
         <div className={styles.wrapper}>
-            <Stack spacing={2} sx={{ height: '100%', width: '100%' }} direction='row'>
+            <Stack spacing={2} className={styles.container} direction='row'>
                 <NavSide />
                 {content_switch(location.pathname, urlParams)}
             </Stack>

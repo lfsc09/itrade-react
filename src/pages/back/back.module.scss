@@ -1,4 +1,13 @@
 .wrapper {
+    height: 100%;
+    width: 100%;
+    overflow: auto;
     background-color: #ebf0f5;
-    height: 100vh;
+}
+
+.container {
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+    align-items: stretch;
 }

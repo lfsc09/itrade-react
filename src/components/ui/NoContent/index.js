@@ -1,6 +1,6 @@
-import styles from './no-content.module.css';
+import styles from './no-content.module.scss';
 import React from 'react';
-import { Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 
 const NoContent = (props) => {
     if (props.type === 'img') return <div>Image not Found</div>;
@@ -13,6 +13,26 @@ const NoContent = (props) => {
                 </Typography>
             </div>
         );
+    if (props.type === 'empty-data') {
+        if (props?.withContainer)
+            return (
+                <div className={styles.wrapper_with_container}>
+                    <Paper className={styles.container}>
+                        <Typography className={`${styles.text} ${styles.empty_text}`} variant='overline'>
+                            {props.empty_text}
+                        </Typography>
+                    </Paper>
+                </div>
+            );
+        else
+            return (
+                <div className={styles.wrapper}>
+                    <Typography className={`${styles.text} ${styles.empty_text}`} variant='overline'>
+                        {props.empty_text}
+                    </Typography>
+                </div>
+            );
+    }
 };
 
 export default NoContent;

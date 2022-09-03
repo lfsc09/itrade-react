@@ -12,13 +12,18 @@
         <style>
             * {
                 font-family: 'Roboto', sans-serif;
+                font-size: 0.9rem;
             }
-            html,
+            html {
+                height: 100vh;
+            }
             body,
             #root,
             .App {
                 margin: 0;
-                height: 100vh;
+                overflow: auto;
+                height: 100%;
+                width: 100%;
             }
             ::-webkit-scrollbar {
                 width: 6px;

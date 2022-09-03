@@ -5,9 +5,9 @@
 *********************/
 /************** GLOBAL PAGE WRAPPER ***********/
 .wrapper {
-    max-height: calc(100vh - 16px);
     flex-grow: 1;
-    padding: 16px 16px 16px 0;
+    padding: 16px 16px 16px 16px;
+    margin-left: 0 !important;
 }
 /***************** GLOBAL TITLE ***************/
 /**
@@ -20,13 +20,13 @@
 
     .title {
         font-weight: bold;
-        font-size: 0.9em;
+        font-size: 0.9rem;
         color: rgba(0, 0, 0, 0.4);
     }
 
     .title_link {
         font-weight: bold;
-        font-size: 0.9em;
+        font-size: 0.9rem;
         text-decoration: none;
         color: inherit;
 
