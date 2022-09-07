@@ -32,6 +32,19 @@
     line-height: 1;
 }
 
+.text_small {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.text_padding_1 {
+    padding: 8px;
+}
+
+.text_padding_2 {
+    padding: 16px;
+}
+
 .empty_text {
     color: rgba(0, 0, 0, 0.4);
 }

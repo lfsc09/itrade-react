@@ -29,6 +29,7 @@ import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import NoContent from '../../../../components/ui/NoContent';
 import SnackOverlay from '../../../../components/ui/SnackOverlay';
 import axiosCon from '../../../../helpers/axios-con';
+import { generateHash } from '../../../../helpers/global';
 import { handleLogout } from '../../../../store/auth/auth-action';
 import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
 import CenarioItem from './CenarioItem';
@@ -74,42 +75,50 @@ const Cenarios = () => {
     /************************
      * COPY PICKERS HANDLERS
      ************************/
-    const handleDatasetCopy = useCallback(({ target: { value: value } }) => {
+    const handleChangeDatasetCopy = useCallback(({ target: { value: value } }) => {
         setDatasetCopy((prevState) => value);
     }, []);
 
-    const handleCenarioCopy = useCallback(({ target: { value: value } }) => {
+    const handleChangeCenarioCopy = useCallback(({ target: { value: value } }) => {
         setCenarioCopy((prevState) => value);
     }, []);
 
-    /*****************
-     * TABLE HANDLERS
-     *****************/
-    const handlerDeletaCenarioAction = useCallback(
-        (id) => () => {
-            dataDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: id });
-        },
-        []
-    );
+    const handleCenarioCopy = useCallback(() => {
+        const newRows = [];
+        const newRow = { id: `new_${generateHash(6)}`, nome: '', observacoes: [] };
+        // Copia os cenarios ja carregados
+        for (let row of dataState.rows) {
+            if (cenarioCopy === row.id) newRow.observacoes = [...row.observacoes];
+            newRows.push({ ...row, observacoes: [...row.observacoes] });
+        }
+        // Joga o novo cenario no começo
+        newRows.unshift(newRow);
+        // Reseta o select
+        setCenarioCopy(0);
+        dataDispatch({ type: DGR_TYPES.ROWS_UPDATED, payload: newRows });
+    }, [cenarioCopy, dataState.rows]);
 
-    const handleDeleteConfirm_No = useCallback(() => {
-        dataDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: null });
-    }, []);
-
-    const handleDeleteConfirm_Yes = useCallback(() => {
+    const handleDatasetCopy = useCallback(() => {
         axiosCon
-            .delete(`/cenario/deleta/${dataState.idRowDeleteConfirm}`)
+            .post('/cenario/list_datarows', {
+                id_dataset: datasetCopy,
+            })
             .then((resp) => {
-                dispatch(
-                    add({
-                        message: 'Cenario removido',
-                        severity: 'success',
-                    })
-                );
-                batch(() => {
-                    dataDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: null });
-                    dataDispatch({ type: DGR_TYPES.FORCE_RELOAD });
-                });
+                const newRows = [];
+                // Copia os cenarios ja carregados
+                for (let row of dataState.rows) newRows.push({ ...row, observacoes: [...row.observacoes] });
+                // Copia os cenarios que devem ser adicionados
+                for (let fetchedRow of resp.data.datarows) {
+                    let skip = newRows.reduce((res, curr) => res || curr.nome === fetchedRow.nome, false);
+                    if (!skip) {
+                        let newRow = { id: `new_${generateHash(6)}`, nome: fetchedRow.nome, observacoes: fetchedRow.observacoes };
+                        // Joga o novo cenario no começo
+                        newRows.unshift(newRow);
+                    }
+                }
+                // Reseta o select
+                setDatasetCopy(0);
+                dataDispatch({ type: DGR_TYPES.ROWS_UPDATED, payload: newRows });
             })
             .catch((error) => {
                 if (error.response) {
@@ -131,9 +140,64 @@ const Cenarios = () => {
                         })
                     );
                 }
-                // setIsSendLoading(false);
+                // Reseta o select
+                setDatasetCopy(0);
+                dataDispatch({ type: DGR_TYPES.STOP_LOADING });
             });
-    }, [dispatch, navigate, dataState.idRowDeleteConfirm]);
+    }, [datasetCopy, dataState.rows, dispatch, navigate]);
+
+    /****************
+     * DATA HANDLERS
+     ****************/
+    // const handlerDeletaCenarioAction = useCallback(
+    //     (id) => () => {
+    //         dataDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: id });
+    //     },
+    //     []
+    // );
+
+    // const handleDeleteConfirm_No = useCallback(() => {
+    //     dataDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: null });
+    // }, []);
+
+    // const handleDeleteConfirm_Yes = useCallback(() => {
+    //     axiosCon
+    //         .delete(`/cenario/deleta/${dataState.idRowDeleteConfirm}`)
+    //         .then((resp) => {
+    //             dispatch(
+    //                 add({
+    //                     message: 'Cenario removido',
+    //                     severity: 'success',
+    //                 })
+    //             );
+    //             batch(() => {
+    //                 dataDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: null });
+    //                 dataDispatch({ type: DGR_TYPES.FORCE_RELOAD });
+    //             });
+    //         })
+    //         .catch((error) => {
+    //             if (error.response) {
+    //                 if (error.response.status === 401) dispatch(handleLogout());
+    //                 else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
+    //                 else if (error.response.status === 500) {
+    //                     dispatch(
+    //                         add({
+    //                             message: error.response.data,
+    //                             severity: 'error',
+    //                         })
+    //                     );
+    //                 }
+    //             } else {
+    //                 dispatch(
+    //                     add({
+    //                         message: error.message,
+    //                         severity: 'error',
+    //                     })
+    //                 );
+    //             }
+    //             // setIsSendLoading(false);
+    //         });
+    // }, [dispatch, navigate, dataState.idRowDeleteConfirm]);
 
     /****************
      * DATAGRID MISC
@@ -158,6 +222,7 @@ const Cenarios = () => {
     /****************************
      * DATASET AUTOCOMPLETE LOAD
      ****************************/
+    // Carregamento do select de Datasets
     useEffect(() => {
         axiosCon
             .get('/dataset/list_suggest?place=cenario__picker__nome')
@@ -177,21 +242,18 @@ const Cenarios = () => {
             });
     }, []);
 
-    /*************
-     * TABLE LOAD
-     *************/
+    /************
+     * DATA LOAD
+     ************/
     useEffect(() => {
+        // Carrega apenas depois que ja foi escolhido um Dataset
         if (dataset !== null)
             axiosCon
                 .post('/cenario/list_datarows', {
-                    page: dataState.page,
-                    pageSize: dataState.pageSize,
-                    filters: [],
-                    sorting: dataState.sortingModel,
                     id_dataset: dataset?.id,
                 })
                 .then((resp) => {
-                    dataDispatch({ type: DGR_TYPES.ROWS_UPDATED, payload: resp.data.datarows });
+                    dataDispatch({ type: DGR_TYPES.ROWS_UPDATED__FETCH, payload: resp.data.datarows });
                 })
                 .catch((error) => {
                     if (error.response) {
@@ -215,7 +277,7 @@ const Cenarios = () => {
                     }
                     dataDispatch({ type: DGR_TYPES.STOP_LOADING });
                 });
-    }, [dataset?.id, dataState.forceReloadDatagrid, dataState.page, dataState.pageSize, dataState.sortingModel, dispatch, navigate]);
+    }, [dataset?.id, dispatch, navigate]);
 
     return (
         <>
@@ -224,7 +286,7 @@ const Cenarios = () => {
                     {item.message}
                 </SnackOverlay>
             ))}
-            <ConfirmDialog open={dataState.idRowDeleteConfirm !== null} title='Deseja apagar mesmo?' handleNo={handleDeleteConfirm_No} handleYes={handleDeleteConfirm_Yes} />
+            {/* <ConfirmDialog open={dataState.idRowDeleteConfirm !== null} title='Deseja apagar mesmo?' handleNo={handleDeleteConfirm_No} handleYes={handleDeleteConfirm_Yes} /> */}
             <Box
                 className={gStyles.wrapper}
                 component={motion.div}
@@ -242,11 +304,6 @@ const Cenarios = () => {
                                 Cenários
                             </Typography>
                         </Breadcrumbs>
-                        <Stack direction='row' spacing={2} width='25%'>
-                            {/* <Button variant='outlined' endIcon={<Add />} component={Link} to='novo' replace={true}>
-                                Novo Cenario
-                            </Button> */}
-                        </Stack>
                     </div>
                     <Divider />
                     <div className={styles.picker_panel}>
@@ -288,19 +345,23 @@ const Cenarios = () => {
                                                     name='copy_dataset'
                                                     size='small'
                                                     value={datasetCopy}
-                                                    onChange={handleDatasetCopy}
+                                                    onChange={handleChangeDatasetCopy}
                                                 >
                                                     <MenuItem key={0} value={0}>
                                                         ---
                                                     </MenuItem>
-                                                    {datasetSuggest.map((row) => (
-                                                        <MenuItem key={row.id} value={row.id}>
-                                                            {row.nome}
-                                                        </MenuItem>
-                                                    ))}
+                                                    {datasetSuggest.map((row) =>
+                                                        dataset?.id !== row.id ? (
+                                                            <MenuItem key={row.id} value={row.id}>
+                                                                {row.nome}
+                                                            </MenuItem>
+                                                        ) : (
+                                                            ''
+                                                        )
+                                                    )}
                                                 </Select>
                                             </FormControl>
-                                            <Button variant='outlined' sx={{ flexGrow: 1 }} endIcon={<ContentCopy />}>
+                                            <Button variant='outlined' sx={{ flexGrow: 1 }} endIcon={<ContentCopy />} onClick={handleDatasetCopy}>
                                                 Copiar
                                             </Button>
                                         </Stack>
@@ -315,19 +376,23 @@ const Cenarios = () => {
                                                     name='copy_cenario'
                                                     size='small'
                                                     value={cenarioCopy}
-                                                    onChange={handleCenarioCopy}
+                                                    onChange={handleChangeCenarioCopy}
                                                 >
                                                     <MenuItem key={0} value={0}>
                                                         Novo Cenário
                                                     </MenuItem>
-                                                    {dataState.rows.map((row) => (
-                                                        <MenuItem key={row.id} value={row.id}>
-                                                            {row.nome}
-                                                        </MenuItem>
-                                                    ))}
+                                                    {dataState.rows.map((row) =>
+                                                        row.nome !== '' || row.observacoes.length > 0 ? (
+                                                            <MenuItem key={row.id} value={row.id}>
+                                                                {row.nome}
+                                                            </MenuItem>
+                                                        ) : (
+                                                            ''
+                                                        )
+                                                    )}
                                                 </Select>
                                             </FormControl>
-                                            <Button variant='outlined' sx={{ flexGrow: 1 }} endIcon={<Add />}>
+                                            <Button variant='outlined' sx={{ flexGrow: 1 }} endIcon={<Add />} onClick={handleCenarioCopy}>
                                                 {cenarioCopy === 0 ? 'Criar' : 'Copiar'}
                                             </Button>
                                         </Stack>
@@ -339,7 +404,7 @@ const Cenarios = () => {
                                     <div className={styles.cenarios_panel}>
                                         <Stack spacing={3}>
                                             {dataState.rows.map((row, i) => (
-                                                <CenarioItem key={row.id} row={row} />
+                                                <CenarioItem key={row.id} row={row} dataDispatch={dataDispatch} />
                                             ))}
                                         </Stack>
                                     </div>

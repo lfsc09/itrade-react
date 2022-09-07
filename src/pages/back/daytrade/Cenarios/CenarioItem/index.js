@@ -3,7 +3,9 @@ import { Button, Chip, Collapse, Paper, Stack, Table, TableBody, TableCell, Tabl
 import React, { useCallback, useState } from 'react';
 
 import Input from '../../../../../components/ui/Input';
+import NoContent from '../../../../../components/ui/NoContent';
 import { generateHash } from '../../../../../helpers/global';
+import { TYPES as DGR_TYPES } from '../dataReducer';
 import styles from './cenario-item.module.scss';
 
 const CenarioItem = (props) => {
@@ -22,6 +24,7 @@ const CenarioItem = (props) => {
 
     const handleNomeChange = useCallback((e) => {
         setRowData((prevState) => ({ ...prevState, nome: e.target.value }));
+        // props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: newRows });
     }, []);
 
     const handleObsChange = useCallback(
@@ -68,32 +71,36 @@ const CenarioItem = (props) => {
             </Stack>
             <Collapse in={openRow} timeout='auto' unmountOnExit>
                 <div className={styles.collapsed_container}>
-                    <Table size='small'>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Ref</TableCell>
-                                <TableCell>Observação</TableCell>
-                                <TableCell align='center'></TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {rowData.observacoes.map((obs) => (
-                                <TableRow key={obs.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                                    <TableCell className={styles.table_cell__ref}>
-                                        <Input value={obs.ref} onChange={(e) => handleObsChange(obs.id, 'ref', e.target.value)} />
-                                    </TableCell>
-                                    <TableCell className={styles.table_cell__nome}>
-                                        <Input value={obs.nome} onChange={(e) => handleObsChange(obs.id, 'nome', e.target.value)} />
-                                    </TableCell>
-                                    <TableCell align='center' className={styles.table_cell__delete}>
-                                        <Button size='small' variant='outlined' color='error' fullWidth onClick={() => handleObsChange(obs.id, null)}>
-                                            Excluir
-                                        </Button>
-                                    </TableCell>
+                    {rowData.observacoes.length > 0 ? (
+                        <Table size='small'>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Ref</TableCell>
+                                    <TableCell>Observação</TableCell>
+                                    <TableCell align='center'></TableCell>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHead>
+                            <TableBody>
+                                {rowData.observacoes.map((obs) => (
+                                    <TableRow key={obs.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                        <TableCell className={styles.table_cell__ref}>
+                                            <Input value={obs.ref} onChange={(e) => handleObsChange(obs.id, 'ref', e.target.value)} />
+                                        </TableCell>
+                                        <TableCell className={styles.table_cell__nome}>
+                                            <Input value={obs.nome} onChange={(e) => handleObsChange(obs.id, 'nome', e.target.value)} />
+                                        </TableCell>
+                                        <TableCell align='center' className={styles.table_cell__delete}>
+                                            <Button size='small' variant='outlined' color='error' fullWidth onClick={() => handleObsChange(obs.id, null)}>
+                                                Excluir
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <NoContent type='empty-data' text_size='small' text_padding='2' empty_text='Não há observações' />
+                    )}
                 </div>
             </Collapse>
         </Paper>

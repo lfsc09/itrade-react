@@ -14,11 +14,13 @@ const NoContent = (props) => {
             </div>
         );
     if (props.type === 'empty-data') {
+        const text_size = props?.text_size === 'small' ? styles.text_small : '';
+        const text_padding = props?.text_padding !== '' ? styles[`text_padding_${props?.text_padding}`] : '';
         if (props?.withContainer)
             return (
                 <div className={styles.wrapper_with_container}>
                     <Paper className={styles.container}>
-                        <Typography className={`${styles.text} ${styles.empty_text}`} variant='overline'>
+                        <Typography className={`${styles.text} ${styles.empty_text} ${text_size}`} variant='overline'>
                             {props.empty_text}
                         </Typography>
                     </Paper>
@@ -26,8 +28,8 @@ const NoContent = (props) => {
             );
         else
             return (
-                <div className={styles.wrapper}>
-                    <Typography className={`${styles.text} ${styles.empty_text}`} variant='overline'>
+                <div className={`${styles.wrapper} ${text_padding}`}>
+                    <Typography className={`${styles.text} ${styles.empty_text} ${text_size}`} variant='overline'>
                         {props.empty_text}
                     </Typography>
                 </div>
