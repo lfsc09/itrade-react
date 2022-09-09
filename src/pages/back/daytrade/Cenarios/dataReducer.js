@@ -1,3 +1,5 @@
+import cloneDeep from 'lodash.clonedeep';
+
 export const TYPES = {
     STOP_LOADING: 0,
     ROWS_UPDATED__FETCH: 1,
@@ -17,8 +19,8 @@ export const reducer = (state, action) => {
     switch (action.type) {
         case TYPES.STOP_LOADING:
             return {
-                rows: [...{ ...state.rows, observacoes: [...state.rows.observacoes] }],
-                originalRows: [...{ ...state.originalRows, observacoes: [...state.originalRows.observacoes] }],
+                rows: cloneDeep(state.rows),
+                originalRows: cloneDeep(state.originalRows),
                 isLoading: false,
             };
         case TYPES.ROWS_UPDATED__FETCH:
@@ -30,17 +32,15 @@ export const reducer = (state, action) => {
         case TYPES.ROWS_UPDATED:
             return {
                 ...state,
-                originalRows: [...{ ...state.originalRows, observacoes: [...state.originalRows.observacoes] }],
+                originalRows: cloneDeep(state.originalRows),
                 rows: action.payload,
             };
         case TYPES.ROW_UPDATED:
             const newRows = [];
-            for (let row of state.rows) {
-                newRows.push(row.id === action.payload.id ? action.payload : { ...row, observacoes: [...row.observacoes] });
-            }
+            for (let row of state.rows) newRows.push(row.id === action.payload.id ? action.payload : { ...row, observacoes: [...row.observacoes] });
             return {
                 ...state,
-                originalRows: [...{ ...state.originalRows, observacoes: [...state.originalRows.observacoes] }],
+                originalRows: cloneDeep(state.originalRows),
                 rows: newRows,
             };
         default:
