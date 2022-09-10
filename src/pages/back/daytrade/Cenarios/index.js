@@ -286,7 +286,6 @@ const Cenarios = () => {
                     {item.message}
                 </SnackOverlay>
             ))}
-            {/* <ConfirmDialog open={dataState.idRowDeleteConfirm !== null} title='Deseja apagar mesmo?' handleNo={handleDeleteConfirm_No} handleYes={handleDeleteConfirm_Yes} /> */}
             <Box
                 className={gStyles.wrapper}
                 component={motion.div}

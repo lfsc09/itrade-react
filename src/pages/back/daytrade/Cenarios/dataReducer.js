@@ -5,6 +5,7 @@ export const TYPES = {
     ROWS_UPDATED__FETCH: 1,
     ROWS_UPDATED: 2,
     ROW_UPDATED: 3,
+    ROW_DELETE: 4,
 };
 
 export const INI_STATE = {
@@ -16,6 +17,7 @@ export const INI_STATE = {
 };
 
 export const reducer = (state, action) => {
+    let newRows;
     switch (action.type) {
         case TYPES.STOP_LOADING:
             return {
@@ -36,8 +38,15 @@ export const reducer = (state, action) => {
                 rows: action.payload,
             };
         case TYPES.ROW_UPDATED:
-            const newRows = [];
+            newRows = [];
             for (let row of state.rows) newRows.push(row.id === action.payload.id ? action.payload : { ...row, observacoes: [...row.observacoes] });
+            return {
+                ...state,
+                originalRows: cloneDeep(state.originalRows),
+                rows: newRows,
+            };
+        case TYPES.ROW_DELETE:
+            newRows = state.rows.filter((row) => row.id !== action.payload);
             return {
                 ...state,
                 originalRows: cloneDeep(state.originalRows),
