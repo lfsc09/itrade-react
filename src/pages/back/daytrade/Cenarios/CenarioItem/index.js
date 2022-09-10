@@ -1,4 +1,4 @@
-import { Add, Delete } from '@mui/icons-material';
+import { Add, ArrowDropDown, ArrowDropUp, Delete } from '@mui/icons-material';
 import { Button, Chip, Collapse, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 import cloneDeep from 'lodash.clonedeep';
 import React, { useCallback, useState } from 'react';
@@ -16,12 +16,25 @@ const CenarioItem = (props) => {
     const [openRow, setOpenRow] = useState(false);
     const [rowData, setRowData] = useState(props?.row ?? { nome: '', observacoes: [] });
 
+    /*******
+     * VARS
+     *******/
+    const obsChange_count = rowData.observacoes.reduce(
+        (res, obs) => {
+            return { added: String(obs.id).includes('new') ? res.added + 1 : res.added, deleted: obs?.delete ? res.deleted + 1 : res.deleted };
+        },
+        { added: 0, deleted: 0 }
+    );
+
     /***********
      * HANDLERS
      ***********/
-    const handleOpenRow = useCallback((e) => {
-        if (e.target.nodeName === 'DIV') setOpenRow((prevState) => !prevState);
-    }, []);
+    const handleOpenRow = useCallback(
+        (e) => {
+            if (e.target.nodeName === 'DIV' && !rowData?.delete) setOpenRow((prevState) => !prevState);
+        },
+        [rowData?.delete]
+    );
 
     const handleNomeChange = useCallback((e) => {
         setRowData((prevState) => ({ ...prevState, nome: e.target.value }));
@@ -90,8 +103,12 @@ const CenarioItem = (props) => {
                 });
             }
             // Se for existente, marca para apagar
-            else changedObs = rowData.observacoes.map((obs) => (obs.id === id ? { ...obs, remove: true } : obs));
-            setRowData((prevState) => ({ ...prevState, observacoes: changedObs }));
+            else changedObs = rowData.observacoes.map((obs) => (obs.id === id ? { ...obs, delete: true } : obs));
+            setRowData((prevState) => {
+                let changedRow = { ...prevState, observacoes: changedObs };
+                props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: changedRow });
+                return changedRow;
+            });
         },
         [rowData.observacoes]
     );
@@ -100,32 +117,56 @@ const CenarioItem = (props) => {
         let newObs = [...rowData.observacoes],
             newHash = generateHash(6),
             nextRef = parseInt(newObs?.[newObs.length - 1]?.ref ?? 0) + 1;
-        newObs.push({ id: `new_${newHash}`, ref: nextRef, nome: '', new: 1 });
-        setRowData((prevState) => ({ ...prevState, observacoes: newObs }));
+        newObs.push({ id: `new_${newHash}`, ref: nextRef, nome: '' });
+        setRowData((prevState) => {
+            let changedRow = { ...prevState, observacoes: newObs };
+            props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: changedRow });
+            return changedRow;
+        });
     }, [rowData]);
 
     const handleCenarioDeleteAction = useCallback(() => {
         // Se for novo, apenas deleta
-        if (String(rowData.id).includes('new')) props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: rowData.id });
+        if (String(rowData.id).includes('new')) props.dataDispatch({ type: DGR_TYPES.ROW_DELETE, payload: rowData.id });
         else {
             let changedRow = cloneDeep(rowData);
             changedRow.delete = true;
             setRowData((prevState) => {
-                props.dataDispatch({ type: DGR_TYPES.ROW_DELETE, payload: changedRow });
+                props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: changedRow });
                 return changedRow;
             });
+            setOpenRow(false);
         }
     }, [rowData.id]);
 
     return (
         <Paper sx={{ px: 3, py: 1 }}>
             <Stack className={styles.row_container} direction='row' spacing={1} onClick={handleOpenRow}>
-                <TextField className={styles.row_input} size='small' value={rowData.nome} onChange={handleNomeChange} onBlur={handleNomeChange_Blur} />
-                <Button size='small' startIcon={<Add />} onClick={handleObsAddAction}>
+                <div className={styles.row_input}>
+                    <Input value={rowData.nome} onChange={handleNomeChange} onBlur={handleNomeChange_Blur} disabled={rowData?.delete ?? false} />
+                </div>
+                <Button size='small' startIcon={<Add />} onClick={handleObsAddAction} disabled={rowData?.delete ?? false}>
                     Observação
                 </Button>
                 <Chip className={styles.row_chip} label={rowData.observacoes.length} />
-                <Button className={styles.row_button__last} size='small' color='error' startIcon={<Delete />} onClick={handleCenarioDeleteAction}>
+                {!rowData?.delete && obsChange_count.added > 0 ? (
+                    <Chip variant='outlined' className={`${styles.row_chip} ${styles.row_chip__added}`} label={obsChange_count.added} icon={<ArrowDropUp />} />
+                ) : (
+                    <></>
+                )}
+                {!rowData?.delete && obsChange_count.deleted > 0 ? (
+                    <Chip variant='outlined' className={`${styles.row_chip} ${styles.row_chip__deleted}`} label={obsChange_count.deleted} icon={<ArrowDropDown />} />
+                ) : (
+                    <></>
+                )}
+                <Button
+                    className={styles.row_button__last}
+                    size='small'
+                    color='error'
+                    startIcon={<Delete />}
+                    onClick={handleCenarioDeleteAction}
+                    disabled={rowData?.delete ?? false}
+                >
                     Remover Cenário
                 </Button>
             </Stack>
@@ -148,8 +189,8 @@ const CenarioItem = (props) => {
                                                 value={obs.ref}
                                                 onChange={(e) => handleObsRefChange(obs.id, e.target.value)}
                                                 onBlur={(e) => handleObsRefChange_Blur(obs.id, e.target.value)}
-                                                disabled={obs?.remove ?? false}
-                                                extraClasses={['textAlign__center']}
+                                                disabled={obs?.delete ?? false}
+                                                extraClasses={['textAlign__center', 'inputSize__small']}
                                             />
                                         </TableCell>
                                         <TableCell className={styles.table_cell__nome}>
@@ -157,7 +198,8 @@ const CenarioItem = (props) => {
                                                 value={obs.nome}
                                                 onChange={(e) => handleObsNomeChange(obs.id, e.target.value)}
                                                 onBlur={(e) => handleObsNomeChange_Blur(obs.id, e.target.value)}
-                                                disabled={obs?.remove ?? false}
+                                                disabled={obs?.delete ?? false}
+                                                extraClasses={['inputSize__small']}
                                             />
                                         </TableCell>
                                         <TableCell align='center' className={styles.table_cell__delete}>
@@ -167,7 +209,7 @@ const CenarioItem = (props) => {
                                                 color='error'
                                                 fullWidth
                                                 onClick={() => handleObsDeleteAction(obs.id)}
-                                                disabled={obs?.remove ?? false}
+                                                disabled={obs?.delete ?? false}
                                             >
                                                 Excluir
                                             </Button>

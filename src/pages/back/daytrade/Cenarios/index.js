@@ -29,7 +29,7 @@ import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import NoContent from '../../../../components/ui/NoContent';
 import SnackOverlay from '../../../../components/ui/SnackOverlay';
 import axiosCon from '../../../../helpers/axios-con';
-import { generateHash } from '../../../../helpers/global';
+import { generateHash, isObjectEmpty } from '../../../../helpers/global';
 import { handleLogout } from '../../../../store/auth/auth-action';
 import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
 import CenarioItem from './CenarioItem';
@@ -145,6 +145,79 @@ const Cenarios = () => {
                 dataDispatch({ type: DGR_TYPES.STOP_LOADING });
             });
     }, [datasetCopy, dataState.rows, dispatch, navigate]);
+
+    const handleAtualizaCenariosAction = useCallback(() => {
+        if (dataset === null) return false;
+
+        let sendData = {
+            id_dataset: dataset?.id,
+            cenarios_delete: [],
+            cenarios_create: [],
+            cenarios_update: [],
+        };
+
+        for (let cenario of dataState.rows) {
+            // Cenário ja existe e será deletado
+            if (cenario?.delete) {
+                sendData.cenarios_delete.push(cenario.id);
+                continue;
+            }
+
+            // Cenário a ser criado
+            if (String(cenario.id).includes('new')) {
+                let newObs = [];
+                for (let obs of cenario.observacoes) newObs.push({ ref: obs.ref, nome: obs.nome });
+                sendData.cenarios_create.push({ nome: cenario.nome, observacoes: newObs });
+                continue;
+            }
+
+            // Verifica se o Cenário está sendo alterado
+            let changedRow = {
+                obs_delete: [],
+                obs_create: [],
+                obs_update: [],
+            };
+            let originalIndex = dataState.originalRows.findIndex((curr) => curr.id === cenario.id);
+            if (originalIndex !== -1) {
+                // Ve se mudou o nome
+                if (cenario.nome !== dataState.originalRows[originalIndex].nome) changedRow.nome = cenario.nome;
+                for (let obs of cenario.observacoes) {
+                    // Ve se a observação ja existe e está sendo deletada
+                    if (obs?.delete) {
+                        changedRow.obs_delete.push(obs.id);
+                        continue;
+                    }
+
+                    // Verifica se a observação é nova
+                    if (String(obs.id).includes('new')) {
+                        changedRow.obs_create.push({ ref: obs.ref, nome: obs.nome });
+                        continue;
+                    }
+
+                    //Ve se foi alterado algo na observação
+                    let changedObs = {};
+                    let originalObsIndex = dataState.originalRows[originalIndex].observacoes.findIndex((curr) => curr.id === obs.id);
+                    if (originalObsIndex !== -1) {
+                        // Ref
+                        if (obs.ref !== dataState.originalRows[originalIndex].observacoes[originalObsIndex].ref) changedObs.ref = obs.ref;
+                        // Nome
+                        if (obs.nome !== dataState.originalRows[originalIndex].observacoes[originalObsIndex].nome) changedObs.nome = obs.nome;
+                    }
+                    if (!isObjectEmpty(changedObs)) {
+                        changedObs.id = obs.id;
+                        changedRow.obs_update.push(changedObs);
+                    }
+                }
+
+                if (changedRow?.nome || changedRow.obs_delete.length || changedRow.obs_create.length || changedRow.obs_update.length) sendData.cenarios_update.push(changedRow);
+
+                /**
+                 * TODO: REMOVER CENARIOS E OBS EM BRANCO
+                 */
+            }
+        }
+        if (sendData.cenarios_delete.length || sendData.cenarios_create.length || sendData.cenarios_update.length) console.log(sendData);
+    }, [dataState.rows]);
 
     /****************
      * DATA HANDLERS
@@ -408,7 +481,15 @@ const Cenarios = () => {
                                         </Stack>
                                     </div>
                                     <div className={styles.send_panel}>
-                                        <LoadingButton loading={false} variant='contained' color='primary' type='submit' endIcon={<KeyboardDoubleArrowUp />} sx={{ width: '100%' }}>
+                                        <LoadingButton
+                                            loading={false}
+                                            variant='contained'
+                                            color='primary'
+                                            type='submit'
+                                            endIcon={<KeyboardDoubleArrowUp />}
+                                            sx={{ width: '100%' }}
+                                            onClick={handleAtualizaCenariosAction}
+                                        >
                                             Atualizar Cenário
                                         </LoadingButton>
                                     </div>
