@@ -157,6 +157,18 @@ const Cenarios = () => {
         };
 
         for (let cenario of dataState.rows) {
+            // Verifica cenários em branco ou incompletos
+            if (cenario.nome === '' && cenario.observacoes.length === 0) continue;
+            if (cenario === '' && cenario.observacoes.length === 0) {
+                dispatch(
+                    add({
+                        message: 'Existem cenários sem Nome',
+                        severity: 'error',
+                    })
+                );
+                return false;
+            }
+
             // Cenário ja existe e será deletado
             if (cenario?.delete) {
                 sendData.cenarios_delete.push(cenario.id);
@@ -182,6 +194,20 @@ const Cenarios = () => {
                 // Ve se mudou o nome
                 if (cenario.nome !== dataState.originalRows[originalIndex].nome) changedRow.nome = cenario.nome;
                 for (let obs of cenario.observacoes) {
+                    // Ignora observações em sem nome (Em branco)
+                    if ((obs.ref === '' && obs.nome === '') || (obs.ref !== '' && obs.nome === '')) continue;
+
+                    // Da erro em observações sem Ref
+                    if (obs.ref === '' && obs.nome !== '') {
+                        dispatch(
+                            add({
+                                message: 'Existem observações incompletas',
+                                severity: 'error',
+                            })
+                        );
+                        return false;
+                    }
+
                     // Ve se a observação ja existe e está sendo deletada
                     if (obs?.delete) {
                         changedRow.obs_delete.push(obs.id);
@@ -211,6 +237,7 @@ const Cenarios = () => {
 
                 if (changedRow?.nome || changedRow.obs_delete.length || changedRow.obs_create.length || changedRow.obs_update.length) sendData.cenarios_update.push(changedRow);
 
+                console.log(sendData);
                 /**
                  * TODO: REMOVER CENARIOS E OBS EM BRANCO
                  */
