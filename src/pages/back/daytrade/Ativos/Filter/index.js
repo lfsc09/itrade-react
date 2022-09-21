@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import axiosCon from '../../../../../helpers/axios-con';
+import { axiosCon } from '../../../../../helpers/axios-con';
 import { handleLogout } from '../../../../../store/auth/auth-action';
 import { TYPES as DGR_TYPES } from '../datagridReducer';
 import styles from './ativos-filter.module.scss';

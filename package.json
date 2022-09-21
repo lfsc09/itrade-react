@@ -3,7 +3,9 @@
     "version": "0.1.0",
     "private": true,
     "dependencies": {
+        "@badrap/bar-of-progress": "^0.2.1",
         "@ckeditor/ckeditor5-react": "^5.0.2",
+        "@date-io/date-fns": "^2.15.0",
         "@emotion/react": "^11.9.3",
         "@emotion/styled": "^11.9.3",
         "@material-table/core": "^0.2.35",

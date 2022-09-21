@@ -9,7 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import gStyles from '../../../../assets/back/scss/global.module.scss';
 import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import SnackOverlay from '../../../../components/ui/SnackOverlay';
-import axiosCon from '../../../../helpers/axios-con';
+import { axiosCon } from '../../../../helpers/axios-con';
 import { isObjectEmpty } from '../../../../helpers/global';
 import { handleLogout } from '../../../../store/auth/auth-action';
 import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
@@ -167,18 +167,23 @@ const Ativos = () => {
      * DATAGRID LOAD
      ****************/
     useEffect(() => {
+        const abortController = new AbortController();
         // Trata o state dos filtros para passar apenas os valores
         const treatedFilters = {};
         Object.keys(datagridState.filters).forEach((fName) => {
             treatedFilters[fName] = datagridState.filters[fName].map((fVal) => fVal.value);
         });
         axiosCon
-            .post('/ativo/list_datagrid', {
-                page: datagridState.page,
-                pageSize: datagridState.pageSize,
-                filters: treatedFilters,
-                sorting: datagridState.sortingModel,
-            })
+            .post(
+                '/ativo/list_datagrid',
+                {
+                    page: datagridState.page,
+                    pageSize: datagridState.pageSize,
+                    filters: treatedFilters,
+                    sorting: datagridState.sortingModel,
+                },
+                { signal: abortController.signal }
+            )
             .then((resp) => {
                 datagridDispatch({ type: DGR_TYPES.ROWS_UPDATED, payload: resp.data.datagrid });
             })
@@ -204,6 +209,9 @@ const Ativos = () => {
                 }
                 datagridDispatch({ type: DGR_TYPES.STOP_LOADING });
             });
+        return () => {
+            abortController.abort();
+        };
     }, [datagridState.forceReloadDatagrid, datagridState.page, datagridState.pageSize, datagridState.filters, datagridState.sortingModel, dispatch, navigate]);
 
     return (

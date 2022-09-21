@@ -2,7 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { add } from '../snack-messages/snack-messages-slice';
 import cryptoJS from 'crypto-js';
 import jwtDecode from 'jwt-decode';
-import axiosCon from '../../helpers/axios-con';
+import { axiosCon } from '../../helpers/axios-con';
 
 const login = createAsyncThunk('auth/login', async ({ usuario, password }, { dispatch, rejectWithValue }) => {
     return axiosCon

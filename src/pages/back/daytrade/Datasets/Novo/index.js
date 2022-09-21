@@ -29,7 +29,7 @@ import * as yup from 'yup';
 
 import gStyles from '../../../../../assets/back/scss/global.module.scss';
 import SnackOverlay from '../../../../../components/ui/SnackOverlay';
-import axiosCon from '../../../../../helpers/axios-con';
+import { axiosCon } from '../../../../../helpers/axios-con';
 import { isObjectEmpty } from '../../../../../helpers/global';
 import { handleLogout } from '../../../../../store/auth/auth-action';
 import { add, remove } from '../../../../../store/snack-messages/snack-messages-slice';
@@ -195,8 +195,9 @@ const NovoDataset = (props) => {
      * FORMIK DATA LOAD
      *******************/
     useEffect(() => {
+        const abortController = new AbortController();
         axiosCon
-            .get(isEdit ? `/dataset/list_edita/${editID}` : '/dataset/list_novo')
+            .get(isEdit ? `/dataset/list_edita/${editID}` : '/dataset/list_novo', { signal: abortController.signal })
             .then((resp) => {
                 // Se por algum motivo veio sem os dados do Dataset
                 if (isEdit && resp.data.dataset === null) {
@@ -231,6 +232,9 @@ const NovoDataset = (props) => {
                     );
                 }
             });
+        return () => {
+            abortController.abort();
+        };
     }, [isEdit, editID, dispatch, navigate, asyncData__processDataset]);
 
     /*********

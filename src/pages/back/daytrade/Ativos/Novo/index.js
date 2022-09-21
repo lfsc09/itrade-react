@@ -11,7 +11,7 @@ import * as yup from 'yup';
 
 import gStyles from '../../../../../assets/back/scss/global.module.scss';
 import SnackOverlay from '../../../../../components/ui/SnackOverlay';
-import axiosCon from '../../../../../helpers/axios-con';
+import { axiosCon } from '../../../../../helpers/axios-con';
 import { isObjectEmpty } from '../../../../../helpers/global';
 import { handleLogout } from '../../../../../store/auth/auth-action';
 import { add, remove } from '../../../../../store/snack-messages/snack-messages-slice';
@@ -149,9 +149,10 @@ const NovoAtivo = (props) => {
      * FORMIK DATA LOAD
      *******************/
     useEffect(() => {
+        const abortController = new AbortController();
         if (isEdit) {
             axiosCon
-                .get(`/ativo/list_edita/${editID}`)
+                .get(`/ativo/list_edita/${editID}`, { signal: abortController.signal })
                 .then((resp) => {
                     // Se por algum motivo veio sem os dados do Ativo
                     if (resp.data.ativo === null) {
@@ -181,6 +182,9 @@ const NovoAtivo = (props) => {
                     }
                 });
         } else setIsInitialLoading(false);
+        return () => {
+            abortController.abort();
+        };
     }, [isEdit, editID, dispatch, navigate]);
 
     /*********

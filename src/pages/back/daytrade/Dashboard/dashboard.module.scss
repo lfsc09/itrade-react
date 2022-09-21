@@ -1,33 +1,17 @@
-.wrapper {
-    max-height: calc(100vh - 16px);
-    flex-grow: 1;
-    padding: 16px 16px 16px 0;
-}
-
 .greetings_panel {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 16px 8px 0 8px;
 
     .greetings_user {
         font-size: 1rem;
     }
 
-    .dataset_form {
-        min-width: 400px;
-    }
-}
-
-.filter_panel {
-    display: flex;
-
-    .filter_panel__button {
-        margin-right: 16px;
-    }
-
-    .filter_container {
-    }
-
-    .simulation_container {
+    .dash_place {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: rgba(0, 0, 0, 0.4);
+        align-self: center;
     }
 }

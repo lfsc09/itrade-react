@@ -13,7 +13,6 @@ export const INI_STATE = {
     rows: [],
     // Dados originais do Fetch
     originalRows: [],
-    isLoading: true,
 };
 
 export const reducer = (state, action) => {
@@ -23,17 +22,14 @@ export const reducer = (state, action) => {
             return {
                 rows: cloneDeep(state.rows),
                 originalRows: cloneDeep(state.originalRows),
-                isLoading: false,
             };
         case TYPES.ROWS_UPDATED__FETCH:
             return {
                 rows: action.payload,
                 originalRows: action.payload,
-                isLoading: false,
             };
         case TYPES.ROWS_UPDATED:
             return {
-                ...state,
                 originalRows: cloneDeep(state.originalRows),
                 rows: action.payload,
             };
@@ -41,14 +37,12 @@ export const reducer = (state, action) => {
             newRows = [];
             for (let row of state.rows) newRows.push(row.id === action.payload.id ? action.payload : { ...row, observacoes: [...row.observacoes] });
             return {
-                ...state,
                 originalRows: cloneDeep(state.originalRows),
                 rows: newRows,
             };
         case TYPES.ROW_DELETE:
             newRows = state.rows.filter((row) => row.id !== action.payload);
             return {
-                ...state,
                 originalRows: cloneDeep(state.originalRows),
                 rows: newRows,
             };

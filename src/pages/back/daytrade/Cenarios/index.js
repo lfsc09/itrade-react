@@ -10,7 +10,6 @@ import {
     FormControl,
     Grid,
     InputLabel,
-    LinearProgress,
     ListItemText,
     MenuItem,
     Paper,
@@ -20,15 +19,14 @@ import {
     Typography,
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { batch, useDispatch, useSelector } from 'react-redux';
+import React, { useCallback, useEffect, useReducer, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 
 import gStyles from '../../../../assets/back/scss/global.module.scss';
-import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import NoContent from '../../../../components/ui/NoContent';
 import SnackOverlay from '../../../../components/ui/SnackOverlay';
-import axiosCon from '../../../../helpers/axios-con';
+import { axiosCon } from '../../../../helpers/axios-con';
 import { generateHash, isObjectEmpty } from '../../../../helpers/global';
 import { handleLogout } from '../../../../store/auth/auth-action';
 import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
@@ -235,7 +233,10 @@ const Cenarios = () => {
                     }
                 }
 
-                if (changedRow?.nome || changedRow.obs_delete.length || changedRow.obs_create.length || changedRow.obs_update.length) sendData.cenarios_update.push(changedRow);
+                if (changedRow?.nome || changedRow.obs_delete.length || changedRow.obs_create.length || changedRow.obs_update.length) {
+                    changedRow.id = cenario.id;
+                    sendData.cenarios_update.push(changedRow);
+                }
 
                 console.log(sendData);
                 /**
@@ -246,86 +247,14 @@ const Cenarios = () => {
         if (sendData.cenarios_delete.length || sendData.cenarios_create.length || sendData.cenarios_update.length) console.log(sendData);
     }, [dataState.rows]);
 
-    /****************
-     * DATA HANDLERS
-     ****************/
-    // const handlerDeletaCenarioAction = useCallback(
-    //     (id) => () => {
-    //         dataDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: id });
-    //     },
-    //     []
-    // );
-
-    // const handleDeleteConfirm_No = useCallback(() => {
-    //     dataDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: null });
-    // }, []);
-
-    // const handleDeleteConfirm_Yes = useCallback(() => {
-    //     axiosCon
-    //         .delete(`/cenario/deleta/${dataState.idRowDeleteConfirm}`)
-    //         .then((resp) => {
-    //             dispatch(
-    //                 add({
-    //                     message: 'Cenario removido',
-    //                     severity: 'success',
-    //                 })
-    //             );
-    //             batch(() => {
-    //                 dataDispatch({ type: DGR_TYPES.DELETE_CONFIRM, payload: null });
-    //                 dataDispatch({ type: DGR_TYPES.FORCE_RELOAD });
-    //             });
-    //         })
-    //         .catch((error) => {
-    //             if (error.response) {
-    //                 if (error.response.status === 401) dispatch(handleLogout());
-    //                 else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
-    //                 else if (error.response.status === 500) {
-    //                     dispatch(
-    //                         add({
-    //                             message: error.response.data,
-    //                             severity: 'error',
-    //                         })
-    //                     );
-    //                 }
-    //             } else {
-    //                 dispatch(
-    //                     add({
-    //                         message: error.message,
-    //                         severity: 'error',
-    //                     })
-    //                 );
-    //             }
-    //             // setIsSendLoading(false);
-    //         });
-    // }, [dispatch, navigate, dataState.idRowDeleteConfirm]);
-
-    /****************
-     * DATAGRID MISC
-     ****************/
-    // const columns = useMemo(
-    //     () => [
-    //         { field: 'nome', headerName: 'Nome', flex: 1, cellClassName: styles.table_cell__nome },
-    //         { field: 'acoes', headerName: 'Ações', type: 'number', flex: 1, cellClassName: styles.table_cell__acoes, renderCell: acoesCell },
-    //         {
-    //             field: 'actions',
-    //             type: 'actions',
-    //             width: 120,
-    //             getActions: (params) => [
-    //                 <GridActionsCellItem icon={<DriveFileRenameOutline />} label='Editar' onClick={handlerEditaDatagridAction(params.id)} />,
-    //                 <GridActionsCellItem icon={<Delete />} label='Apagar' onClick={handlerDeletaDatagridAction(params.id)} />,
-    //             ],
-    //         },
-    //     ],
-    //     [handlerEditaDatagridAction, handlerDeletaDatagridAction]
-    // );
-
     /****************************
      * DATASET AUTOCOMPLETE LOAD
      ****************************/
     // Carregamento do select de Datasets
     useEffect(() => {
+        const abortController = new AbortController();
         axiosCon
-            .get('/dataset/list_suggest?place=cenario__picker__nome')
+            .get('/dataset/list_suggest?place=cenario__picker__nome', { signal: abortController.signal })
             .then((resp) => {
                 setDatasetSuggest(resp.data.suggestion);
             })
@@ -340,18 +269,26 @@ const Cenarios = () => {
                     console.log('Error Suggest: ', error.message);
                 }
             });
+        return () => {
+            abortController.abort();
+        };
     }, []);
 
     /************
      * DATA LOAD
      ************/
     useEffect(() => {
+        const abortController = new AbortController();
         // Carrega apenas depois que ja foi escolhido um Dataset
         if (dataset !== null)
             axiosCon
-                .post('/cenario/list_datarows', {
-                    id_dataset: dataset?.id,
-                })
+                .post(
+                    '/cenario/list_datarows',
+                    {
+                        id_dataset: dataset?.id,
+                    },
+                    { signal: abortController.signal }
+                )
                 .then((resp) => {
                     dataDispatch({ type: DGR_TYPES.ROWS_UPDATED__FETCH, payload: resp.data.datarows });
                 })
@@ -377,6 +314,9 @@ const Cenarios = () => {
                     }
                     dataDispatch({ type: DGR_TYPES.STOP_LOADING });
                 });
+        return () => {
+            abortController.abort();
+        };
     }, [dataset?.id, dispatch, navigate]);
 
     return (
