@@ -1,4 +1,4 @@
-import { AccessTime, AutoFixHigh, CalendarToday, CheckBox, CheckBoxOutlineBlank, FilterListOff } from '@mui/icons-material';
+import { AccessTime, AutoFixHigh, CheckBox, CheckBoxOutlineBlank, FilterListOff } from '@mui/icons-material';
 import {
     Autocomplete,
     Button,
@@ -28,11 +28,18 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import ptBR from 'date-fns/locale/pt-BR';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { isEqual } from 'date-fns';
 
 import { TYPES as DGR_TYPES } from '../dataReducer';
 import styles from './dashboard-filter.module.scss';
 import FilterCenarioObs from './FilterCenarioObs';
 import SimulationParada from './SimulationParada';
+import { isObjectEmpty } from '../../../../../helpers/global';
+import cloneDeep from 'lodash.clonedeep';
+import { batch } from 'react-redux';
+
+const minHoraSlider = 9,
+    maxHoraSlider = 18;
 
 const periodos = [
     { value: 1, label: 'Por Trade' },
@@ -63,17 +70,17 @@ const FilterDashboard = (props) => {
     const [dataset, setDataset] = useState(props.filterState?.datasets ?? []);
     const [comparaDataset, setComparaDataset] = useState(props.filterState?.comparaDataset ?? false);
     // Filters
-    const [dateInicial, setDateInicial] = useState(props.filterState?.dateInicial ?? new Date());
-    const [dateFinal, setDateFinal] = useState(props.filterState?.dateFinal ?? new Date());
-    const [hora, setHora] = useState(props.filterState?.hora ?? [9, 18]);
+    const [dateInicial, setDateInicial] = useState(props.filterState?.date_inicial ?? props.original.data_inicial);
+    const [dateFinal, setDateFinal] = useState(props.filterState?.date_final ?? props.original.data_final);
+    const [hora, setHora] = useState([props.filterState?.hora_inicial ?? 9, props.filterState?.hora_final ?? 18]);
     const [ativo, setAtivo] = useState(props.filterState?.ativo ?? []);
-    const [gerenciamento, setGerenciamento] = useState(props.filterState?.gerenciamento ?? null);
+    const [gerenciamento, setGerenciamento] = useState(props.filterState.gerenciamento);
     const [cenario, setCenario] = useState(props.filterState?.cenario ?? {});
     // Simulations
-    const [periodo, setPeriodo] = useState(props.simulationState?.periodo_calc ?? 1);
-    const [custo, setCusto] = useState(props.simulationState?.usa_custo ?? 1);
-    const [ignoraErro, setIgnoraErro] = useState(props.simulationState?.ignora_erro ?? 0);
-    const [tipoCts, setTipoCts] = useState(props.simulationState?.tipo_cts ?? 1);
+    const [periodo, setPeriodo] = useState(props.simulationState.periodo_calc);
+    const [custo, setCusto] = useState(props.simulationState.usa_custo);
+    const [ignoraErro, setIgnoraErro] = useState(props.simulationState.ignora_erro);
+    const [tipoCts, setTipoCts] = useState(props.simulationState.tipo_cts);
     const [cts, setCts] = useState(props.simulationState?.cts ?? '');
     const [tipoParada, setTipoParada] = useState(props.simulationState?.tipo_parada ?? []);
     const [capital, setCapital] = useState(props.simulationState?.valor_inicial ?? '');
@@ -174,11 +181,11 @@ const FilterDashboard = (props) => {
     }, []);
 
     const handleDateInicialPicker = useCallback((value) => {
-        setDateInicial((prevState) => value);
+        setDateInicial((prevState) => new Date(value.toDateString()));
     }, []);
 
     const handleDateFinalPicker = useCallback((value) => {
-        setDateFinal((prevState) => value);
+        setDateFinal((prevState) => new Date(value.toDateString()));
     }, []);
 
     const handleHoraSlider = useCallback((e, value) => {
@@ -225,17 +232,38 @@ const FilterDashboard = (props) => {
         props.dispatchers.setFilterModalOpen(false);
     }, []);
 
-    // const handleSave = useCallback(() => {
-    //     let newFilters = {};
-    //     if (tipo.length) newFilters['tipo'] = [...tipo];
-    //     if (situacao.length) newFilters['situacao'] = [...situacao];
-    //     props.datagridDispatch({ type: DGR_TYPES.FILTERS_CHANGED, payload: newFilters });
-    // }, [tipo, situacao, props]);
+    const handleSave = () => {
+        let newFilters = {
+            gerenciamento: gerenciamento,
+        };
+        if (!isEqual(dateInicial, props.original.data_inicial)) newFilters['data_inicial'] = dateInicial;
+        if (!isEqual(dateFinal, props.original.data_final)) newFilters['data_final'] = dateFinal;
+        if (hora[0] !== minHoraSlider) newFilters['hora_inicial'] = hora[0];
+        if (hora[1] !== maxHoraSlider) newFilters['hora_final'] = hora[1];
+        if (ativos.length) newFilters['ativo'] = [...ativo];
+        if (!isObjectEmpty(cenario)) newFilters['cenario'] = cloneDeep(cenario);
+
+        let newSimulations = {
+            periodo_calc: periodo,
+            usa_custo: custo,
+            ignora_erro: ignoraErro,
+            tipo_cts: tipoCts,
+        };
+        if (cts !== '') newSimulations['cts'] = cts;
+        if (tipoParada.length) newSimulations['tipo_parada'] = [...tipoParada];
+        if (capital !== '') newSimulations['valor_inicial'] = capital;
+        if (riscoMaximo !== '') newSimulations['R'] = riscoMaximo;
+
+        batch(() => {
+            props.dispatchers.dataDispatch({ type: DGR_TYPES.FILTERS_CHANGED, payload: { filters: newFilters, simulations: newSimulations } });
+            props.dispatchers.setFilterModalOpen((prevState) => false);
+        });
+    };
 
     // const handleClear = useCallback(() => {
     //     setTipo([]);
     //     setSituacao([]);
-    //     props.datagridDispatch({ type: DGR_TYPES.FILTERS_CLEAR });
+    //     props.dataDispatch({ type: DGR_TYPES.FILTERS_CLEAR });
     // }, [props]);
 
     /************
@@ -312,8 +340,8 @@ const FilterDashboard = (props) => {
                                     closeOnSelect={true}
                                     value={dateInicial}
                                     onChange={handleDateInicialPicker}
-                                    minDate={dateInicial}
-                                    maxDate={dateFinal}
+                                    minDate={props.original.data_inicial}
+                                    maxDate={props.original.data_final}
                                     renderInput={(params) => <TextField {...params} fullWidth size='small' />}
                                 />
                             </LocalizationProvider>
@@ -325,8 +353,8 @@ const FilterDashboard = (props) => {
                                     closeOnSelect={true}
                                     value={dateFinal}
                                     onChange={handleDateFinalPicker}
-                                    minDate={dateInicial}
-                                    maxDate={dateFinal}
+                                    minDate={props.original.data_inicial}
+                                    maxDate={props.original.data_final}
                                     renderInput={(params) => <TextField {...params} fullWidth size='small' />}
                                 />
                             </LocalizationProvider>
@@ -338,8 +366,8 @@ const FilterDashboard = (props) => {
                                     valueLabelDisplay='auto'
                                     disableSwap
                                     marks={true}
-                                    min={9}
-                                    max={18}
+                                    min={minHoraSlider}
+                                    max={maxHoraSlider}
                                     value={hora}
                                     onChange={handleHoraSlider}
                                     valueLabelFormat={horaValueText}
@@ -480,7 +508,7 @@ const FilterDashboard = (props) => {
                 <Button className={styles.action_clear} onClick={handleClose}>
                     Cancelar
                 </Button>
-                <Button onClick={() => {}} endIcon={<AutoFixHigh />}>
+                <Button onClick={handleSave} endIcon={<AutoFixHigh />}>
                     Salvar
                 </Button>
             </DialogActions>

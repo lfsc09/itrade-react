@@ -52,7 +52,13 @@ const Dashboard = () => {
         axiosCon
             .get('/dash/step1', { signal: abortController.signal })
             .then((resp) => {
-                let loadData = { datasets: resp.data.datasets, filters: {}, simulations: {} };
+                // Carrega informações no SESSION STORAGE
+                let sessionData = JSON.parse(sessionStorage.getItem('daytrade')) ?? {
+                    filters: { gerenciamento: null },
+                    simulations: { periodo_calc: 1, usa_custo: 1, ignora_erro: 1, tipo_cts: 1 },
+                };
+                console.log(sessionData);
+                let loadData = { datasets: resp.data.datasets, filters: sessionData.filters, simulations: sessionData.simulations };
                 dataDispatch({ type: DGR_TYPES.STEP1_LOAD, payload: loadData });
             })
             .catch((error) => {
@@ -87,6 +93,10 @@ const Dashboard = () => {
                 open={filterModalOpen}
                 filterState={dataState.filters}
                 simulationState={dataState.simulations}
+                /**
+                 * TODO:
+                 */
+                original={{ data_inicial: new Date(new Date().toDateString()), data_final: new Date(new Date().toDateString()) }}
                 datasetSuggest={dataState.datasets}
                 dispatchers={{ dataDispatch: dataDispatch, setFilterModalOpen: setFilterModalOpen }}
             />

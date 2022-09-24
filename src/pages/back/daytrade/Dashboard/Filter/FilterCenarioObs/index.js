@@ -53,7 +53,7 @@ const FilterCenarioObs = (props) => {
         (e) => {
             let cpyCenario = cloneDeep(cenario);
             const cIndx = props.cenarios.findIndex((v) => v.nome);
-            if (e.target.checked) cpyCenario[e.target.name] = { id: props.cenarios[cIndx].nome, observacoes: {} };
+            if (e.target.checked) cpyCenario[e.target.name] = { id: props.cenarios[cIndx].id, observacoes: {} };
             else delete cpyCenario[e.target.name];
             setCenario((prevState) => cpyCenario);
         },
