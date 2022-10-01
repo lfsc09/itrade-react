@@ -1,13 +1,13 @@
-import React from 'react';
-import { Stack, TextField } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
 import { Send } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import { Stack, TextField } from '@mui/material';
 import { useFormik } from 'formik';
-import SnackOverlay from '../ui/SnackOverlay';
-import * as yup from 'yup';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { login } from '../../store/auth/auth-thunk';
-import { remove } from '../../store/snack-messages/snack-messages-slice';
+import * as yup from 'yup';
+
+import { login } from '../../../store/auth/auth-thunk';
+import MessageController from '../../ui/MessageController';
 
 const validationLoginSchema = yup.object({
     usuario: yup.string().trim().required('Informe seu usuário'),
@@ -24,7 +24,6 @@ const LoginForm = () => {
      * STATES
      *********/
     const { isLoading } = useSelector((store) => store.auth);
-    const { snacks } = useSelector((store) => store.snackMessages);
 
     /********
      * FORMS
@@ -42,11 +41,7 @@ const LoginForm = () => {
 
     return (
         <>
-            {snacks.map((item) => (
-                <SnackOverlay key={item.key} open={true} severity={item.severity} onClose={() => dispatch(remove(item.key))}>
-                    {item.message}
-                </SnackOverlay>
-            ))}
+            <MessageController overlay={true} />
             <form onSubmit={formik.handleSubmit}>
                 <Stack spacing={2} minWidth={250}>
                     <TextField

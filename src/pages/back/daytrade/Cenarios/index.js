@@ -20,16 +20,16 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 
 import gStyles from '../../../../assets/back/scss/global.module.scss';
+import MessageController from '../../../../components/ui/MessageController';
 import NoContent from '../../../../components/ui/NoContent';
-import SnackOverlay from '../../../../components/ui/SnackOverlay';
 import { axiosCon } from '../../../../helpers/axios-con';
 import { generateHash, isObjectEmpty } from '../../../../helpers/global';
+import { add } from '../../../../store/api-messages/api-messages-slice';
 import { handleLogout } from '../../../../store/auth/auth-action';
-import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
 import CenarioItem from './CenarioItem';
 import styles from './cenarios.module.scss';
 import { reducer as dataReducer, INI_STATE as DGR_INI_STATE, TYPES as DGR_TYPES } from './dataReducer';
@@ -44,11 +44,6 @@ const Cenarios = () => {
      * NAVIGATE
      ***********/
     const navigate = useNavigate();
-
-    /******************
-     * SNACKS SELECTOR
-     ******************/
-    const { snacks } = useSelector((store) => store.snackMessages);
 
     /*********
      * STATES
@@ -321,11 +316,7 @@ const Cenarios = () => {
 
     return (
         <>
-            {snacks.map((item) => (
-                <SnackOverlay key={item.key} open={true} severity={item.severity} onClose={() => dispatch(remove(item.key))}>
-                    {item.message}
-                </SnackOverlay>
-            ))}
+            <MessageController overlay={true} />
             <Box
                 className={gStyles.wrapper}
                 component={motion.div}

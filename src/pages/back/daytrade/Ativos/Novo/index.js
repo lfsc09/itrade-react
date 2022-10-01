@@ -4,17 +4,17 @@ import { Box, Breadcrumbs, Divider, Grid, Paper, Stack, TextField, Typography } 
 import { useFormik } from 'formik';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import * as yup from 'yup';
 
 import gStyles from '../../../../../assets/back/scss/global.module.scss';
-import SnackOverlay from '../../../../../components/ui/SnackOverlay';
+import MessageController from '../../../../../components/ui/MessageController';
 import { axiosCon } from '../../../../../helpers/axios-con';
 import { isObjectEmpty } from '../../../../../helpers/global';
+import { add } from '../../../../../store/api-messages/api-messages-slice';
 import { handleLogout } from '../../../../../store/auth/auth-action';
-import { add, remove } from '../../../../../store/snack-messages/snack-messages-slice';
 import styles from './ativos-novo.module.scss';
 import AtivoNovoSkeleton from './Skeleton';
 
@@ -37,11 +37,6 @@ const NovoAtivo = (props) => {
      * NAVIGATE
      ***********/
     const navigate = useNavigate();
-
-    /******************
-     * SNACKS SELECTOR
-     ******************/
-    const { snacks } = useSelector((store) => store.snackMessages);
 
     /*********
      * STATES
@@ -204,11 +199,7 @@ const NovoAtivo = (props) => {
 
     return (
         <>
-            {snacks.map((item) => (
-                <SnackOverlay key={item.key} open={true} severity={item.severity} onClose={() => dispatch(remove(item.key))}>
-                    {item.message}
-                </SnackOverlay>
-            ))}
+            <MessageController overlay={true} />
             <Box
                 className={gStyles.wrapper}
                 component={motion.div}

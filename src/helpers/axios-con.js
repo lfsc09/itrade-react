@@ -1,5 +1,5 @@
-import axios from 'axios';
 import ProgressBar from '@badrap/bar-of-progress';
+import axios from 'axios';
 
 const progressBar = new ProgressBar();
 
@@ -25,6 +25,7 @@ axiosCon.interceptors.response.use(
         return response;
     },
     (error) => {
+        progressBar.finish();
         return Promise.reject(error);
     }
 );

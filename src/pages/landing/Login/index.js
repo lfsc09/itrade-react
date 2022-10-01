@@ -1,8 +1,9 @@
-import styles from './login.module.css';
 import { Box, Container } from '@mui/system';
-import React from 'react';
-import LoginForm from '../../../components/landing/LoginForm';
 import { motion } from 'framer-motion';
+import React from 'react';
+
+import LoginForm from '../../../components/landing/LoginForm';
+import styles from './login.module.scss';
 
 const Login = () => {
     return (

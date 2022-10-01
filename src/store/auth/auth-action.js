@@ -1,4 +1,5 @@
 import jwtDecode from 'jwt-decode';
+
 import { axiosCon } from '../../helpers/axios-con';
 import { logout, setUserFromLocalToken } from './auth-slice';
 

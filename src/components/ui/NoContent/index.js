@@ -1,6 +1,7 @@
-import styles from './no-content.module.scss';
-import React from 'react';
 import { Paper, Typography } from '@mui/material';
+import React from 'react';
+
+import styles from './no-content.module.scss';
 
 const NoContent = (props) => {
     if (props.type === 'img') return <div>Image not Found</div>;

@@ -12,9 +12,9 @@ export const INI_STATE = {
     cenarios: [],
     operacoes_p_dataset: [],
     // Filtros
-    filters: {},
+    filters: null,
     // Simulações
-    simulations: {},
+    simulations: null,
 };
 
 export const reducer = (state, action) => {
@@ -26,6 +26,14 @@ export const reducer = (state, action) => {
                 operacoes_p_dataset: [],
                 filters: action.payload.filters,
                 simulations: action.payload.simulations,
+            };
+        case TYPES.STEP2_LOAD:
+            return {
+                datasets: cloneDeep(state.datasets),
+                cenarios: action.payload.cenarios,
+                operacoes_p_dataset: action.payload.operacoes_p_dataset,
+                filters: cloneDeep(state.filters),
+                simulations: cloneDeep(state.simulations),
             };
         case TYPES.FILTERS_CHANGED:
             return {

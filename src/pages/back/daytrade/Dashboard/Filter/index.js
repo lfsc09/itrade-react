@@ -26,17 +26,17 @@ import {
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import ptBR from 'date-fns/locale/pt-BR';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { isEqual } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
+import cloneDeep from 'lodash.clonedeep';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { batch } from 'react-redux';
 
+import { isObjectEmpty } from '../../../../../helpers/global';
 import { TYPES as DGR_TYPES } from '../dataReducer';
 import styles from './dashboard-filter.module.scss';
 import FilterCenarioObs from './FilterCenarioObs';
 import SimulationParada from './SimulationParada';
-import { isObjectEmpty } from '../../../../../helpers/global';
-import cloneDeep from 'lodash.clonedeep';
-import { batch } from 'react-redux';
 
 const minHoraSlider = 9,
     maxHoraSlider = 18;
@@ -67,7 +67,7 @@ const FilterDashboard = (props) => {
     /*********
      * STATES
      *********/
-    const [dataset, setDataset] = useState(props.filterState?.datasets ?? []);
+    const [dataset, setDataset] = useState(props.filterState?.dataset);
     const [comparaDataset, setComparaDataset] = useState(props.filterState?.comparaDataset ?? false);
     // Filters
     const [dateInicial, setDateInicial] = useState(props.filterState?.date_inicial ?? props.original.data_inicial);
@@ -236,6 +236,11 @@ const FilterDashboard = (props) => {
         let newFilters = {
             gerenciamento: gerenciamento,
         };
+        if (!isObjectEmpty(dataset)) {
+            newFilters['dataset'] = cloneDeep(dataset);
+            // Checksum com ID do dataset, para uso no useEffect do Dashboard
+            newFilters['dataset_react_checksum'] = dataset.reduce((t, d) => t + d.id, 0);
+        }
         if (!isEqual(dateInicial, props.original.data_inicial)) newFilters['data_inicial'] = dateInicial;
         if (!isEqual(dateFinal, props.original.data_final)) newFilters['data_final'] = dateFinal;
         if (hora[0] !== minHoraSlider) newFilters['hora_inicial'] = hora[0];
@@ -319,7 +324,7 @@ const FilterDashboard = (props) => {
                                 <FormControlLabel
                                     classes={{ label: styles.filter__compara_label }}
                                     componentsProps={{ typography: { variant: 'overline' } }}
-                                    control={<Switch color='success' checked={comparaDataset} onChange={handleComparaDatasetSwitch} />}
+                                    control={<Switch color='success' checked={comparaDataset} onChange={handleComparaDatasetSwitch} disabled />}
                                     label={comparaDataset ? 'Comparar Datasets' : 'Juntar Datasets'}
                                 />
                             </FormGroup>

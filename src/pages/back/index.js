@@ -1,17 +1,18 @@
-import styles from './back.module.scss';
+import { Stack } from '@mui/material';
 import React from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { Stack } from '@mui/material';
+
 import NavSide from '../../components/back/NavSide';
 import NoContent from '../../components/ui/NoContent';
+import styles from './back.module.scss';
+import DaytradeAtivos from './daytrade/Ativos';
+import DaytradeAtivosNovo from './daytrade/Ativos/Novo';
+import DaytradeCenarios from './daytrade/Cenarios';
 import DaytradeDashboard from './daytrade/Dashboard';
 import DaytradeDatasets from './daytrade/Datasets';
 import DaytradeDatasetsNovo from './daytrade/Datasets/Novo';
-import DaytradeAtivos from './daytrade/Ativos';
-import DaytradeAtivosNovo from './daytrade/Ativos/Novo';
 import DaytradeGerenciamentos from './daytrade/Gerenciamentos';
 import DaytradeGerenciamentosNovo from './daytrade/Gerenciamentos/Novo';
-import DaytradeCenarios from './daytrade/Cenarios';
 
 const content_switch = (url, urlParams) => {
     if (url.match(/^.*\/daytrade\/dashboard$/)) return <DaytradeDashboard />;

@@ -1,11 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
+
+import apiMessagesReducer from './api-messages/api-messages-slice';
 import authReducer from './auth/auth-slice';
-import snackMessagesReducer from './snack-messages/snack-messages-slice';
 
 const store = configureStore({
     reducer: {
         auth: authReducer,
-        snackMessages: snackMessagesReducer,
+        apiMessages: apiMessagesReducer,
     },
 });
 

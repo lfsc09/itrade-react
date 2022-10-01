@@ -112,3 +112,33 @@ npm install @reduxjs/toolkit react-redux
 ```
 npm install sass
 ```
+
+### Plugin CKEditor5 (https://ckeditor.com/docs/ckeditor5/latest)
+
+Para build normal
+
+```
+npm install @ckeditor/ckeditor5-react @ckeditor/ckeditor5-build-classic
+```
+
+Para custom builds, criadas a partir do site deles
+
+```
+Arquivo baixado separadamente do site deve ser extraido direto no root do projeto
+```
+
+```
+Adicionar manualmente no package.json e package-lock.json: "ckeditor5-custom-build": "file:ckeditor5"
+```
+
+### Plugin Progress Bar on Top (https://github.com/badrap/bar-of-progress)
+
+```
+npm install @badrap/bar-of-progress
+```
+
+### Plugin cloneDeep (https://lodash.com/docs/#cloneDeep)
+
+```
+npm install lodash.clonedeep
+```

@@ -1,0 +1,18 @@
+.container {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    margin: 0 24px 16px 24px;
+    max-width: 100vw;
+    display: flex;
+    flex-direction: column;
+}
+
+.container__apaga_tudo {
+    width: 100%;
+
+    .apaga_tudo {
+        font-size: 0.6rem;
+        padding-bottom: 0;
+    }
+}

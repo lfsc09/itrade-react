@@ -1,8 +1,9 @@
 import React from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import LandingLogin from '../pages/landing/Login';
+import { Navigate, Route, Routes } from 'react-router-dom';
+
 import BackWrapper from '../pages/back';
+import LandingLogin from '../pages/landing/Login';
 
 const MainRoutes = () => {
     const { user } = useSelector((store) => store.auth);

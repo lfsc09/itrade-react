@@ -3,16 +3,16 @@ import { Box, Breadcrumbs, Button, Chip, Divider, Grid, IconButton, LinearProgre
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
-import { useDispatch, useSelector, batch } from 'react-redux';
+import { batch, useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 
 import gStyles from '../../../../assets/back/scss/global.module.scss';
 import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
-import SnackOverlay from '../../../../components/ui/SnackOverlay';
+import MessageController from '../../../../components/ui/MessageController';
 import { axiosCon } from '../../../../helpers/axios-con';
 import { formatValue_fromRaw, isObjectEmpty } from '../../../../helpers/global';
+import { add } from '../../../../store/api-messages/api-messages-slice';
 import { handleLogout } from '../../../../store/auth/auth-action';
-import { add, remove } from '../../../../store/snack-messages/snack-messages-slice';
 import { reducer as datagridReducer, INI_STATE as DGR_INI_STATE, TYPES as DGR_TYPES } from './datagridReducer';
 import styles from './datasets.module.scss';
 import FilterDataset from './Filter';
@@ -62,11 +62,6 @@ const Datasets = () => {
      * NAVIGATE
      ***********/
     const navigate = useNavigate();
-
-    /******************
-     * SNACKS SELECTOR
-     ******************/
-    const { snacks } = useSelector((store) => store.snackMessages);
 
     /*******************
      * DATAGRID REDUCER
@@ -259,11 +254,7 @@ const Datasets = () => {
 
     return (
         <>
-            {snacks.map((item) => (
-                <SnackOverlay key={item.key} open={true} severity={item.severity} onClose={() => dispatch(remove(item.key))}>
-                    {item.message}
-                </SnackOverlay>
-            ))}
+            <MessageController overlay={true} />
             <ConfirmDialog
                 open={datagridState.idRowDeleteConfirm !== null}
                 title='Deseja apagar mesmo?'

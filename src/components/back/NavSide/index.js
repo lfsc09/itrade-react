@@ -1,11 +1,12 @@
-import styles from './navside.module.scss';
 import { Analytics, CandlestickChart, CloudUpload, DataThresholding, Euro, ExpandLess, ExpandMore, Grading, Layers, LocalAtm, Logout, Science, Storage } from '@mui/icons-material';
-import { Divider, Paper, Box, List, ListItemButton, ListItemIcon, ListItemText, Collapse } from '@mui/material';
-import React, { useState } from 'react';
+import { Box, Collapse, Divider, List, ListItemButton, ListItemIcon, ListItemText, Paper } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
+
 import { handleLogout } from '../../../store/auth/auth-action';
+import styles from './navside.module.scss';
 
 const NavSide = () => {
     const dispatch = useDispatch();

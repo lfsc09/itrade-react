@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import React from 'react';
 
 import styles from './confirm-dialog.module.scss';
