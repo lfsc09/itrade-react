@@ -9,28 +9,26 @@ import {
     DialogTitle,
     Divider,
     FormControl,
-    FormControlLabel,
-    FormGroup,
     Grid,
     InputLabel,
     ListItemText,
     MenuItem,
-    Paper,
     Select,
     Slider,
     Stack,
-    Switch,
     TextField,
     Typography,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { PickersDay } from '@mui/x-date-pickers/PickersDay';
 import { isEqual } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import cloneDeep from 'lodash.clonedeep';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { batch } from 'react-redux';
+import { batch, useDispatch } from 'react-redux';
+import { format } from 'date-fns';
 
 import { isObjectEmpty } from '../../../../../helpers/global';
 import { TYPES as DGR_TYPES } from '../dataReducer';
@@ -64,14 +62,17 @@ const tiposCts = [
 ];
 
 const FilterDashboard = (props) => {
+    /***********
+     * DISPATCH
+     ***********/
+    const dispatch = useDispatch();
+
     /*********
      * STATES
      *********/
-    const [dataset, setDataset] = useState(props.filterState?.dataset);
-    const [comparaDataset, setComparaDataset] = useState(props.filterState?.comparaDataset ?? false);
     // Filters
-    const [dateInicial, setDateInicial] = useState(props.filterState?.date_inicial ?? props.original.data_inicial);
-    const [dateFinal, setDateFinal] = useState(props.filterState?.date_final ?? props.original.data_final);
+    const [dateInicial, setDateInicial] = useState(props.filterState?.date_inicial ?? props.original.date_inicial);
+    const [dateFinal, setDateFinal] = useState(props.filterState?.date_final ?? props.original.date_final);
     const [hora, setHora] = useState([props.filterState?.hora_inicial ?? 9, props.filterState?.hora_final ?? 18]);
     const [ativo, setAtivo] = useState(props.filterState?.ativo ?? []);
     const [gerenciamento, setGerenciamento] = useState(props.filterState.gerenciamento);
@@ -86,100 +87,9 @@ const FilterDashboard = (props) => {
     const [capital, setCapital] = useState(props.simulationState?.valor_inicial ?? '');
     const [riscoMaximo, setRiscoMaximo] = useState(props.simulationState?.R ?? '');
 
-    /*******
-     * VARS
-     *******/
-    const ativos = useMemo(() => [], []);
-    const gerenciamentos = useMemo(() => [], []);
-    const cenarios = useMemo(
-        () => [
-            {
-                id: 1,
-                nome: 'FT',
-                observacoes: [
-                    {
-                        id: '1329',
-                        ref: '1',
-                        nome: '(Entrada) 50%: Compra Acima / Venda Abaixo',
-                    },
-                    {
-                        id: '1330',
-                        ref: '2',
-                        nome: '(Entrada) EMA20: Compra Acima / Venda Abaixo',
-                    },
-                    {
-                        id: '1331',
-                        ref: '3',
-                        nome: '(Entrada) PLOT60: Entre entrada e alvo ou tocando',
-                    },
-                    {
-                        id: '1332',
-                        ref: '4',
-                        nome: '(Padrão) Rompimento barra Ruim',
-                    },
-                    {
-                        id: '1333',
-                        ref: '5',
-                        nome: '(Padrão) Rompimento barra Forte',
-                    },
-                    {
-                        id: '1334',
-                        ref: '6',
-                        nome: '(Padrão) Rompimento é Outside',
-                    },
-                    {
-                        id: '1335',
-                        ref: '7',
-                        nome: '(Padrão) Continuidade Forte',
-                    },
-                    {
-                        id: '1336',
-                        ref: '8',
-                        nome: '(Padrão) Continuidade é Outside',
-                    },
-                    {
-                        id: '1337',
-                        ref: '9',
-                        nome: '(Padrão) Continuidade é Inside',
-                    },
-                    {
-                        id: '1338',
-                        ref: '10',
-                        nome: '(Padrão) Continuidade toca na EMA20',
-                    },
-                    {
-                        id: '1339',
-                        ref: '11',
-                        nome: '(Padrão) 3 barras consecutivas contando com a continuidade',
-                    },
-                    {
-                        id: '1340',
-                        ref: '12',
-                        nome: '(Padrão) Veio de A2/B2 ou A4/B4',
-                    },
-                    {
-                        id: '1341',
-                        ref: '13',
-                        nome: '(Padrão) Veio de pré-rompimento',
-                    },
-                ],
-            },
-            { id: 2, nome: 'FTS', observacoes: [] },
-        ],
-        []
-    );
-
     /***********
      * HANDLERS
      ***********/
-    const handleDatasetAutocomplete = useCallback((e, values) => {
-        setDataset((prevState) => values);
-    }, []);
-
-    const handleComparaDatasetSwitch = useCallback((e) => {
-        setComparaDataset((prevState) => e.target.checked);
-    }, []);
-
     const handleDateInicialPicker = useCallback((value) => {
         setDateInicial((prevState) => new Date(value.toDateString()));
     }, []);
@@ -197,7 +107,7 @@ const FilterDashboard = (props) => {
     }, []);
 
     const handleGerenciamentoAutocomplete = useCallback((e, values) => {
-        setGerenciamento((prevState) => values);
+        if (values !== null) setGerenciamento((prevState) => values);
     }, []);
 
     const handlePeriodoSelect = useCallback((e) => {
@@ -213,7 +123,12 @@ const FilterDashboard = (props) => {
     }, []);
 
     const handleTipoCtsSelect = useCallback((e) => {
-        setTipoCts((prevState) => e.target.value);
+        if (e.target.value === 1) {
+            batch(() => {
+                setCts((prevState) => '');
+                setTipoCts((prevState) => e.target.value);
+            });
+        } else setTipoCts((prevState) => e.target.value);
     }, []);
 
     const handleCtsInput = useCallback((e) => {
@@ -236,16 +151,11 @@ const FilterDashboard = (props) => {
         let newFilters = {
             gerenciamento: gerenciamento,
         };
-        if (!isObjectEmpty(dataset)) {
-            newFilters['dataset'] = cloneDeep(dataset);
-            // Checksum com ID do dataset, para uso no useEffect do Dashboard
-            newFilters['dataset_react_checksum'] = dataset.reduce((t, d) => t + d.id, 0);
-        }
-        if (!isEqual(dateInicial, props.original.data_inicial)) newFilters['data_inicial'] = dateInicial;
-        if (!isEqual(dateFinal, props.original.data_final)) newFilters['data_final'] = dateFinal;
+        if (!isEqual(dateInicial, props.original.date_inicial)) newFilters['data_inicial'] = dateInicial;
+        if (!isEqual(dateFinal, props.original.date_final)) newFilters['data_final'] = dateFinal;
         if (hora[0] !== minHoraSlider) newFilters['hora_inicial'] = hora[0];
         if (hora[1] !== maxHoraSlider) newFilters['hora_final'] = hora[1];
-        if (ativos.length) newFilters['ativo'] = [...ativo];
+        if (ativo.length) newFilters['ativo'] = [...ativo];
         if (!isObjectEmpty(cenario)) newFilters['cenario'] = cloneDeep(cenario);
 
         let newSimulations = {
@@ -278,6 +188,26 @@ const FilterDashboard = (props) => {
         return `${value}:00`;
     }, []);
 
+    const disableWeekends = useCallback((day) => day.getDay() === 0 || day.getDay() === 6, []);
+
+    const renderDay = useCallback(
+        (date, selectedDates, pickersDayProps) => {
+            if (format(date, 'yyyy-MM-dd') in props.original.dias) return <PickersDay className={styles.filter__date__has_data} {...pickersDayProps} />;
+
+            return <PickersDay {...pickersDayProps} />;
+        },
+        [props.original.date_inicial, props.original.date_final]
+    );
+
+    /*******************************************
+     * UPDATE FILTERS (AFTER CHANGED DATASETS)
+     *******************************************/
+    useEffect(() => {
+        if (props.filterState.gerenciamento !== gerenciamento) setGerenciamento((prevState) => props.filterState.gerenciamento);
+        if (props.original.date_inicial !== dateInicial) setDateInicial((prevState) => props.original.date_inicial);
+        if (props.original.date_final !== dateFinal) setDateFinal((prevState) => props.original.date_final);
+    }, [props.filterState.gerenciamento, props.original.date_inicial, props.original.date_final]);
+
     /***************
      * RESET INPUTS
      ***************/
@@ -289,47 +219,10 @@ const FilterDashboard = (props) => {
     // }, [props.open]);
 
     return (
-        <Dialog open={props.open} onClose={handleClose} maxWidth='lg' fullWidth>
+        <Dialog open={props.open} onClose={handleClose} maxWidth='xl' fullWidth>
             <DialogTitle>Filtros</DialogTitle>
             <DialogContent dividers={true}>
                 <Grid container spacing={3}>
-                    <Grid container item spacing={2} xs={12}>
-                        <Grid item md={9} xs={12}>
-                            <Autocomplete
-                                multiple
-                                disableCloseOnSelect
-                                name='dataset'
-                                options={props.datasetSuggest}
-                                value={dataset}
-                                onChange={handleDatasetAutocomplete}
-                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                                getOptionLabel={(option) => option.nome}
-                                renderOption={(props, option, { selected }) => (
-                                    <li {...props}>
-                                        <Checkbox
-                                            icon={<CheckBoxOutlineBlank fontSize='small' />}
-                                            checkedIcon={<CheckBox fontSize='small' />}
-                                            style={{ marginRight: 8 }}
-                                            checked={selected}
-                                        />
-                                        <ListItemText primary={option.nome} />
-                                    </li>
-                                )}
-                                style={{ width: '100%' }}
-                                renderInput={(params) => <TextField {...params} label='Dataset' placeholder='' />}
-                            />
-                        </Grid>
-                        <Grid item md={3} xs={12} className={styles.filter__compara}>
-                            <FormGroup>
-                                <FormControlLabel
-                                    classes={{ label: styles.filter__compara_label }}
-                                    componentsProps={{ typography: { variant: 'overline' } }}
-                                    control={<Switch color='success' checked={comparaDataset} onChange={handleComparaDatasetSwitch} disabled />}
-                                    label={comparaDataset ? 'Comparar Datasets' : 'Juntar Datasets'}
-                                />
-                            </FormGroup>
-                        </Grid>
-                    </Grid>
                     <Grid item xs={12}>
                         <Divider textAlign='left'>
                             <Typography variant='overline' className={styles.divider_title}>
@@ -338,33 +231,37 @@ const FilterDashboard = (props) => {
                         </Divider>
                     </Grid>
                     <Grid container item spacing={2} xs={12} sx={{ alignItems: 'center' }}>
-                        <Grid item md={2} xs={12}>
+                        <Grid item md={1.5} xs={12}>
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
                                 <DatePicker
                                     label='De'
                                     closeOnSelect={true}
                                     value={dateInicial}
                                     onChange={handleDateInicialPicker}
-                                    minDate={props.original.data_inicial}
-                                    maxDate={props.original.data_final}
+                                    minDate={props.original.date_inicial}
+                                    maxDate={props.original.date_final}
+                                    shouldDisableDate={disableWeekends}
+                                    renderDay={renderDay}
                                     renderInput={(params) => <TextField {...params} fullWidth size='small' />}
                                 />
                             </LocalizationProvider>
                         </Grid>
-                        <Grid item md={2} xs={12}>
+                        <Grid item md={1.5} xs={12}>
                             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
                                 <DatePicker
                                     label='Até'
                                     closeOnSelect={true}
                                     value={dateFinal}
                                     onChange={handleDateFinalPicker}
-                                    minDate={props.original.data_inicial}
-                                    maxDate={props.original.data_final}
+                                    minDate={props.original.date_inicial}
+                                    maxDate={props.original.date_final}
+                                    shouldDisableDate={disableWeekends}
+                                    renderDay={renderDay}
                                     renderInput={(params) => <TextField {...params} fullWidth size='small' />}
                                 />
                             </LocalizationProvider>
                         </Grid>
-                        <Grid item md={2} xs={12}>
+                        <Grid item md={1.5} xs={12}>
                             <Stack spacing={2} direction='row' alignItems='center'>
                                 <AccessTime sx={{ color: '#555' }} />
                                 <Slider
@@ -380,12 +277,13 @@ const FilterDashboard = (props) => {
                                 />
                             </Stack>
                         </Grid>
-                        <Grid item md={6} xs={12}>
+                        <Grid item md={2} xs={12}>
                             <Autocomplete
                                 multiple
                                 name='ativo'
                                 size='small'
-                                options={ativos}
+                                limitTags={2}
+                                options={props.ativosSuggest}
                                 value={ativo}
                                 onChange={handleAtivoAutocomplete}
                                 disableCloseOnSelect
@@ -406,11 +304,11 @@ const FilterDashboard = (props) => {
                                 renderInput={(params) => <TextField {...params} label='Ativos' placeholder='' />}
                             />
                         </Grid>
-                        <Grid item md={6} xs={12}>
+                        <Grid item md={2} xs={12}>
                             <Autocomplete
                                 name='gerenciamento'
                                 size='small'
-                                options={gerenciamentos}
+                                options={props.gerenciamentosSuggest}
                                 value={gerenciamento}
                                 onChange={handleGerenciamentoAutocomplete}
                                 disableCloseOnSelect
@@ -431,8 +329,8 @@ const FilterDashboard = (props) => {
                                 renderInput={(params) => <TextField {...params} label='Gerenciamentos' placeholder='' />}
                             />
                         </Grid>
-                        <Grid item md={6} xs={12}>
-                            <FilterCenarioObs cenarios={cenarios} receivedCenario={cenario} returnCenario={setCenario} />
+                        <Grid item md={3.5} xs={12}>
+                            <FilterCenarioObs cenarios={props.cenariosSuggest} receivedCenario={cenario} returnCenario={setCenario} />
                         </Grid>
                     </Grid>
                     <Grid item xs={12}>
@@ -443,7 +341,7 @@ const FilterDashboard = (props) => {
                         </Divider>
                     </Grid>
                     <Grid container item spacing={2} xs={12}>
-                        <Grid item md={2} xs={12}>
+                        <Grid item md={1} xs={12}>
                             <FormControl fullWidth>
                                 <InputLabel>Período</InputLabel>
                                 <Select value={periodo} label='Período' size='small' onChange={handlePeriodoSelect}>
@@ -455,7 +353,7 @@ const FilterDashboard = (props) => {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item md={2} xs={12}>
+                        <Grid item md={1.5} xs={12}>
                             <FormControl fullWidth>
                                 <InputLabel>Custos</InputLabel>
                                 <Select value={custo} label='Custos' size='small' onChange={handleCustoSelect}>
@@ -467,7 +365,7 @@ const FilterDashboard = (props) => {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item md={2} xs={12}>
+                        <Grid item md={1} xs={12}>
                             <FormControl fullWidth>
                                 <InputLabel>Ignorar Erros</InputLabel>
                                 <Select value={ignoraErro} label='Ignorar Erros' size='small' onChange={handleIgnoraErroSelect}>
@@ -494,14 +392,14 @@ const FilterDashboard = (props) => {
                                 <TextField className={styles.simulation__cts} value={cts} label='Cts' size='small' disabled={tipoCts === 1} onChange={handleCtsInput} />
                             </Stack>
                         </Grid>
-                        <Grid item md={3} xs={12}>
-                            <SimulationParada receivedTipoParada={tipoParada} returnTipoParada={setTipoParada} />
-                        </Grid>
-                        <Grid item md={2} xs={12}>
+                        <Grid item md={1.5} xs={12}>
                             <TextField label='Simular Capital' value={capital} onChange={handleCapitalInput} size='small' fullWidth />
                         </Grid>
-                        <Grid item md={2} xs={12}>
+                        <Grid item md={1.5} xs={12}>
                             <TextField label='Simular Risco Máximo' value={riscoMaximo} onChange={handleRiscoMaximoInput} size='small' fullWidth />
+                        </Grid>
+                        <Grid item md={2.5} xs={12}>
+                            <SimulationParada receivedTipoParada={tipoParada} returnTipoParada={setTipoParada} />
                         </Grid>
                     </Grid>
                 </Grid>

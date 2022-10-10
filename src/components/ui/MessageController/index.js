@@ -7,12 +7,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { remove, removeAll } from '../../../store/api-messages/api-messages-slice';
 import styles from './message-controller.module.scss';
 
-/**
- * Controller de Mensagens
- *  - messages: Array de mensagens
- *  - overlay: (true|false) Se deve mostrar as mensagens em overlay ou se irá cria-las em algum local especifico da pagina
- *
- *  Se for em overlay e houver mais de 1 mensagem, é criado um container com um botão para apagar todos de uma vez
+/*
+    Controller de Mensagens.
+    
+    Busca mensagens direto no Redux de mensagens.
+    Se for em overlay e houver mais de 1 mensagem, é criado um container com um botão para apagar todos de uma vez.
+
+    @props : [
+        ...
+        overlay(true|false) : Se deve mostrar as mensagens em overlay ou se irá cria-las em algum local especifico da pagina
+    ]
  */
 const MessageController = (props) => {
     /**********

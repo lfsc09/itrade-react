@@ -1,13 +1,13 @@
-/**
- * Retorna a quarta-feira do mes mais próxima do dia 15 (Para o WIN)
- */
+/*
+    Retorna a quarta-feira do mes mais próxima do dia 15 (Para o WIN).
+*/
 const winSeries__getQuartas15 = (ano, mes) => {
     let d = new Date(ano, mes, 1),
         wednesdays = [],
         choosen_wed = null;
-    // Get the first Wednesday in the month
+    // Busca a primeira quarta-feira do mes
     while (d.getDay() !== 3) d.setDate(d.getDate() + 1);
-    // Get all the other Wednesdays in the month
+    // Pega todas as outras quartas-feiras do mes
     while (d.getMonth() === mes) {
         let day = new Date(d.getTime()).getDate();
         wednesdays.push({
@@ -23,9 +23,9 @@ const winSeries__getQuartas15 = (ano, mes) => {
     return choosen_wed.day;
 };
 
-/**
- * Gera os contratos de vencimentos do WIN para o @ano
- */
+/*
+    Gera os contratos de vencimentos do WIN para o @ano
+*/
 const winSeries = (ano) => {
     let today = new Date(),
         p = {},
@@ -40,7 +40,7 @@ const winSeries = (ano) => {
     if (today.getFullYear() === ano)
         p.isCurrent = (today.getMonth() === 11 && today.getDate() >= p.start.d) || today.getMonth() === 0 || (today.getMonth() === 1 && today.getDate() <= p.end.d);
     periods.push(p);
-    //Fev - Abr
+    // Fev - Abr
     p = { start: {}, end: {}, isCurrent: false, letter: 'J' };
     p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 1, 1));
     p.start.d = winSeries__getQuartas15(ano, 1);
@@ -50,7 +50,7 @@ const winSeries = (ano) => {
     if (today.getFullYear() === ano)
         p.isCurrent = (today.getMonth() === 1 && today.getDate() >= p.start.d) || today.getMonth() === 2 || (today.getMonth() === 3 && today.getDate() <= p.end.d);
     periods.push(p);
-    //Abr - Jun
+    // Abr - Jun
     p = { start: {}, end: {}, isCurrent: false, letter: 'M' };
     p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 3, 1));
     p.start.d = winSeries__getQuartas15(ano, 3);
@@ -60,7 +60,7 @@ const winSeries = (ano) => {
     if (today.getFullYear() === ano)
         p.isCurrent = (today.getMonth() === 3 && today.getDate() >= p.start.d) || today.getMonth() === 4 || (today.getMonth() === 5 && today.getDate() <= p.end.d);
     periods.push(p);
-    //Jun - Ago
+    // Jun - Ago
     p = { start: {}, end: {}, isCurrent: false, letter: 'Q' };
     p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 5, 1));
     p.start.d = winSeries__getQuartas15(ano, 5);
@@ -70,7 +70,7 @@ const winSeries = (ano) => {
     if (today.getFullYear() === ano)
         p.isCurrent = (today.getMonth() === 5 && today.getDate() >= p.start.d) || today.getMonth() === 6 || (today.getMonth() === 7 && today.getDate() <= p.end.d);
     periods.push(p);
-    //Ago - Out
+    // Ago - Out
     p = { start: {}, end: {}, isCurrent: false, letter: 'V' };
     p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 7, 1));
     p.start.d = winSeries__getQuartas15(ano, 7);
@@ -80,7 +80,7 @@ const winSeries = (ano) => {
     if (today.getFullYear() === ano)
         p.isCurrent = (today.getMonth() === 7 && today.getDate() >= p.start.d) || today.getMonth() === 8 || (today.getMonth() === 9 && today.getDate() <= p.end.d);
     periods.push(p);
-    //Out - Dez
+    // Out - Dez
     p = { start: {}, end: {}, isCurrent: false, letter: 'Z' };
     p.start.m = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(new Date(ano, 9, 1));
     p.start.d = winSeries__getQuartas15(ano, 9);
@@ -93,9 +93,9 @@ const winSeries = (ano) => {
     return periods;
 };
 
-/**
- * Gera os contratos de vencimentos do WDO para o @ano
- */
+/*
+    Gera os contratos de vencimentos do WDO para o @ano
+*/
 const wdoSeries = (ano) => {
     let today = new Date(),
         p = {},

@@ -2,13 +2,14 @@ import { createSlice } from '@reduxjs/toolkit';
 
 import { generateHash } from '../../helpers/global';
 
-/**
- * Uma mensagem consiste de:
- *  - key: Chave unica aleatória desta mensagem (Fins do DOM)
- *  - title: Titulo da mensagem (Opcional)
- *  - message: Mensagem da mensagem
- *  - severity: Tipo da mensagem (Se é de Erro/Sucesso/Aviso)
- */
+/*
+    Uma mensagem consiste de: {
+        key: Chave unica aleatória desta mensagem (Fins do DOM)
+        title: Titulo da mensagem (Opcional)
+        message: Mensagem da mensagem
+        severity: Tipo da mensagem (Se é de Erro/Sucesso/Aviso)
+    }
+*/
 const initialState = {
     messages: [],
 };

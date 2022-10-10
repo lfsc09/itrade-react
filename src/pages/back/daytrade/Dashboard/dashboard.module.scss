@@ -15,3 +15,16 @@
         align-self: center;
     }
 }
+
+.filter__compara {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .filter__compara_label {
+        white-space: nowrap;
+        font-weight: bold;
+        line-height: 0;
+        color: #555;
+    }
+}

@@ -15,7 +15,9 @@ import {
     ListItemButton,
     ListItemText,
     ListSubheader,
+    Stack,
     Switch,
+    Typography,
 } from '@mui/material';
 import cloneDeep from 'lodash.clonedeep';
 import React, { useCallback, useState } from 'react';
@@ -99,32 +101,42 @@ const FilterCenarioObs = (props) => {
             </Button>
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth='md' fullWidth>
                 <DialogContent dividers={true}>
-                    <Grid container spacing={2}>
-                        <Grid item md={3} xs={12}>
-                            <FormControl component='fieldset' variant='standard' sx={{ m: 2 }}>
-                                <FormLabel component='legend'>Cenários</FormLabel>
+                    <Stack direction='row' spacing={2}>
+                        <div className={styles.cenario_list}>
+                            <Typography className={styles.cenario_list__label} variant='overline'>
+                                Cenários
+                            </Typography>
+                            <FormControl className={styles.cenario_container} component='fieldset' variant='standard'>
                                 <FormGroup>
                                     {props.cenarios.map((c) => (
                                         <FormControlLabel
                                             key={`cenarios-${c.id}`}
                                             control={<Checkbox checked={c.nome in cenario} onChange={handleCenarioSeletionChange} name={c.nome} />}
-                                            label={c.nome}
+                                            label={
+                                                <>
+                                                    <span className={styles.cenario_nome}>{c.nome}</span>
+                                                    <span className={styles.cenario_dataset}>{c.dataset}</span>
+                                                </>
+                                            }
                                         />
                                     ))}
                                 </FormGroup>
                             </FormControl>
-                        </Grid>
-                        <Grid item md={1} xs={12}>
+                        </div>
+                        <div>
                             <Divider orientation='vertical' variant='middle' />
-                        </Grid>
-                        <Grid item md={8} xs={12}>
+                        </div>
+                        <div className={styles.obs_list}>
                             {!isEmptyCenario ? (
                                 <List>
                                     {props.cenarios.map((c) =>
                                         c.nome in cenario ? (
                                             <li key={`list-${c.id}`}>
                                                 <ul className={styles.obs_container}>
-                                                    <ListSubheader>{c.nome}</ListSubheader>
+                                                    <ListSubheader>
+                                                        <span>{c.nome}</span>
+                                                        <span className={styles.obs_cenario__dataset}>{c.dataset}</span>
+                                                    </ListSubheader>
                                                     {c.observacoes.map((o) => (
                                                         <ListItem
                                                             key={`list-obs-${o.id}`}
@@ -163,10 +175,10 @@ const FilterCenarioObs = (props) => {
                                     )}
                                 </List>
                             ) : (
-                                <NoContent type='empty-data' empty_text='Nenhum cenário selecionado' />
+                                <NoContent type='empty-data' empty_text='Nenhum cenário selecionado' text_size='small' />
                             )}
-                        </Grid>
-                    </Grid>
+                        </div>
+                    </Stack>
                 </DialogContent>
                 <DialogActions sx={{ px: 2 }}>
                     <Button onClick={handleCloseDialog}>Fechar</Button>

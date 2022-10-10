@@ -8,20 +8,13 @@
     color: #777;
 }
 
-.filter__compara {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    .filter__compara_label {
-        font-weight: bold;
-        line-height: 0;
-        color: #555;
-    }
-}
-
 .filter__date {
     width: 100%;
+}
+
+.filter__date__has_data {
+    text-decoration: underline;
+    color: #198754;
 }
 
 .filter__hora {

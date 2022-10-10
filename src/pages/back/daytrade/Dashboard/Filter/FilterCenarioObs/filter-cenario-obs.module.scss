@@ -1,5 +1,45 @@
+.cenario_list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.cenario_list__label {
+    line-height: 48px;
+    margin-top: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.cenario_container {
+    margin: 0 16px 16px 16px;
+    flex: 1;
+}
+
+.cenario_nome {
+    font-weight: bold;
+}
+
+.cenario_dataset {
+    font-size: 0.7rem;
+    text-decoration: underline;
+    font-weight: bold;
+    margin-left: 6px;
+}
+
+.obs_list {
+    flex: 2;
+}
+
 .obs_container {
     padding-left: 0;
+}
+
+.obs_cenario__dataset {
+    font-size: 0.7rem;
+    text-decoration: underline;
+    font-weight: bold;
+    margin-left: 6px;
 }
 
 .obs_item:hover {

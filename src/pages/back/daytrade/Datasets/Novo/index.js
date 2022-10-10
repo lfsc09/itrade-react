@@ -107,14 +107,7 @@ const NovoDataset = (props) => {
                                 })
                             );
                         }
-                    } else {
-                        dispatch(
-                            add({
-                                message: error.message,
-                                severity: 'error',
-                            })
-                        );
-                    }
+                    } else console.log('Error Axios: ', error.message);
                     setIsSendLoading(false);
                 });
         },
@@ -171,14 +164,7 @@ const NovoDataset = (props) => {
                                     })
                                 );
                             }
-                        } else {
-                            dispatch(
-                                add({
-                                    message: error.message,
-                                    severity: 'error',
-                                })
-                            );
-                        }
+                        } else console.log('Error Axios: ', error.message);
                         setIsSendLoading(false);
                     });
             }
@@ -218,14 +204,7 @@ const NovoDataset = (props) => {
                 if (error.response) {
                     if (error.response.status === 401) dispatch(handleLogout());
                     else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
-                } else {
-                    dispatch(
-                        add({
-                            message: error.message,
-                            severity: 'error',
-                        })
-                    );
-                }
+                } else console.log('Error Axios: ', error.message);
             });
         return () => {
             abortController.abort();

@@ -125,14 +125,7 @@ const Cenarios = () => {
                             })
                         );
                     }
-                } else {
-                    dispatch(
-                        add({
-                            message: error.message,
-                            severity: 'error',
-                        })
-                    );
-                }
+                } else console.log('Error Axios: ', error.message);
                 // Reseta o select
                 setDatasetCopy(0);
                 dataDispatch({ type: DGR_TYPES.STOP_LOADING });
@@ -260,9 +253,7 @@ const Cenarios = () => {
                     else if (error.response.status === 500) {
                         console.log('Error Suggest: ', error.response.data);
                     }
-                } else {
-                    console.log('Error Suggest: ', error.message);
-                }
+                } else console.log('Error Axios: ', error.message);
             });
         return () => {
             abortController.abort();
@@ -299,14 +290,7 @@ const Cenarios = () => {
                                 })
                             );
                         }
-                    } else {
-                        dispatch(
-                            add({
-                                message: error.message,
-                                severity: 'error',
-                            })
-                        );
-                    }
+                    } else console.log('Error Axios: ', error.message);
                     dataDispatch({ type: DGR_TYPES.STOP_LOADING });
                 });
         return () => {

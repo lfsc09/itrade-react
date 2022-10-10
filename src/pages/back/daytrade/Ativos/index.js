@@ -117,14 +117,7 @@ const Ativos = () => {
                             })
                         );
                     }
-                } else {
-                    dispatch(
-                        add({
-                            message: error.message,
-                            severity: 'error',
-                        })
-                    );
-                }
+                } else console.log('Error Axios: ', error.message);
                 // setIsSendLoading(false);
             });
     }, [dispatch, navigate, datagridState.idRowDeleteConfirm]);
@@ -194,14 +187,7 @@ const Ativos = () => {
                             })
                         );
                     }
-                } else {
-                    dispatch(
-                        add({
-                            message: error.message,
-                            severity: 'error',
-                        })
-                    );
-                }
+                } else console.log('Error Axios: ', error.message);
                 datagridDispatch({ type: DGR_TYPES.STOP_LOADING });
             });
         return () => {

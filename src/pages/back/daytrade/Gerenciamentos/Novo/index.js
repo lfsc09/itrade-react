@@ -88,14 +88,7 @@ const NovoGerenciamento = (props) => {
                                     })
                                 );
                             }
-                        } else {
-                            dispatch(
-                                add({
-                                    message: error.message,
-                                    severity: 'error',
-                                })
-                            );
-                        }
+                        } else console.log('Error Axios: ', error.message);
                         setIsSendLoading(false);
                     });
             } else
@@ -177,14 +170,7 @@ const NovoGerenciamento = (props) => {
                                     })
                                 );
                             }
-                        } else {
-                            dispatch(
-                                add({
-                                    message: error.message,
-                                    severity: 'error',
-                                })
-                            );
-                        }
+                        } else console.log('Error Axios: ', error.message);
                         setIsSendLoading(false);
                     });
             }
@@ -262,14 +248,7 @@ const NovoGerenciamento = (props) => {
                     if (error.response) {
                         if (error.response.status === 401) dispatch(handleLogout());
                         else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
-                    } else {
-                        dispatch(
-                            add({
-                                message: error.message,
-                                severity: 'error',
-                            })
-                        );
-                    }
+                    } else console.log('Error Axios: ', error.message);
                 });
         } else setIsInitialLoading(false);
         return () => {

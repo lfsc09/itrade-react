@@ -55,9 +55,7 @@ const FilterAtivo = (props) => {
                             else if (error.response.status === 500) {
                                 console.log('Error Suggest: ', error.response.data);
                             }
-                        } else {
-                            console.log('Error Suggest: ', error.message);
-                        }
+                        } else console.log('Error Axios: ', error.message);
                         setNomeLoading(false);
                     });
             }, 300);

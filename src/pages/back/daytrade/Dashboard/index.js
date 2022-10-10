@@ -1,5 +1,25 @@
-import { AutoFixHigh, FilterList } from '@mui/icons-material';
-import { Box, Button, Checkbox, Divider, FormControl, FormHelperText, Grid, IconButton, ListItemText, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material';
+import { AutoFixHigh, CheckBox, CheckBoxOutlineBlank, FilterList } from '@mui/icons-material';
+import {
+    Autocomplete,
+    Box,
+    Button,
+    Checkbox,
+    Divider,
+    FormControl,
+    FormControlLabel,
+    FormGroup,
+    FormHelperText,
+    Grid,
+    IconButton,
+    ListItemText,
+    MenuItem,
+    Paper,
+    Select,
+    Stack,
+    Switch,
+    TextField,
+    Typography,
+} from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { batch, useDispatch, useSelector } from 'react-redux';
@@ -9,9 +29,11 @@ import gStyles from '../../../../assets/back/scss/global.module.scss';
 import MessageController from '../../../../components/ui/MessageController';
 import { axiosCon } from '../../../../helpers/axios-con';
 import { formatValue_fromRaw, isObjectEmpty } from '../../../../helpers/global';
+import { generate__DashboardOps } from '../../../../helpers/rv-statistics';
 import { add } from '../../../../store/api-messages/api-messages-slice';
 import { handleLogout } from '../../../../store/auth/auth-action';
 import styles from './dashboard.module.scss';
+import DatagridStats from './DatagridStats';
 import { reducer as dataReducer, INI_STATE as DGR_INI_STATE, TYPES as DGR_TYPES } from './dataReducer';
 import FilterDashboard from './Filter';
 
@@ -31,7 +53,14 @@ const Dashboard = () => {
     /*********
      * STATES
      *********/
+    const [step2_firstLoad, setStep2_firstLoad] = useState(true);
     const [filterModalOpen, setFilterModalOpen] = useState(false);
+    const [comparaDataset, setComparaDataset] = useState(false);
+    const [dataset, setDataset] = useState([]);
+    // Checksum com ID do dataset, para averiguar mudanças no 'dataset'
+    const [dataset_checksum, setDataset_Checksum] = useState('');
+    const [operacoes, setOperacoes] = useState([]);
+    const [statistics, setStatistics] = useState(null);
 
     /***************
      * DATA REDUCER
@@ -45,56 +74,82 @@ const Dashboard = () => {
     useEffect(() => {
         const abortController = new AbortController();
         axiosCon
-            .get('/dash/step1', { signal: abortController.signal })
+            .get('/dash/load_datasets', { signal: abortController.signal })
             .then((resp) => {
                 // Carrega informações no SESSION STORAGE
                 let sessionData = JSON.parse(sessionStorage.getItem('daytrade'));
                 let loadData = {
                     datasets: resp.data.datasets,
-                    filters: sessionData?.filters ?? { dataset: [resp.data.datasets[0]], dataset_react_checksum: resp.data.datasets[0].id, gerenciamento: null },
+                    filters: sessionData?.filters ?? { gerenciamento: null },
                     simulations: sessionData?.simulations ?? { periodo_calc: 1, usa_custo: 1, ignora_erro: 1, tipo_cts: 1 },
                 };
-                dataDispatch({ type: DGR_TYPES.STEP1_LOAD, payload: loadData });
+                let selectedDatasets = sessionData?.dataset ?? [resp.data.datasets[0]];
+                batch(() => {
+                    setDataset((prevState) => selectedDatasets);
+                    setDataset_Checksum((prevState) => selectedDatasets.reduce((t, d) => t + '_' + d.id, ''));
+                    dataDispatch({ type: DGR_TYPES.STEP1_LOAD, payload: loadData });
+                });
             })
             .catch((error) => {
                 if (error.response) {
                     if (error.response.status === 401) dispatch(handleLogout());
-                } else {
-                    console.log('Error Suggest: ', error.message);
-                }
+                } else console.log('Error Axios: ', error.message);
             });
         return () => {
             abortController.abort();
         };
     }, []);
 
-    /***************************
-     * STEP2: DATASETS OPs LOAD
-     ***************************/
+    /*********************************************************
+     * STEP2: DATASETS OPs LOAD (Operações, Cenarios, Ativos)
+     *********************************************************/
     useEffect(() => {
-        if (dataState.filters !== null) {
+        if (dataset.length) {
             const abortController = new AbortController();
             axiosCon
-                .get('/dash/step2', { signal: abortController.signal })
+                .post(
+                    '/dash/load_datasets__info',
+                    {
+                        filters: { dataset: dataset.map((d) => d.id) },
+                    },
+                    { signal: abortController.signal }
+                )
                 .then((resp) => {
                     let loadData = {
+                        ativos: resp.data.ativos,
+                        gerenciamentos: resp.data.gerenciamentos,
                         cenarios: resp.data.cenarios,
-                        operacoes_p_dataset: resp.data.operacoes_por_dataset,
+                        originalInfo: {
+                            date_inicial: new Date(new Date(resp.data.originalInfo.date_inicial).toDateString()),
+                            date_final: new Date(new Date(resp.data.originalInfo.date_final).toDateString()),
+                            dias: resp.data.originalInfo.dias,
+                        },
                     };
-                    dataDispatch({ type: DGR_TYPES.STEP2_LOAD, payload: loadData });
+                    if (step2_firstLoad) {
+                        // Se for o primeiro load da Aba (SESSION STORAGE Vazio)
+                        if (dataState.filters.gerenciamento === null) loadData.filters = { gerenciamento: resp.data.gerenciamentos?.[0] ?? null };
+                    } else {
+                        // Reseta os filters e simulations ao mudar os Datasets
+                        loadData.filters = { gerenciamento: resp.data.gerenciamentos?.[0] ?? null };
+                        loadData.simulations = { periodo_calc: 1, usa_custo: 1, ignora_erro: 1, tipo_cts: 1 };
+                    }
+                    batch(() => {
+                        if (step2_firstLoad) setStep2_firstLoad(false);
+                        setOperacoes((prevState) => resp.data.operacoes);
+                        setStatistics((prevstate) => generate__DashboardOps(resp.data.operacoes));
+                        dataDispatch({ type: DGR_TYPES.STEP2_LOAD, payload: loadData });
+                    });
                 })
                 .catch((error) => {
                     if (error.response) {
                         if (error.response.status === 401) dispatch(handleLogout());
-                    } else {
-                        console.log('Error Suggest: ', error.message);
-                    }
+                    } else console.log('Error Axios: ', error.message);
                 });
             return () => {
                 abortController.abort();
             };
         }
-    }, [dataState.filters?.dataset_react_checksum]);
+    }, [dataset_checksum]);
 
     /***********
      * HANDLERS
@@ -103,19 +158,32 @@ const Dashboard = () => {
         setFilterModalOpen(true);
     }, []);
 
+    const handleDatasetAutocomplete = useCallback((e, values) => {
+        setDataset((prevState) => values);
+    }, []);
+
+    const handleComparaDatasetSwitch = useCallback((e) => {
+        setComparaDataset((prevState) => e.target.checked);
+    }, []);
+
+    const handleDatasetChangeClick = useCallback(() => {
+        if (dataset.length) setDataset_Checksum((prevState) => dataset.reduce((t, d) => t + '_' + d.id, ''));
+    }, [dataset]);
+
+    console.log(statistics);
+
     return (
         <>
             <MessageController overlay={true} />
-            {dataState.filters !== null ? (
+            {dataState.filters !== null && dataState.ativos !== null && dataState.gerenciamentos !== null && dataState.cenarios !== null ? (
                 <FilterDashboard
                     open={filterModalOpen}
+                    ativosSuggest={dataState.ativos}
+                    gerenciamentosSuggest={dataState.gerenciamentos}
+                    cenariosSuggest={dataState.cenarios}
                     filterState={dataState.filters}
                     simulationState={dataState.simulations}
-                    /**
-                     * TODO:
-                     */
-                    original={{ data_inicial: new Date(new Date().toDateString()), data_final: new Date(new Date().toDateString()) }}
-                    datasetSuggest={dataState.datasets}
+                    original={dataState.originalInfo}
                     dispatchers={{ dataDispatch: dataDispatch, setFilterModalOpen: setFilterModalOpen }}
                 />
             ) : (
@@ -143,6 +211,46 @@ const Dashboard = () => {
                         </Stack>
                     </div>
                     <Divider />
+                    <Paper sx={{ p: 1, pt: 2 }}>
+                        <Stack direction='row' spacing={3}>
+                            <Autocomplete
+                                multiple
+                                disableCloseOnSelect
+                                size='small'
+                                name='dataset'
+                                options={dataState.datasets}
+                                value={dataset}
+                                onChange={handleDatasetAutocomplete}
+                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                getOptionLabel={(option) => option.nome}
+                                renderOption={(props, option, { selected }) => (
+                                    <li {...props}>
+                                        <Checkbox
+                                            icon={<CheckBoxOutlineBlank fontSize='small' />}
+                                            checkedIcon={<CheckBox fontSize='small' />}
+                                            style={{ marginRight: 8 }}
+                                            checked={selected}
+                                        />
+                                        <ListItemText primary={option.nome} />
+                                    </li>
+                                )}
+                                style={{ width: '100%' }}
+                                renderInput={(params) => <TextField {...params} label='Datasets' placeholder='' />}
+                            />
+                            <FormGroup className={styles.filter__compara}>
+                                <FormControlLabel
+                                    classes={{ label: styles.filter__compara_label }}
+                                    componentsProps={{ typography: { variant: 'overline' } }}
+                                    control={<Switch color='success' checked={comparaDataset} onChange={handleComparaDatasetSwitch} disabled />}
+                                    label={comparaDataset ? 'Comparar Datasets' : 'Juntar Datasets'}
+                                />
+                            </FormGroup>
+                            <Button variant='contained' size='small' onClick={handleDatasetChangeClick}>
+                                <AutoFixHigh />
+                            </Button>
+                        </Stack>
+                    </Paper>
+                    {statistics !== null ? <DatagridStats stats={statistics} periodoCalc={dataState.simulations?.periodo_calc} /> : <></>}
                 </Stack>
             </Box>
         </>

@@ -3,13 +3,12 @@ import React, { forwardRef } from 'react';
 
 import styles from './input.module.scss';
 
-/**
- * Custom PROPS
- *
- * @param extraClasses[]:
- *  - textAlign__center
- *  - inputSize__small
- */
+/*
+    @props : [
+        ...
+        extraClasses([textAlign__center, inputSize__small]) : Classes extras que podem ser passadas
+    ]
+*/
 const Input = forwardRef((props, ref) => {
     const { extraClasses, ...other } = props;
     const processed_classes = extraClasses?.map((exC) => styles?.[exC] ?? '')?.join(' ') ?? '';

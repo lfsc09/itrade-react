@@ -9,8 +9,10 @@ export const TYPES = {
 export const INI_STATE = {
     // Dados
     datasets: [],
-    cenarios: [],
-    operacoes_p_dataset: [],
+    ativos: null,
+    gerenciamentos: null,
+    cenarios: null,
+    originalInfo: null,
     // Filtros
     filters: null,
     // Simulações
@@ -22,24 +24,30 @@ export const reducer = (state, action) => {
         case TYPES.STEP1_LOAD:
             return {
                 datasets: action.payload.datasets,
-                cenarios: [],
-                operacoes_p_dataset: [],
+                ativos: state.ativos,
+                gerenciamentos: state.gerenciamentos,
+                cenarios: state.cenarios,
+                originalInfo: state.originalInfo,
                 filters: action.payload.filters,
                 simulations: action.payload.simulations,
             };
         case TYPES.STEP2_LOAD:
             return {
                 datasets: cloneDeep(state.datasets),
+                ativos: action.payload.ativos,
+                gerenciamentos: action.payload.gerenciamentos,
                 cenarios: action.payload.cenarios,
-                operacoes_p_dataset: action.payload.operacoes_p_dataset,
-                filters: cloneDeep(state.filters),
-                simulations: cloneDeep(state.simulations),
+                originalInfo: action.payload.originalInfo,
+                filters: action.payload?.filters ?? cloneDeep(state.filters),
+                simulations: action.payload?.simulations ?? cloneDeep(state.simulations),
             };
         case TYPES.FILTERS_CHANGED:
             return {
                 datasets: cloneDeep(state.datasets),
+                ativos: cloneDeep(state.ativos),
+                gerenciamentos: cloneDeep(state.gerenciamentos),
                 cenarios: cloneDeep(state.cenarios),
-                operacoes_p_dataset: cloneDeep(state.operacoes_p_dataset),
+                originalInfo: cloneDeep(state.originalInfo),
                 filters: action.payload.filters,
                 simulations: action.payload.simulations,
             };
