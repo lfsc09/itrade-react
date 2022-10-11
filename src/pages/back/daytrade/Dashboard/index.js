@@ -27,6 +27,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import gStyles from '../../../../assets/back/scss/global.module.scss';
 import MessageController from '../../../../components/ui/MessageController';
+import NoContent from '../../../../components/ui/NoContent';
 import { axiosCon } from '../../../../helpers/axios-con';
 import { formatValue_fromRaw, isObjectEmpty } from '../../../../helpers/global';
 import { generate__DashboardOps } from '../../../../helpers/rv-statistics';
@@ -135,8 +136,8 @@ const Dashboard = () => {
                     }
                     batch(() => {
                         if (step2_firstLoad) setStep2_firstLoad(false);
-                        setOperacoes((prevState) => resp.data.operacoes);
-                        setStatistics((prevstate) => generate__DashboardOps(resp.data.operacoes));
+                        setOperacoes((prevState) => []);
+                        setStatistics((prevstate) => generate__DashboardOps([]));
                         dataDispatch({ type: DGR_TYPES.STEP2_LOAD, payload: loadData });
                     });
                 })
@@ -250,7 +251,11 @@ const Dashboard = () => {
                             </Button>
                         </Stack>
                     </Paper>
-                    {statistics !== null ? <DatagridStats stats={statistics} periodoCalc={dataState.simulations?.periodo_calc} /> : <></>}
+                    {statistics !== null && !isObjectEmpty(statistics.dashboard_ops__table_stats) ? (
+                        <DatagridStats stats={statistics} periodoCalc={dataState.simulations?.periodo_calc} />
+                    ) : (
+                        <NoContent type='empty-data' withContainer={true} empty_text='Sem Dados' />
+                    )}
                 </Stack>
             </Box>
         </>
