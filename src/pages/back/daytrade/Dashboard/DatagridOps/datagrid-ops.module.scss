@@ -1,0 +1,9 @@
+.grid_wrapper {
+    display: flex;
+    max-height: 500px;
+}
+
+.grid_container {
+    height: 100%;
+    flex-grow: 1;
+}

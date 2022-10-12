@@ -1,3 +1,12 @@
+.tabs {
+    min-height: 16px;
+
+    .tab {
+        min-height: 16px;
+        padding: 8px 16px;
+    }
+}
+
 .dg_header {
     font-weight: bold;
 
@@ -16,38 +25,4 @@
 
 .col_subheader {
     font-size: 11px;
-}
-
-span.text_margin_left {
-    margin-left: 8px;
-}
-
-span.text_tiny {
-    font-weight: bold;
-    font-size: 9px;
-}
-
-span.text_small {
-    font-weight: bold;
-    font-size: 11px;
-}
-
-span.text_success {
-    color: #198754;
-}
-
-span.text_danger {
-    color: #dc3545;
-}
-
-span.text_primary {
-    color: #0d6efd;
-}
-
-span.text_muted {
-    color: #6c757d !important;
-}
-
-span.text_bold {
-    font-weight: bold;
 }

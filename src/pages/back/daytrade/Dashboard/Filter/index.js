@@ -24,11 +24,11 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { PickersDay } from '@mui/x-date-pickers/PickersDay';
 import { isEqual } from 'date-fns';
+import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import cloneDeep from 'lodash.clonedeep';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { batch, useDispatch } from 'react-redux';
-import { format } from 'date-fns';
+import React, { useCallback, useEffect, useState } from 'react';
+import { batch } from 'react-redux';
 
 import { isObjectEmpty } from '../../../../../helpers/global';
 import { TYPES as DGR_TYPES } from '../dataReducer';
@@ -62,11 +62,6 @@ const tiposCts = [
 ];
 
 const FilterDashboard = (props) => {
-    /***********
-     * DISPATCH
-     ***********/
-    const dispatch = useDispatch();
-
     /*********
      * STATES
      *********/
@@ -199,9 +194,9 @@ const FilterDashboard = (props) => {
         [props.original.date_inicial, props.original.date_final]
     );
 
-    /*******************************************
-     * UPDATE FILTERS (AFTER CHANGED DATASETS)
-     *******************************************/
+    /*************************************************************
+     * UPDATE FILTERS (POR CONTA DE ALTERAÇÕES NO COMPONENTE PAI)
+     *************************************************************/
     useEffect(() => {
         if (props.filterState.gerenciamento !== gerenciamento) setGerenciamento((prevState) => props.filterState.gerenciamento);
         if (props.original.date_inicial !== dateInicial) setDateInicial((prevState) => props.original.date_inicial);

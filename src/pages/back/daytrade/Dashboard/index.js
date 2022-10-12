@@ -34,6 +34,7 @@ import { generate__DashboardOps } from '../../../../helpers/rv-statistics';
 import { add } from '../../../../store/api-messages/api-messages-slice';
 import { handleLogout } from '../../../../store/auth/auth-action';
 import styles from './dashboard.module.scss';
+import DatagridOps from './DatagridOps';
 import DatagridStats from './DatagridStats';
 import { reducer as dataReducer, INI_STATE as DGR_INI_STATE, TYPES as DGR_TYPES } from './dataReducer';
 import FilterDashboard from './Filter';
@@ -136,8 +137,8 @@ const Dashboard = () => {
                     }
                     batch(() => {
                         if (step2_firstLoad) setStep2_firstLoad(false);
-                        setOperacoes((prevState) => []);
-                        setStatistics((prevstate) => generate__DashboardOps([]));
+                        setOperacoes((prevState) => resp.data.operacoes);
+                        setStatistics((prevstate) => generate__DashboardOps(resp.data.operacoes));
                         dataDispatch({ type: DGR_TYPES.STEP2_LOAD, payload: loadData });
                     });
                 })
@@ -253,6 +254,11 @@ const Dashboard = () => {
                     </Paper>
                     {statistics !== null && !isObjectEmpty(statistics.dashboard_ops__table_stats) ? (
                         <DatagridStats stats={statistics} periodoCalc={dataState.simulations?.periodo_calc} />
+                    ) : (
+                        <NoContent type='empty-data' withContainer={true} empty_text='Sem Dados' />
+                    )}
+                    {statistics !== null && statistics.dashboard_ops__table_trades.length ? (
+                        <DatagridOps rows={statistics.dashboard_ops__table_trades} />
                     ) : (
                         <NoContent type='empty-data' withContainer={true} empty_text='Sem Dados' />
                     )}

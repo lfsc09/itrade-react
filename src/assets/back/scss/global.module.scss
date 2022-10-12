@@ -62,8 +62,8 @@
 }
 /*------------ GLOBAL DATAGRID TABLE ------------*/
 /*
-    Referente as areas mais genéricas dos Datagrids. 
-    Coisas mais especificas como Cells serão especificadas nos scss de cada módulo.
+Referente as areas mais genéricas dos Datagrids. 
+Coisas mais especificas como Cells serão especificadas nos scss de cada módulo.
 */
 .table_panel {
     flex-grow: 1;
@@ -71,4 +71,38 @@
     .table_container {
         height: 100%;
     }
+}
+/*----------------- GLOBAL MISC -----------------*/
+span.text_margin_left {
+    margin-left: 8px;
+}
+
+span.text_tiny {
+    font-weight: bold;
+    font-size: 9px;
+}
+
+span.text_small {
+    font-weight: bold;
+    font-size: 11px;
+}
+
+span.text_success {
+    color: #198754;
+}
+
+span.text_danger {
+    color: #dc3545;
+}
+
+span.text_primary {
+    color: #0d6efd;
+}
+
+span.text_muted {
+    color: #6c757d !important;
+}
+
+span.text_bold {
+    font-weight: bold;
 }
