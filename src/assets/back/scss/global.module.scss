@@ -73,36 +73,34 @@ Coisas mais especificas como Cells serão especificadas nos scss de cada módulo
     }
 }
 /*----------------- GLOBAL MISC -----------------*/
-span.text_margin_left {
+.text_margin_left {
     margin-left: 8px;
 }
 
-span.text_tiny {
-    font-weight: bold;
-    font-size: 9px;
+.text_tiny {
+    font-size: 9px !important;
 }
 
-span.text_small {
-    font-weight: bold;
-    font-size: 11px;
+.text_small {
+    font-size: 11px !important;
 }
 
-span.text_success {
+.text_success {
     color: #198754;
 }
 
-span.text_danger {
+.text_danger {
     color: #dc3545;
 }
 
-span.text_primary {
+.text_primary {
     color: #0d6efd;
 }
 
-span.text_muted {
+.text_muted {
     color: #6c757d !important;
 }
 
-span.text_bold {
+.text_bold {
     font-weight: bold;
 }
