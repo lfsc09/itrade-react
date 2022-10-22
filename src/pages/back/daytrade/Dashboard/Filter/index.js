@@ -31,7 +31,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { batch } from 'react-redux';
 
 import { isObjectEmpty } from '../../../../../helpers/global';
-import { TYPES as DGR_TYPES } from '../dataReducer';
+import { checksum_filters, checksum_simulations, TYPES as DGR_TYPES } from '../dataReducer';
 import styles from './dashboard-filter.module.scss';
 import FilterCenarioObs from './FilterCenarioObs';
 import SimulationParada from './SimulationParada';
@@ -61,14 +61,38 @@ const tiposCts = [
     { value: 3, label: 'Quantidade Fixa por R' },
 ];
 
+const data_format = {
+    toString: (type, value) => {
+        if (type === 'data' && value instanceof Date) return format(value, 'yyyy-MM-dd');
+        else if (type === 'hora' && Number.isFinite(value)) return `${value}:00`;
+        return value;
+    },
+    toObj: (type, value) => {
+        if (typeof value === 'string') {
+            if (type === 'data') return new Date(value);
+            if (type === 'hora') return parseInt(value.split(':')[0] ?? 0);
+        }
+        return value;
+    },
+};
+
 const FilterDashboard = (props) => {
     /*********
      * STATES
      *********/
     // Filters
-    const [dateInicial, setDateInicial] = useState(props.filterState?.date_inicial ?? props.original.date_inicial);
-    const [dateFinal, setDateFinal] = useState(props.filterState?.date_final ?? props.original.date_final);
-    const [hora, setHora] = useState([props.filterState?.hora_inicial ?? 9, props.filterState?.hora_final ?? 18]);
+    const [dateInicial, setDateInicial] = useState(data_format.toObj('data', props.filterState?.date_inicial ?? props.original.date_inicial));
+    // Como o Datepicker funciona apenas com 'Objeto Date', esta variavel conterá o valor da data em String, para ser passada ao componente Pai
+    const [dateInicial_Formated, setDateInicial_Formated] = useState(data_format.toString('data', props.filterState?.date_inicial ?? props.original.date_inicial));
+    const [dateFinal, setDateFinal] = useState(data_format.toObj('data', props.filterState?.date_final ?? props.original.date_final));
+    // Como o Datepicker funciona apenas com 'Objeto Date', esta variavel conterá o valor da data em String(0000-00-00), para ser passada ao componente Pai
+    const [dateFinal_Formated, setDateFinal_Formated] = useState(data_format.toString('data', props.filterState?.date_final ?? props.original.date_final));
+    const [hora, setHora] = useState([data_format.toObj('hora', props.filterState?.hora_inicial ?? 9), data_format.toObj('hora', props.filterState?.hora_final ?? 18)]);
+    // Como o Slider funciona apenas com 'Int', esta variavel conterá os valores das horas em String(00:00), para ser passada ao componente Pai
+    const [hora_Formated, setHora_Formated] = useState([
+        data_format.toString('hora', props.filterState?.hora_inicial ?? 9),
+        data_format.toString('hora', props.filterState?.hora_final ?? 18),
+    ]);
     const [ativo, setAtivo] = useState(props.filterState?.ativo ?? []);
     const [gerenciamento, setGerenciamento] = useState(props.filterState.gerenciamento);
     const [cenario, setCenario] = useState(props.filterState?.cenario ?? {});
@@ -86,15 +110,27 @@ const FilterDashboard = (props) => {
      * HANDLERS
      ***********/
     const handleDateInicialPicker = useCallback((value) => {
-        setDateInicial((prevState) => new Date(value.toDateString()));
+        batch(() => {
+            const new_value = new Date(value.toDateString());
+            setDateInicial((prevState) => new_value);
+            setDateInicial_Formated((prevState) => data_format.toString('data', new_value));
+        });
     }, []);
 
     const handleDateFinalPicker = useCallback((value) => {
-        setDateFinal((prevState) => new Date(value.toDateString()));
+        batch(() => {
+            const new_value = new Date(value.toDateString());
+            setDateFinal((prevState) => new_value);
+            setDateFinal_Formated((prevState) => data_format.toString('data', new_value));
+        });
     }, []);
 
     const handleHoraSlider = useCallback((e, value) => {
         setHora((prevState) => value);
+    }, []);
+
+    const handleHoraSlider_MouseUp = useCallback((e, value) => {
+        setHora_Formated((prevState) => value.map((h) => data_format.toString('hora', h)));
     }, []);
 
     const handleAtivoAutocomplete = useCallback((e, values) => {
@@ -138,18 +174,14 @@ const FilterDashboard = (props) => {
         setRiscoMaximo((prevState) => e.target.value);
     }, []);
 
-    const handleClose = useCallback(() => {
-        props.dispatchers.setFilterModalOpen(false);
-    }, []);
-
-    const handleSave = () => {
+    const handleClose = () => {
         let newFilters = {
             gerenciamento: gerenciamento,
         };
-        if (!isEqual(dateInicial, props.original.date_inicial)) newFilters['data_inicial'] = dateInicial;
-        if (!isEqual(dateFinal, props.original.date_final)) newFilters['data_final'] = dateFinal;
-        if (hora[0] !== minHoraSlider) newFilters['hora_inicial'] = hora[0];
-        if (hora[1] !== maxHoraSlider) newFilters['hora_final'] = hora[1];
+        if (!isEqual(dateInicial, props.original.date_inicial)) newFilters['data_inicial'] = dateInicial_Formated;
+        if (!isEqual(dateFinal, props.original.date_final)) newFilters['data_final'] = dateFinal_Formated;
+        if (hora[0] !== minHoraSlider) newFilters['hora_inicial'] = hora_Formated[0];
+        if (hora[1] !== maxHoraSlider) newFilters['hora_final'] = hora_Formated[1];
         if (ativo.length) newFilters['ativo'] = [...ativo];
         if (!isObjectEmpty(cenario)) newFilters['cenario'] = cloneDeep(cenario);
 
@@ -165,16 +197,21 @@ const FilterDashboard = (props) => {
         if (riscoMaximo !== '') newSimulations['R'] = riscoMaximo;
 
         batch(() => {
-            props.dispatchers.dataDispatch({ type: DGR_TYPES.FILTERS_CHANGED, payload: { filters: newFilters, simulations: newSimulations } });
+            if (props.filterChecksum !== checksum_filters(newFilters) || props.simulationChecksum !== checksum_simulations(newSimulations))
+                props.dispatchers.dataDispatch({ type: DGR_TYPES.FILTERS_CHANGED, payload: { filters: newFilters, simulations: newSimulations } });
             props.dispatchers.setFilterModalOpen((prevState) => false);
         });
     };
 
-    // const handleClear = useCallback(() => {
-    //     setTipo([]);
-    //     setSituacao([]);
-    //     props.dataDispatch({ type: DGR_TYPES.FILTERS_CLEAR });
-    // }, [props]);
+    const handleClear = useCallback(() => {
+        batch(() => {
+            setGerenciamento((prevState) => props.filterState.gerenciamento);
+            setDateInicial((prevState) => props.original.date_inicial);
+            setDateInicial_Formated((prevState) => data_format.toString('data', props.original.date_inicial));
+            setDateFinal((prevState) => props.original.date_final);
+            setDateFinal_Formated((prevState) => data_format.toString('data', props.original.date_final));
+        });
+    }, [props.filterState.gerenciamento, props.original.date_inicial_checksum, props.original.date_final_checksum]);
 
     /************
      * MISC FUNC
@@ -198,20 +235,8 @@ const FilterDashboard = (props) => {
      * UPDATE FILTERS (POR CONTA DE ALTERAÇÕES NO COMPONENTE PAI)
      *************************************************************/
     useEffect(() => {
-        if (props.filterState.gerenciamento !== gerenciamento) setGerenciamento((prevState) => props.filterState.gerenciamento);
-        if (props.original.date_inicial !== dateInicial) setDateInicial((prevState) => props.original.date_inicial);
-        if (props.original.date_final !== dateFinal) setDateFinal((prevState) => props.original.date_final);
-    }, [props.filterState.gerenciamento, props.original.date_inicial, props.original.date_final]);
-
-    /***************
-     * RESET INPUTS
-     ***************/
-    // useEffect(() => {
-    //     if (props.open) {
-    //         setSituacao((prevState) => props.filterState?.situacao ?? []);
-    //         setTipo((prevState) => props.filterState?.tipo ?? []);
-    //     }
-    // }, [props.open]);
+        handleClear();
+    }, []);
 
     return (
         <Dialog open={props.open} onClose={handleClose} maxWidth='xl' fullWidth>
@@ -267,6 +292,7 @@ const FilterDashboard = (props) => {
                                     max={maxHoraSlider}
                                     value={hora}
                                     onChange={handleHoraSlider}
+                                    onChangeCommitted={handleHoraSlider_MouseUp}
                                     valueLabelFormat={horaValueText}
                                     componentsProps={{ root: { className: styles.filter__hora } }}
                                 />
@@ -404,10 +430,7 @@ const FilterDashboard = (props) => {
                     Limpar Tudo
                 </Button>
                 <Button className={styles.action_clear} onClick={handleClose}>
-                    Cancelar
-                </Button>
-                <Button onClick={handleSave} endIcon={<AutoFixHigh />}>
-                    Salvar
+                    Fechar
                 </Button>
             </DialogActions>
         </Dialog>

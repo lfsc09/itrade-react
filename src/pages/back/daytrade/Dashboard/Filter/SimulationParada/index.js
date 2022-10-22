@@ -1,5 +1,7 @@
+import { FilterListOff } from '@mui/icons-material';
 import { Button, Dialog, DialogActions, DialogContent, Divider, Grid, Stack, Typography } from '@mui/material';
 import React, { useCallback, useState } from 'react';
+import { batch } from 'react-redux';
 
 import Input from '../../../../../../components/ui/Input';
 import styles from './simulation-parada.module.scss';
@@ -10,6 +12,15 @@ const transformReceivedTipoParada = (data) => {
     return newData;
 };
 
+/*
+    Retorna um Array de objetos [{ tipo_parada: string, valor_parada: int|float }, ...]
+
+    @props : [
+        ...
+        receivedTipoParada({ string: int|float }) : Valores vindos do componente pai de Tipos de Paradas
+        returnTipoParada(func)                    : Função para atualizar o tipo parada do componente Pai
+    ]
+*/
 const SimulationParada = (props) => {
     /*********
      * STATES
@@ -27,9 +38,11 @@ const SimulationParada = (props) => {
     const handleCloseDialog = useCallback(() => {
         let newTipoParada = [];
         for (let tp in tipoParada) newTipoParada.push({ tipo_parada: tp, valor_parada: tipoParada[tp] });
-        setOpenDialog((prevState) => false);
-        props.returnTipoParada((prevState) => newTipoParada);
-    }, []);
+        batch(() => {
+            setOpenDialog((prevState) => false);
+            props.returnTipoParada((prevState) => newTipoParada);
+        });
+    }, [tipoParada]);
 
     const handleTipoParadaInputs = useCallback(
         (e) => {
@@ -40,6 +53,10 @@ const SimulationParada = (props) => {
         },
         [tipoParada]
     );
+
+    const handleClear = useCallback(() => {
+        setTipoParada((prevState) => ({}));
+    }, []);
 
     return (
         <>
@@ -138,7 +155,12 @@ const SimulationParada = (props) => {
                     </Grid>
                 </DialogContent>
                 <DialogActions sx={{ px: 2 }}>
-                    <Button onClick={handleCloseDialog}>Fechar</Button>
+                    <Button onClick={handleClear} endIcon={<FilterListOff />}>
+                        Limpar Tudo
+                    </Button>
+                    <Button className={styles.action_clear} onClick={handleCloseDialog}>
+                        Fechar
+                    </Button>
                 </DialogActions>
             </Dialog>
         </>

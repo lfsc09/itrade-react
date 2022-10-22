@@ -39,11 +39,11 @@ const checkObservacoes = (opCenario, opObs, filter_cenarios, method = 'AND') => 
             if (method === 'OR') {
                 for (let ref in filter_cenarios[opCenario]['observacoes']) {
                     // Operações que TENHAM a observação
-                    if (filter_cenarios[opCenario]['observacoes'][ref] == 0) {
+                    if (filter_cenarios[opCenario]['observacoes'][ref] === 0) {
                         if (opObs__Array.includes(ref)) return true;
                     }
                     // Operações que NÃO TENHAM a observação
-                    else if (filter_cenarios[opCenario]['observacoes'][ref] == 1) {
+                    else if (filter_cenarios[opCenario]['observacoes'][ref] === 1) {
                         if (!opObs__Array.includes(ref)) return true;
                     }
                 }
@@ -53,11 +53,11 @@ const checkObservacoes = (opCenario, opObs, filter_cenarios, method = 'AND') => 
             if (method === 'AND') {
                 for (let ref in filter_cenarios[opCenario]['observacoes']) {
                     // Operações que TENHAM a observação
-                    if (filter_cenarios[opCenario]['observacoes'][ref] == 0) {
+                    if (filter_cenarios[opCenario]['observacoes'][ref] === 0) {
                         if (!opObs__Array.includes(ref)) return false;
                     }
                     // Operações que NÃO TENHAM a observação
-                    else if (filter_cenarios[opCenario]['observacoes'][ref] == 1) {
+                    else if (filter_cenarios[opCenario]['observacoes'][ref] === 1) {
                         if (opObs__Array.includes(ref)) return false;
                     }
                 }
@@ -72,11 +72,11 @@ const checkObservacoes = (opCenario, opObs, filter_cenarios, method = 'AND') => 
 */
 const findCts_toUse = (opCts, stopBrl, opEscalada, simulation) => {
     // Usar Cts da operação
-    if (simulation.tipo_cts === '1' || (simulation.tipo_cts === '2' && simulation.cts === null) || (simulation.tipo_cts === '3' && simulation.R === null)) return opCts;
+    if (simulation.tipo_cts === 1 || (simulation.tipo_cts === 2 && simulation.cts === null) || (simulation.tipo_cts === 3 && simulation.R === null)) return opCts;
     // Força uma quantidade fixa passada em 'simulation.cts'
-    else if (simulation.tipo_cts === '2' && simulation.cts !== null) return simulation.cts * (opEscalada + 1);
+    else if (simulation.tipo_cts === 2 && simulation.cts !== null) return simulation.cts * (opEscalada + 1);
     // Calcula o numero maximo de Cts a partir do 'R' e do 'Maior Stop' da operacao
-    else if (simulation.tipo_cts === '3') return Math.floor(divide(simulation.R, stopBrl)) * (opEscalada + 1);
+    else if (simulation.tipo_cts === 3) return Math.floor(divide(simulation.R, stopBrl)) * (opEscalada + 1);
 };
 
 /*
@@ -94,7 +94,7 @@ const okToUse_filterOp = (op, op_stopBrl, filters, simulation) => {
     // Filtra apenas os ativos selecionados
     if (filters.ativo.length > 0 && !filters.ativo.includes(op.ativo)) return false;
     // Filtra apenas os gerenciamentos selecionados
-    if (filters.gerenciamento !== null && filters.gerenciamento != op.gerenciamento) return false;
+    if (filters.gerenciamento !== null && filters.gerenciamento !== op.gerenciamento) return false;
     // Filtra apenas os cenarios selecionados
     if (!isObjectEmpty(filters.cenario) && !(op.cenario in filters.cenario)) return false;
     // Filtra apenas as observações selecionadas dos cenarios
@@ -102,7 +102,7 @@ const okToUse_filterOp = (op, op_stopBrl, filters, simulation) => {
     // Filtra apenas as operações com Stop dentro do R passado
     if (simulation.R !== null && simulation.R_filter_ops && op_stopBrl > simulation.R) return false;
     // Filtra operações com Erro
-    if (simulation.ignora_erro && op.erro == 1) return false;
+    if (simulation.ignora_erro && op.erro === 1) return false;
     return true;
 };
 
@@ -434,7 +434,7 @@ const groupData_byPeriodo = (list, filters, simulation, options = {}) => {
     ///////////////////////
     // Mantem 'por Trade'
     ///////////////////////
-    if (simulation.periodo_calc === '1') {
+    if (simulation.periodo_calc === 1) {
         for (let e in list) {
             let op_resultBruto_Unitario = calculate_op_result(list[e], simulation);
             // Roda os 'filters' na operação
@@ -518,7 +518,7 @@ const groupData_byPeriodo = (list, filters, simulation, options = {}) => {
                                 brl: resultBruto_operacao,
                                 R: simulation.R !== null ? divide(resultBruto_operacao, simulation.R) : '--',
                                 S:
-                                    op_resultBruto_Unitario['result'].brl != 0
+                                    op_resultBruto_Unitario['result'].brl !== 0
                                         ? divide(divide(op_resultBruto_Unitario['result'].brl, list[e].vol), op_resultBruto_Unitario['menor_alvo'])
                                         : 0,
                             },
@@ -535,7 +535,7 @@ const groupData_byPeriodo = (list, filters, simulation, options = {}) => {
     ////////////////////
     // Agrupa 'por Dia'
     ////////////////////
-    else if (simulation.periodo_calc === '2') {
+    else if (simulation.periodo_calc === 2) {
         let day_used = null,
             index = -1;
         for (let e in list) {
@@ -611,7 +611,7 @@ const groupData_byPeriodo = (list, filters, simulation, options = {}) => {
                                 brl: resultBruto_operacao,
                                 R: simulation.R !== null ? divide(resultBruto_operacao, simulation.R) : '--',
                                 S:
-                                    op_resultBruto_Unitario['result'].brl != 0
+                                    op_resultBruto_Unitario['result'].brl !== 0
                                         ? divide(divide(op_resultBruto_Unitario['result'].brl, list[e].vol), op_resultBruto_Unitario['menor_alvo'])
                                         : 0,
                             },
@@ -636,7 +636,7 @@ const groupData_byPeriodo = (list, filters, simulation, options = {}) => {
                         }
                         new_list[index]['result_bruto']['brl'] += resultBruto_operacao;
                         new_list[index]['result_bruto']['S'] +=
-                            op_resultBruto_Unitario['result'].brl != 0
+                            op_resultBruto_Unitario['result'].brl !== 0
                                 ? divide(divide(op_resultBruto_Unitario['result'].brl, list[e].vol), op_resultBruto_Unitario['menor_alvo'])
                                 : 0;
                         if (simulation.R !== null) new_list[index]['result_bruto']['R'] += divide(resultBruto_operacao, simulation.R);
@@ -654,7 +654,7 @@ const groupData_byPeriodo = (list, filters, simulation, options = {}) => {
     ////////////////////
     // Agrupa 'por Mes'
     ////////////////////
-    else if (simulation.periodo_calc === '3') {
+    else if (simulation.periodo_calc === 3) {
         let month_used = null,
             index = -1;
         for (let e in list) {
@@ -730,7 +730,7 @@ const groupData_byPeriodo = (list, filters, simulation, options = {}) => {
                                 brl: resultBruto_operacao,
                                 R: simulation.R !== null ? divide(resultBruto_operacao, simulation.R) : '--',
                                 S:
-                                    op_resultBruto_Unitario['result'].brl != 0
+                                    op_resultBruto_Unitario['result'].brl !== 0
                                         ? divide(divide(op_resultBruto_Unitario['result'].brl, list[e].vol), op_resultBruto_Unitario['menor_alvo'])
                                         : 0,
                             },
@@ -755,7 +755,7 @@ const groupData_byPeriodo = (list, filters, simulation, options = {}) => {
                         }
                         new_list[index]['result_bruto']['brl'] += resultBruto_operacao;
                         new_list[index]['result_bruto']['S'] +=
-                            op_resultBruto_Unitario['result'].brl != 0
+                            op_resultBruto_Unitario['result'].brl !== 0
                                 ? divide(divide(op_resultBruto_Unitario['result'].brl, list[e].vol), op_resultBruto_Unitario['menor_alvo'])
                                 : 0;
                         if (simulation.R !== null) new_list[index]['result_bruto']['R'] += divide(resultBruto_operacao, simulation.R);
@@ -810,35 +810,36 @@ const calculate_op_result = (op, simulation) => {
     @options    : Opções opcionais a serem passadas para a função.
 */
 const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options = {}) => {
+    console.log('Statistics');
     /*------------------------------------ Vars --------------------------------------*/
     // Opções passadas ao executar o generate
     let _options = {
-        get_byCenario: options.get_byCenario ?? true,
-        get_graficoData: options.get_graficoData ?? true,
-        get_tradeTableData: options.get_tradeTableData ?? true,
-        only_FilterOps: options.only_FilterOps ?? false,
+        get_byCenario: 'get_byCenario' in options ? options.get_byCenario : true,
+        get_graficoData: 'get_graficoData' in options ? options.get_graficoData : true,
+        get_tradeTableData: 'get_tradeTableData' in options ? options.get_tradeTableData : true,
+        only_FilterOps: 'only_FilterOps' in options ? options.only_FilterOps : false,
     };
     // Modifca alguns valores do 'filters' e 'simulation'
     let _filters = {
-        data_inicial: filters.data_inicial ?? null,
-        data_final: filters.data_final ?? null,
-        hora_inicial: filters.hora_inicial ?? null,
-        hora_final: filters.hora_final ?? null,
-        ativo: filters.ativo ?? [],
-        gerenciamento: filters.gerenciamento ?? null,
-        cenario: filters.cenario ?? {},
-        observacoes_query_union: filters.observacoes_query_union ?? 'AND',
+        data_inicial: 'data_inicial' in filters ? filters.data_inicial : null,
+        data_final: 'data_final' in filters ? filters.data_final : null,
+        hora_inicial: 'hora_inicial' in filters ? filters.hora_inicial : null,
+        hora_final: 'hora_final' in filters ? filters.hora_final : null,
+        ativo: 'ativo' in filters ? filters.ativo : [],
+        gerenciamento: 'gerenciamento' in filters ? filters.gerenciamento?.label : null,
+        cenario: 'cenario' in filters ? filters.cenario : {},
+        observacoes_query_union: 'observacoes_query_union' in filters ? filters.observacoes_query_union : 'AND',
     };
     let _simulation = {
-        periodo_calc: simulation.periodo_calc ?? '1',
-        tipo_cts: simulation.tipo_cts ?? '1',
-        cts: simulation.cts ?? null,
-        usa_custo: simulation.usa_custo == 1 ?? true,
-        ignora_erro: simulation.ignora_erro == 1 ?? false,
-        tipo_parada: simulation.tipo_parada ?? [],
-        valor_inicial: parseFloat(simulation.valor_inicial) ?? null,
-        R: 'R' in simulation && simulation.R != 0 ? simulation.R : null,
-        R_filter_ops: 'R_filter_ops' in simulation && simulation.R_filter_ops == '1' ? true : false,
+        periodo_calc: 'periodo_calc' in simulation ? simulation.periodo_calc : 1,
+        tipo_cts: 'tipo_cts' in simulation ? simulation.tipo_cts : 1,
+        cts: 'cts' in simulation ? simulation.cts : null,
+        usa_custo: 'usa_custo' in simulation ? simulation.usa_custo === 1 : true,
+        ignora_erro: 'ignora_erro' in simulation ? simulation.ignora_erro === 1 : false,
+        tipo_parada: 'tipo_parada' in simulation ? simulation.tipo_parada : [],
+        valor_inicial: 'valor_inicial' in simulation ? parseFloat(simulation.valor_inicial) : null,
+        R: 'R' in simulation && simulation.R !== 0 ? simulation.R : null,
+        R_filter_ops: 'R_filter_ops' in simulation && simulation.R_filter_ops === 1 ? true : false,
     };
     // Variaveis para a tabela de estatistica geral
     let _dashboard_ops__table_stats = {
@@ -1012,7 +1013,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
     }
     /*----------------------------- Percorre as operações ----------------------------*/
     /*----------------------------------- Por Trade ----------------------------------*/
-    if (_simulation.periodo_calc === '1') {
+    if (_simulation.periodo_calc === 1) {
         for (let o in _ops) {
             //////////////////////////////////
             // Resultados do Trade
@@ -1086,7 +1087,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
                 _temp__table_stats['mediaGain'] += _ops[o].result_liquido['brl'];
             }
             // Se for uma operação com Erro
-            if (_ops[o].erro == 1) _dashboard_ops__table_stats['trades__erro']++;
+            if (_ops[o].erro === 1) _dashboard_ops__table_stats['trades__erro']++;
             // Calcula o lucro corrente após cada operação
             _temp__table_stats['lucro_corrente']['brl'] += _ops[o].result_liquido['brl'];
             // Calcula o Lucro por Mes
@@ -1209,7 +1210,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
                     _temp__table_stats__byCenario[_ops[o].cenario]['mediaGain'] += _ops[o].result_liquido['brl'];
                 }
                 // Se for uma operação com Erro
-                if (_ops[o].erro == 1) _dashboard_ops__table_stats__byCenario[_ops[o].cenario]['trades__erro']++;
+                if (_ops[o].erro === 1) _dashboard_ops__table_stats__byCenario[_ops[o].cenario]['trades__erro']++;
                 // Calcula o lucro corrente após cada operação
                 _temp__table_stats__byCenario[_ops[o].cenario]['lucro_corrente']['brl'] += _ops[o].result_liquido['brl'];
                 // Para o DP
@@ -1414,7 +1415,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             dashboard_ops__table_trades: _dashboard_ops__table_trades,
             dashboard_ops__chart_data: _dashboard_ops__chart_data,
         };
-    } else if (_simulation.periodo_calc === '2') {
+    } else if (_simulation.periodo_calc === 2) {
         /*------------------------------------ Por Dia -----------------------------------*/
         for (let o in _ops) {
             //////////////////////////////////
@@ -1451,7 +1452,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             //////////////////////////////////
             // Estatisticas Gerais
             //////////////////////////////////
-            let day_of_week = getDay(_ops[o].data);
+            let day_of_week = getDay(parseISO(_ops[o].data));
             if (!(day_of_week in _temp__table_stats['horas__unicas'])) _temp__table_stats['horas__unicas'][day_of_week] = { result: 0.0, qtd: 0 };
             _temp__table_stats['horas__unicas'][day_of_week]['result'] += _ops[o].result_liquido['brl'];
             _temp__table_stats['horas__unicas'][day_of_week]['qtd']++;
@@ -1483,7 +1484,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
                 _temp__table_stats['mediaGain'] += _ops[o].result_liquido['brl'];
             }
             // Se for uma operação com Erro
-            if (_ops[o].erro == 1) _dashboard_ops__table_stats['trades__erro']++;
+            if (_ops[o].erro === 1) _dashboard_ops__table_stats['trades__erro']++;
             // Calcula o lucro corrente após cada operação
             _temp__table_stats['lucro_corrente']['brl'] += _ops[o].result_liquido['brl'];
             // Calcula o Lucro por Mes
@@ -1690,7 +1691,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             dashboard_ops__table_trades: _dashboard_ops__table_trades,
             dashboard_ops__chart_data: _dashboard_ops__chart_data,
         };
-    } else if (_simulation.periodo_calc === '3') {
+    } else if (_simulation.periodo_calc === 3) {
         /*------------------------------------ Por Mes -----------------------------------*/
         for (let o in _ops) {
             //////////////////////////////////
@@ -1727,7 +1728,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             //////////////////////////////////
             // Estatisticas Gerais
             //////////////////////////////////
-            let month = getMonth(_ops[o].data);
+            let month = getMonth(parseISO(_ops[o].data));
             if (!(month in _temp__table_stats['horas__unicas'])) _temp__table_stats['horas__unicas'][month] = { result: 0.0, qtd: 0 };
             _temp__table_stats['horas__unicas'][month]['result'] += _ops[o].result_liquido['brl'];
             _temp__table_stats['horas__unicas'][month]['qtd']++;
@@ -1759,7 +1760,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
                 _temp__table_stats['mediaGain'] += _ops[o].result_liquido['brl'];
             }
             // Se for uma operação com Erro
-            if (_ops[o].erro == 1) _dashboard_ops__table_stats['trades__erro']++;
+            if (_ops[o].erro === 1) _dashboard_ops__table_stats['trades__erro']++;
             // Calcula o lucro corrente após cada operação
             _temp__table_stats['lucro_corrente']['brl'] += _ops[o].result_liquido['brl'];
             // Calcula o Lucro por Mes

@@ -17,14 +17,23 @@ const opCell = ({ value }) => {
     return '';
 };
 
-const custoCell = ({ value }) => {
-    return <span className={`${gstyles.text_bold} ${gstyles.text_danger}`}>{`R$ ${value.toFixed(2)}`}</span>;
+const creditoCell = ({ value }) => {
+    return <span className={`${gstyles.text_bold} ${gstyles.text_success} ${gstyles.text_small}`}>{`R$ ${value.toFixed(2)}`}</span>;
 };
 
-const resultCell = ({ value }) => {
-    if (value > 0) return <span className={`${gstyles.text_bold} ${gstyles.text_success}`}>{`R$ ${value.toFixed(2)}`}</span>;
-    else if (value < 0) return <span className={`${gstyles.text_bold} ${gstyles.text_danger}`}>{`R$ ${value.toFixed(2)}`}</span>;
-    else return <span className={`${gstyles.text_bold} ${gstyles.text_muted}`}>{`R$ ${value.toFixed(2)}`}</span>;
+const debitoCell = ({ value }) => {
+    return <span className={`${gstyles.text_bold} ${gstyles.text_danger} ${gstyles.text_small}`}>{`R$ ${value.toFixed(2)}`}</span>;
+};
+
+const resultCell_BRL = ({ value }) => {
+    if (value > 0) return <span className={`${gstyles.text_bold} ${gstyles.text_success} ${gstyles.text_small}`}>{`R$ ${value.toFixed(2)}`}</span>;
+    else if (value < 0) return <span className={`${gstyles.text_bold} ${gstyles.text_danger} ${gstyles.text_small}`}>{`R$ ${value.toFixed(2)}`}</span>;
+    else return <span className={`${gstyles.text_bold} ${gstyles.text_muted} ${gstyles.text_small}`}>{`R$ ${value.toFixed(2)}`}</span>;
+};
+const resultCell_S = ({ value }) => {
+    if (value > 0) return <span className={`${gstyles.text_bold} ${gstyles.text_success} ${gstyles.text_small}`}>{`${value.toFixed(1)}S`}</span>;
+    else if (value < 0) return <span className={`${gstyles.text_bold} ${gstyles.text_danger} ${gstyles.text_small}`}>{`R$ ${value.toFixed(1)}S`}</span>;
+    else return <span className={`${gstyles.text_bold} ${gstyles.text_muted} ${gstyles.text_small}`}>{`R$ ${value.toFixed(1)}S`}</span>;
 };
 
 const erroCell = ({ value }) => {
@@ -33,49 +42,222 @@ const erroCell = ({ value }) => {
 };
 
 const dataFormatter = ({ value }) => formatValue_fromRaw({ style: 'date' }, value);
+const mesFormatter = ({ value }) => formatValue_fromRaw({ style: 'date', options: { month: 'short', year: 'numeric', timeZone: 'UTC' } }, value);
+const volMediaFormatter = ({ value }) => value.toFixed(0);
 
 const DatagridOps = (props) => {
-    const dg_options = useMemo(
-        () => ({
-            columns: [
-                { field: 'trade__seq', headerName: '#', width: 70, disableColumnMenu: true, cellClassName: `${gstyles.text_bold} ${gstyles.text_muted}` },
-                {
-                    field: 'trade__data',
-                    headerName: 'Data',
-                    flex: 1,
-                    disableColumnMenu: true,
-                    valueFormatter: dataFormatter,
-                    cellClassName: `${gstyles.text_muted} ${gstyles.text_bold}`,
-                },
-                { field: 'trade__hora', headerName: 'Hora', flex: 1, disableColumnMenu: true, cellClassName: `${gstyles.text_muted} ${gstyles.text_bold}` },
-                { field: 'trade__cenario', headerName: 'Cenário', flex: 2, disableColumnMenu: true, cellClassName: `${gstyles.text_bold}` },
-                { field: 'trade__op', headerName: 'Op.', width: 70, disableColumnMenu: true, renderCell: opCell, align: 'center', headerAlign: 'center', sortable: false },
-                { field: 'trade__cts', headerName: 'Cts', width: 70, disableColumnMenu: true, align: 'center', headerAlign: 'center', cellClassName: `${gstyles.text_bold}` },
-                { field: 'trade__vol', headerName: 'Vol', width: 70, disableColumnMenu: true, align: 'center', headerAlign: 'center', cellClassName: `${gstyles.text_bold}` },
-                { field: 'trade__result_bruto__brl', headerName: 'Bruto BRL', flex: 1, disableColumnMenu: true, renderCell: resultCell },
-                { field: 'trade__custo', headerName: 'Custo', flex: 1, disableColumnMenu: true, renderCell: custoCell },
-                {
-                    field: 'trade__result_liquido__brl',
-                    headerName: 'Líquido BRL',
-                    flex: 1,
-                    disableColumnMenu: true,
-                    renderCell: resultCell,
-                },
-                { field: 'trade__observacoes', headerName: 'Obs.', flex: 3, disableColumnMenu: true, sortable: false },
-                { field: 'trade__erro', headerName: 'Erro', width: 70, disableColumnMenu: true, align: 'center', headerAlign: 'center', renderCell: erroCell },
-            ],
-            rowsPerPage: [11],
-            sortingModel: [{ field: 'trade__seq', sort: 'desc' }],
-        }),
-        []
-    );
+    const dg_options = useMemo(() => {
+        if (props.periodoCalc === 1) {
+            return {
+                columns: [
+                    {
+                        field: 'trade__seq',
+                        headerName: '#',
+                        width: 70,
+                        disableColumnMenu: true,
+                        cellClassName: `${gstyles.text_bold} ${gstyles.text_muted} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'trade__data',
+                        headerName: 'Data',
+                        flex: 1,
+                        disableColumnMenu: true,
+                        sortable: false,
+                        valueFormatter: dataFormatter,
+                        cellClassName: `${gstyles.text_muted} ${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'trade__hora',
+                        headerName: 'Hora',
+                        flex: 1,
+                        disableColumnMenu: true,
+                        cellClassName: `${gstyles.text_muted} ${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    { field: 'trade__cenario', headerName: 'Cenário', flex: 2, disableColumnMenu: true, cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}` },
+                    { field: 'trade__op', headerName: 'Op.', width: 70, disableColumnMenu: true, renderCell: opCell, align: 'center', headerAlign: 'center', sortable: false },
+                    {
+                        field: 'trade__cts',
+                        headerName: 'Cts',
+                        width: 70,
+                        disableColumnMenu: true,
+                        align: 'center',
+                        headerAlign: 'center',
+                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'trade__vol',
+                        headerName: 'Vol',
+                        width: 70,
+                        disableColumnMenu: true,
+                        align: 'center',
+                        headerAlign: 'center',
+                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    { field: 'trade__result_bruto__brl', headerName: 'Bruto BRL', flex: 1, disableColumnMenu: true, renderCell: resultCell_BRL },
+                    { field: 'trade__custo', headerName: 'Custo', flex: 1, disableColumnMenu: true, renderCell: debitoCell },
+                    {
+                        field: 'trade__result_liquido__brl',
+                        headerName: 'Líquido BRL',
+                        flex: 1,
+                        disableColumnMenu: true,
+                        renderCell: resultCell_BRL,
+                    },
+                    {
+                        field: 'trade__observacoes',
+                        headerName: 'Obs.',
+                        flex: 3,
+                        disableColumnMenu: true,
+                        sortable: false,
+                        cellClassName: `${gstyles.text_bold} ${gstyles.text_muted} ${styles.dg_cell__small}`,
+                    },
+                    { field: 'trade__erro', headerName: 'Erro', width: 70, disableColumnMenu: true, align: 'center', headerAlign: 'center', renderCell: erroCell },
+                ],
+                rowsPerPage: [11],
+                sortingModel: [{ field: 'trade__seq', sort: 'desc' }],
+            };
+        } else if (props.periodoCalc === 2) {
+            return {
+                columns: [
+                    {
+                        field: 'dia__seq',
+                        headerName: '#',
+                        width: 70,
+                        disableColumnMenu: true,
+                        cellClassName: `${gstyles.text_bold} ${gstyles.text_muted} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'dia__data',
+                        headerName: 'Data',
+                        flex: 1,
+                        disableColumnMenu: true,
+                        sortable: false,
+                        valueFormatter: dataFormatter,
+                        cellClassName: `${gstyles.text_muted} ${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'dia__qtd_trades',
+                        headerName: 'Ops',
+                        width: 70,
+                        disableColumnMenu: true,
+                        align: 'center',
+                        headerAlign: 'center',
+                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'dia__cts',
+                        headerName: 'Cts',
+                        width: 70,
+                        disableColumnMenu: true,
+                        align: 'center',
+                        headerAlign: 'center',
+                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'dia__vol_media',
+                        headerName: 'Vol M.',
+                        width: 70,
+                        disableColumnMenu: true,
+                        align: 'center',
+                        headerAlign: 'center',
+                        valueFormatter: volMediaFormatter,
+                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    { field: 'dia__lucro_bruto__brl', headerName: 'L. Bruto', flex: 1, disableColumnMenu: true, renderCell: creditoCell },
+                    { field: 'dia__prejuizo_bruto__brl', headerName: 'P. Bruto', flex: 1, disableColumnMenu: true, renderCell: debitoCell },
+                    { field: 'dia__result_bruto__S', headerName: 'Bruto S', flex: 1, disableColumnMenu: true, renderCell: resultCell_S },
+                    { field: 'dia__result_bruto__brl', headerName: 'Bruto BRL', flex: 1, disableColumnMenu: true, renderCell: resultCell_BRL },
+                    { field: 'dia__custo', headerName: 'Custos', flex: 1, disableColumnMenu: true, renderCell: debitoCell },
+                    {
+                        field: 'dia__result_liquido__brl',
+                        headerName: 'Líquido BRL',
+                        flex: 1,
+                        disableColumnMenu: true,
+                        renderCell: resultCell_BRL,
+                    },
+                    { field: 'dia__erro', headerName: 'Erro', width: 70, disableColumnMenu: true, align: 'center', headerAlign: 'center', renderCell: erroCell },
+                ],
+                rowsPerPage: [11],
+                sortingModel: [{ field: 'dia__seq', sort: 'desc' }],
+            };
+        } else if (props.periodoCalc === 3) {
+            return {
+                columns: [
+                    {
+                        field: 'mes__seq',
+                        headerName: '#',
+                        width: 70,
+                        disableColumnMenu: true,
+                        cellClassName: `${gstyles.text_bold} ${gstyles.text_muted} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'mes__data',
+                        headerName: 'Data',
+                        flex: 1,
+                        disableColumnMenu: true,
+                        sortable: false,
+                        valueFormatter: mesFormatter,
+                        cellClassName: `${gstyles.text_muted} ${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'mes__qtd_trades',
+                        headerName: 'Ops',
+                        width: 70,
+                        disableColumnMenu: true,
+                        align: 'center',
+                        headerAlign: 'center',
+                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'mes__cts',
+                        headerName: 'Cts',
+                        width: 70,
+                        disableColumnMenu: true,
+                        align: 'center',
+                        headerAlign: 'center',
+                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    {
+                        field: 'mes__vol_media',
+                        headerName: 'Vol M.',
+                        width: 70,
+                        disableColumnMenu: true,
+                        align: 'center',
+                        headerAlign: 'center',
+                        valueFormatter: volMediaFormatter,
+                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    },
+                    { field: 'mes__lucro_bruto__brl', headerName: 'L. Bruto', flex: 1, disableColumnMenu: true, renderCell: creditoCell },
+                    { field: 'mes__prejuizo_bruto__brl', headerName: 'P. Bruto', flex: 1, disableColumnMenu: true, renderCell: debitoCell },
+                    { field: 'mes__result_bruto__S', headerName: 'Bruto S', flex: 1, disableColumnMenu: true, renderCell: resultCell_S },
+                    { field: 'mes__result_bruto__brl', headerName: 'Bruto BRL', flex: 1, disableColumnMenu: true, renderCell: resultCell_BRL },
+                    { field: 'mes__custo', headerName: 'Custos', flex: 1, disableColumnMenu: true, renderCell: debitoCell },
+                    {
+                        field: 'mes__result_liquido__brl',
+                        headerName: 'Líquido BRL',
+                        flex: 1,
+                        disableColumnMenu: true,
+                        renderCell: resultCell_BRL,
+                    },
+                    { field: 'mes__erro', headerName: 'Erro', width: 70, disableColumnMenu: true, align: 'center', headerAlign: 'center', renderCell: erroCell },
+                ],
+                rowsPerPage: [11],
+                sortingModel: [{ field: 'mes__seq', sort: 'desc' }],
+            };
+        }
+        return {};
+    }, [props.periodoCalc]);
 
     /***********
      * HANDLERS
      ***********/
-    const getRowId = useCallback((row_data) => {
-        return row_data.trade__id;
-    }, []);
+    const getRowId = useCallback(
+        (row_data) => {
+            if (props.periodoCalc === 1) return row_data.trade__id;
+            else if (props.periodoCalc === 2) return row_data.dia__seq;
+            else if (props.periodoCalc === 3) return row_data.mes__seq;
+        },
+        [props.periodoCalc]
+    );
 
     return (
         <Paper className={styles.grid_wrapper}>

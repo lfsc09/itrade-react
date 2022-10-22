@@ -20,6 +20,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
+import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { batch, useDispatch, useSelector } from 'react-redux';
@@ -61,7 +62,7 @@ const Dashboard = () => {
     const [dataset, setDataset] = useState([]);
     // Checksum com ID do dataset, para averiguar mudanças no 'dataset'
     const [dataset_checksum, setDataset_Checksum] = useState('');
-    const [operacoes, setOperacoes] = useState([]);
+    const [operacoes, setOperacoes] = useState(null);
     const [statistics, setStatistics] = useState(null);
 
     /***************
@@ -83,7 +84,7 @@ const Dashboard = () => {
                 let loadData = {
                     datasets: resp.data.datasets,
                     filters: sessionData?.filters ?? { gerenciamento: null },
-                    simulations: sessionData?.simulations ?? { periodo_calc: 1, usa_custo: 1, ignora_erro: 1, tipo_cts: 1 },
+                    simulations: sessionData?.simulations ?? { periodo_calc: 1, usa_custo: 1, ignora_erro: 0, tipo_cts: 1 },
                 };
                 let selectedDatasets = sessionData?.dataset ?? [resp.data.datasets[0]];
                 batch(() => {
@@ -127,6 +128,8 @@ const Dashboard = () => {
                             dias: resp.data.originalInfo.dias,
                         },
                     };
+                    loadData.originalInfo.date_inicial_checksum = format(loadData.originalInfo.date_inicial, 'yyyy-MM-dd');
+                    loadData.originalInfo.date_final_checksum = format(loadData.originalInfo.date_final, 'yyyy-MM-dd');
                     if (step2_firstLoad) {
                         // Se for o primeiro load da Aba (SESSION STORAGE Vazio)
                         if (dataState.filters.gerenciamento === null) loadData.filters = { gerenciamento: resp.data.gerenciamentos?.[0] ?? null };
@@ -138,7 +141,6 @@ const Dashboard = () => {
                     batch(() => {
                         if (step2_firstLoad) setStep2_firstLoad(false);
                         setOperacoes((prevState) => resp.data.operacoes);
-                        setStatistics((prevstate) => generate__DashboardOps(resp.data.operacoes));
                         dataDispatch({ type: DGR_TYPES.STEP2_LOAD, payload: loadData });
                     });
                 })
@@ -152,6 +154,17 @@ const Dashboard = () => {
             };
         }
     }, [dataset_checksum]);
+
+    /************************************
+     * REACALCULA AS ESTATISTICAS APENAS
+     ************************************/
+    useEffect(() => {
+        console.log(dataState.filters_checksum, dataState.simulations_checksum);
+        if (operacoes !== null && dataState.filters !== null && dataState.simulations !== null) {
+            console.log('Recalculou');
+            setStatistics((prevstate) => generate__DashboardOps(operacoes, dataState.filters, dataState.simulations));
+        }
+    }, [dataState.filters_checksum, dataState.simulations_checksum]);
 
     /***********
      * HANDLERS
@@ -172,8 +185,6 @@ const Dashboard = () => {
         if (dataset.length) setDataset_Checksum((prevState) => dataset.reduce((t, d) => t + '_' + d.id, ''));
     }, [dataset]);
 
-    console.log(statistics);
-
     return (
         <>
             <MessageController overlay={true} />
@@ -184,7 +195,9 @@ const Dashboard = () => {
                     gerenciamentosSuggest={dataState.gerenciamentos}
                     cenariosSuggest={dataState.cenarios}
                     filterState={dataState.filters}
+                    filterChecksum={dataState.filters_checksum}
                     simulationState={dataState.simulations}
+                    simulationChecksum={dataState.simulations_checksum}
                     original={dataState.originalInfo}
                     dispatchers={{ dataDispatch: dataDispatch, setFilterModalOpen: setFilterModalOpen }}
                 />
@@ -258,7 +271,7 @@ const Dashboard = () => {
                         <NoContent type='empty-data' withContainer={true} empty_text='Sem Dados' />
                     )}
                     {statistics !== null && statistics.dashboard_ops__table_trades.length ? (
-                        <DatagridOps rows={statistics.dashboard_ops__table_trades} />
+                        <DatagridOps rows={statistics.dashboard_ops__table_trades} periodoCalc={dataState.simulations?.periodo_calc} />
                     ) : (
                         <NoContent type='empty-data' withContainer={true} empty_text='Sem Dados' />
                     )}

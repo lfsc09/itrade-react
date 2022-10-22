@@ -1,3 +1,4 @@
+import { FilterListOff } from '@mui/icons-material';
 import {
     Button,
     Checkbox,
@@ -8,8 +9,6 @@ import {
     FormControl,
     FormControlLabel,
     FormGroup,
-    FormLabel,
-    Grid,
     List,
     ListItem,
     ListItemButton,
@@ -26,6 +25,16 @@ import NoContent from '../../../../../../components/ui/NoContent';
 import { isObjectEmpty } from '../../../../../../helpers/global';
 import styles from './filter-cenario-obs.module.scss';
 
+/*
+    Retorna um Objeto com cenários { string : { id: int, observacoes: { int : int } }, ...}
+
+    @props : [
+        ...
+        cenarios                                                            : Array com os cenários do(s) Dataset(s)
+        receivedCenario({ string : { id: int, observacoes: { int : int } }) : Valores vindos do componente pai de Cenário selecionados para filtro
+        returnCenario(func)                                                 : Função para atualizar o cenário do componente Pai
+    ]
+*/
 const FilterCenarioObs = (props) => {
     /*********
      * STATES
@@ -81,6 +90,10 @@ const FilterCenarioObs = (props) => {
         },
         [cenario]
     );
+
+    const handleClear = useCallback(() => {
+        setCenario((prevState) => ({}));
+    }, []);
 
     /********
      * FUNCS
@@ -181,7 +194,12 @@ const FilterCenarioObs = (props) => {
                     </Stack>
                 </DialogContent>
                 <DialogActions sx={{ px: 2 }}>
-                    <Button onClick={handleCloseDialog}>Fechar</Button>
+                    <Button onClick={handleClear} endIcon={<FilterListOff />}>
+                        Limpar Tudo
+                    </Button>
+                    <Button className={styles.action_clear} onClick={handleCloseDialog}>
+                        Fechar
+                    </Button>
                 </DialogActions>
             </Dialog>
         </>
