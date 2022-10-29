@@ -136,7 +136,7 @@ const Dashboard = () => {
                     } else {
                         // Reseta os filters e simulations ao mudar os Datasets
                         loadData.filters = { gerenciamento: resp.data.gerenciamentos?.[0] ?? null };
-                        loadData.simulations = { periodo_calc: 1, usa_custo: 1, ignora_erro: 1, tipo_cts: 1 };
+                        loadData.simulations = { periodo_calc: 1, usa_custo: 1, ignora_erro: 0, tipo_cts: 1 };
                     }
                     batch(() => {
                         if (step2_firstLoad) setStep2_firstLoad(false);
@@ -160,10 +160,8 @@ const Dashboard = () => {
      ************************************/
     useEffect(() => {
         console.log(dataState.filters_checksum, dataState.simulations_checksum);
-        if (operacoes !== null && dataState.filters !== null && dataState.simulations !== null) {
-            console.log('Recalculou');
+        if (operacoes !== null && dataState.filters !== null && dataState.simulations !== null)
             setStatistics((prevstate) => generate__DashboardOps(operacoes, dataState.filters, dataState.simulations));
-        }
     }, [dataState.filters_checksum, dataState.simulations_checksum]);
 
     /***********
@@ -174,7 +172,7 @@ const Dashboard = () => {
     }, []);
 
     const handleDatasetAutocomplete = useCallback((e, values) => {
-        setDataset((prevState) => values);
+        if (values.length) setDataset((prevState) => values);
     }, []);
 
     const handleComparaDatasetSwitch = useCallback((e) => {

@@ -33,6 +33,7 @@ export const checksum_filters = (f) => {
         for (let val of f.ativo) checksum += `|${val.label}`;
         checksum += '}';
     }
+    if ('gerenciamento' in f && f.gerenciamento !== null) checksum += `&ger=${f.gerenciamento.label}`;
     if ('cenario' in f) {
         checksum += '&cen={';
         for (let cen in f.cenario) {

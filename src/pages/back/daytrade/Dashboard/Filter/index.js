@@ -96,6 +96,8 @@ const FilterDashboard = (props) => {
     const [ativo, setAtivo] = useState(props.filterState?.ativo ?? []);
     const [gerenciamento, setGerenciamento] = useState(props.filterState.gerenciamento);
     const [cenario, setCenario] = useState(props.filterState?.cenario ?? {});
+    // Checksum do cenario para evitar redraws do VDOM do componente de Cenarios
+    const [cenario_checksum, setCenario_checksum] = useState('');
     // Simulations
     const [periodo, setPeriodo] = useState(props.simulationState.periodo_calc);
     const [custo, setCusto] = useState(props.simulationState.usa_custo);
@@ -103,6 +105,8 @@ const FilterDashboard = (props) => {
     const [tipoCts, setTipoCts] = useState(props.simulationState.tipo_cts);
     const [cts, setCts] = useState(props.simulationState?.cts ?? '');
     const [tipoParada, setTipoParada] = useState(props.simulationState?.tipo_parada ?? []);
+    // Checksum do tipo parada para evitar redraws do VDOM do componente de Tipos de Parada
+    const [tipoParada_checksum, setTipoParada_checksum] = useState('');
     const [capital, setCapital] = useState(props.simulationState?.valor_inicial ?? '');
     const [riscoMaximo, setRiscoMaximo] = useState(props.simulationState?.R ?? '');
 
@@ -205,11 +209,25 @@ const FilterDashboard = (props) => {
 
     const handleClear = useCallback(() => {
         batch(() => {
-            setGerenciamento((prevState) => props.filterState.gerenciamento);
             setDateInicial((prevState) => props.original.date_inicial);
             setDateInicial_Formated((prevState) => data_format.toString('data', props.original.date_inicial));
             setDateFinal((prevState) => props.original.date_final);
             setDateFinal_Formated((prevState) => data_format.toString('data', props.original.date_final));
+            setHora((prevState) => [9, 18]);
+            setHora_Formated((prevState) => ['9:00', '18:00']);
+            setAtivo((prevState) => []);
+            setGerenciamento((prevState) => props.filterState.gerenciamento);
+            setCenario((prevState) => ({}));
+            setCenario_checksum((prevState) => '');
+            setPeriodo((prevState) => 1);
+            setCusto((prevState) => 1);
+            setIgnoraErro((prevState) => 0);
+            setTipoCts((prevState) => 1);
+            setCts((prevState) => '');
+            setTipoParada((prevState) => []);
+            setTipoParada_checksum((prevState) => '');
+            setCapital((prevState) => '');
+            setRiscoMaximo((prevState) => '');
         });
     }, [props.filterState.gerenciamento, props.original.date_inicial_checksum, props.original.date_final_checksum]);
 
@@ -236,7 +254,7 @@ const FilterDashboard = (props) => {
      *************************************************************/
     useEffect(() => {
         handleClear();
-    }, []);
+    }, [props.original.date_inicial_checksum, props.original.date_final_checksum]);
 
     return (
         <Dialog open={props.open} onClose={handleClose} maxWidth='xl' fullWidth>
@@ -351,7 +369,13 @@ const FilterDashboard = (props) => {
                             />
                         </Grid>
                         <Grid item md={3.5} xs={12}>
-                            <FilterCenarioObs cenarios={props.cenariosSuggest} receivedCenario={cenario} returnCenario={setCenario} />
+                            <FilterCenarioObs
+                                cenarios={props.cenariosSuggest}
+                                receivedCenario={cenario}
+                                receivedCenario_checksum={cenario_checksum}
+                                returnCenario={setCenario}
+                                returnCenario_checksum={setCenario_checksum}
+                            />
                         </Grid>
                     </Grid>
                     <Grid item xs={12}>
@@ -414,19 +438,24 @@ const FilterDashboard = (props) => {
                             </Stack>
                         </Grid>
                         <Grid item md={1.5} xs={12}>
-                            <TextField label='Simular Capital' value={capital} onChange={handleCapitalInput} size='small' fullWidth />
+                            <TextField label='Capital (R$)' value={capital} onChange={handleCapitalInput} size='small' fullWidth />
                         </Grid>
                         <Grid item md={1.5} xs={12}>
-                            <TextField label='Simular Risco Máximo' value={riscoMaximo} onChange={handleRiscoMaximoInput} size='small' fullWidth />
+                            <TextField label='Risco Máximo (R$)' value={riscoMaximo} onChange={handleRiscoMaximoInput} size='small' fullWidth />
                         </Grid>
                         <Grid item md={2.5} xs={12}>
-                            <SimulationParada receivedTipoParada={tipoParada} returnTipoParada={setTipoParada} />
+                            <SimulationParada
+                                receivedTipoParada={tipoParada}
+                                receivedTipoParada_checksum={tipoParada_checksum}
+                                returnTipoParada={setTipoParada}
+                                returnTipoParada_checksum={setTipoParada_checksum}
+                            />
                         </Grid>
                     </Grid>
                 </Grid>
             </DialogContent>
             <DialogActions sx={{ px: 2 }}>
-                <Button onClick={() => {}} endIcon={<FilterListOff />}>
+                <Button onClick={handleClear} endIcon={<FilterListOff />}>
                     Limpar Tudo
                 </Button>
                 <Button className={styles.action_clear} onClick={handleClose}>

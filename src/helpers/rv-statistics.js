@@ -39,11 +39,11 @@ const checkObservacoes = (opCenario, opObs, filter_cenarios, method = 'AND') => 
             if (method === 'OR') {
                 for (let ref in filter_cenarios[opCenario]['observacoes']) {
                     // Operações que TENHAM a observação
-                    if (filter_cenarios[opCenario]['observacoes'][ref] === 0) {
+                    if (!filter_cenarios[opCenario]['observacoes'][ref]) {
                         if (opObs__Array.includes(ref)) return true;
                     }
                     // Operações que NÃO TENHAM a observação
-                    else if (filter_cenarios[opCenario]['observacoes'][ref] === 1) {
+                    else if (filter_cenarios[opCenario]['observacoes'][ref]) {
                         if (!opObs__Array.includes(ref)) return true;
                     }
                 }
@@ -53,11 +53,11 @@ const checkObservacoes = (opCenario, opObs, filter_cenarios, method = 'AND') => 
             if (method === 'AND') {
                 for (let ref in filter_cenarios[opCenario]['observacoes']) {
                     // Operações que TENHAM a observação
-                    if (filter_cenarios[opCenario]['observacoes'][ref] === 0) {
+                    if (!filter_cenarios[opCenario]['observacoes'][ref]) {
                         if (!opObs__Array.includes(ref)) return false;
                     }
                     // Operações que NÃO TENHAM a observação
-                    else if (filter_cenarios[opCenario]['observacoes'][ref] === 1) {
+                    else if (filter_cenarios[opCenario]['observacoes'][ref]) {
                         if (opObs__Array.includes(ref)) return false;
                     }
                 }
@@ -810,7 +810,7 @@ const calculate_op_result = (op, simulation) => {
     @options    : Opções opcionais a serem passadas para a função.
 */
 const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options = {}) => {
-    console.log('Statistics');
+    // console.log(simulation);
     /*------------------------------------ Vars --------------------------------------*/
     // Opções passadas ao executar o generate
     let _options = {
@@ -825,7 +825,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
         data_final: 'data_final' in filters ? filters.data_final : null,
         hora_inicial: 'hora_inicial' in filters ? filters.hora_inicial : null,
         hora_final: 'hora_final' in filters ? filters.hora_final : null,
-        ativo: 'ativo' in filters ? filters.ativo : [],
+        ativo: 'ativo' in filters ? filters.ativo.map((v) => v.label) : [],
         gerenciamento: 'gerenciamento' in filters ? filters.gerenciamento?.label : null,
         cenario: 'cenario' in filters ? filters.cenario : {},
         observacoes_query_union: 'observacoes_query_union' in filters ? filters.observacoes_query_union : 'AND',

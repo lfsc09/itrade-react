@@ -1,10 +1,17 @@
 import { FilterListOff } from '@mui/icons-material';
 import { Button, Dialog, DialogActions, DialogContent, Divider, Grid, Stack, Typography } from '@mui/material';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { batch } from 'react-redux';
 
 import Input from '../../../../../../components/ui/Input';
 import styles from './simulation-parada.module.scss';
+
+const checksum_tipoParada = (tp) => {
+    let checksum = '{';
+    for (let key in tp) checksum += `|${key}=${tp[key]}`;
+    checksum += '}';
+    return checksum;
+};
 
 const transformReceivedTipoParada = (data) => {
     let newData = {};
@@ -37,10 +44,14 @@ const SimulationParada = (props) => {
 
     const handleCloseDialog = useCallback(() => {
         let newTipoParada = [];
+        let newChecksum = checksum_tipoParada(tipoParada);
         for (let tp in tipoParada) newTipoParada.push({ tipo_parada: tp, valor_parada: tipoParada[tp] });
         batch(() => {
             setOpenDialog((prevState) => false);
-            props.returnTipoParada((prevState) => newTipoParada);
+            if (newChecksum !== props.receivedTipoParada_checksum) {
+                props.returnTipoParada((prevState) => newTipoParada);
+                props.returnTipoParada_checksum((prevState) => newChecksum);
+            }
         });
     }, [tipoParada]);
 
@@ -57,6 +68,13 @@ const SimulationParada = (props) => {
     const handleClear = useCallback(() => {
         setTipoParada((prevState) => ({}));
     }, []);
+
+    /*****************************************************
+     * UPDATE (POR CONTA DE ALTERAÇÕES NO COMPONENTE PAI)
+     *****************************************************/
+    useEffect(() => {
+        setTipoParada((prevState) => transformReceivedTipoParada(props.receivedTipoParada));
+    }, [props.receivedTipoParada_checksum]);
 
     return (
         <>

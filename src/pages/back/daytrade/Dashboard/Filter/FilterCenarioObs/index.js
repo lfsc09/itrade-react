@@ -19,11 +19,23 @@ import {
     Typography,
 } from '@mui/material';
 import cloneDeep from 'lodash.clonedeep';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { batch } from 'react-redux';
 
 import NoContent from '../../../../../../components/ui/NoContent';
 import { isObjectEmpty } from '../../../../../../helpers/global';
 import styles from './filter-cenario-obs.module.scss';
+
+const cenario_checksum = (c) => {
+    let checksum = '{';
+    for (let cen in c) {
+        checksum += `|${cen}={`;
+        for (let obs in c[cen].observacoes) checksum += `|${obs}=${c[cen].observacoes[obs]}`;
+        checksum += '}';
+    }
+    checksum += '}';
+    return checksum;
+};
 
 /*
     Retorna um Objeto com cenários { string : { id: int, observacoes: { int : int } }, ...}
@@ -56,8 +68,14 @@ const FilterCenarioObs = (props) => {
 
     const handleCloseDialog = useCallback(() => {
         let cpyCenario = cloneDeep(cenario);
-        setOpenDialog((prevState) => false);
-        props.returnCenario((prevState) => cpyCenario);
+        let newChecksum = cenario_checksum(cpyCenario);
+        batch(() => {
+            setOpenDialog((prevState) => false);
+            if (newChecksum !== props.receivedCenario_checksum) {
+                props.returnCenario((prevState) => cpyCenario);
+                props.returnCenario_checksum((prevState) => newChecksum);
+            }
+        });
     }, [cenario]);
 
     const handleCenarioSeletionChange = useCallback(
@@ -95,13 +113,22 @@ const FilterCenarioObs = (props) => {
         setCenario((prevState) => ({}));
     }, []);
 
+    /*****************************************************
+     * UPDATE (POR CONTA DE ALTERAÇÕES NO COMPONENTE PAI)
+     *****************************************************/
+    useEffect(() => {
+        setCenario((prevState) => props.receivedCenario);
+    }, [props.receivedCenario_checksum]);
+
     /********
      * FUNCS
      ********/
     const showCenarioInfo = useCallback(() => {
         let label = [];
         for (let c in cenario) {
-            let selObs = Object.keys(cenario[c].observacoes).join(',');
+            let selObs = Object.keys(cenario[c].observacoes)
+                .map((o_k) => (cenario[c].observacoes[o_k] ? `!${o_k}` : o_k))
+                .join(',');
             label.push(`${c}${selObs !== '' ? `(${selObs})` : ''}`);
         }
         return label.join(', ');
