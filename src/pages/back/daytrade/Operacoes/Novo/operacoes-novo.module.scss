@@ -1,0 +1,22 @@
+.picker_panel {
+    margin-top: 16px;
+}
+
+.dataset_atualizadoEm {
+    font-size: 10px;
+    font-weight: bold;
+    color: rgba(0, 0, 0, 0.4);
+}
+
+.autofill__slider {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .filter__slider_label {
+        white-space: nowrap;
+        font-weight: bold;
+        line-height: 0;
+        color: #555;
+    }
+}

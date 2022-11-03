@@ -69,13 +69,13 @@ const NavSide = () => {
                                 </ListItemIcon>
                                 <ListItemText primary='Builds' primaryTypographyProps={{ variant: 'overline' }} />
                             </ListItemButton>
-                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/novas_operacoes' replace={true}>
+                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/operacoes/novo' replace={true}>
                                 <ListItemIcon>
                                     <Layers />
                                 </ListItemIcon>
                                 <ListItemText primary='Novas Operações' primaryTypographyProps={{ variant: 'overline' }} />
                             </ListItemButton>
-                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/importar_operacoes' replace={true}>
+                            <ListItemButton className={styles.nav_button} sx={{ pl: 4 }} component={Link} to='/daytrade/operacoes/importar' replace={true}>
                                 <ListItemIcon>
                                     <CloudUpload />
                                 </ListItemIcon>

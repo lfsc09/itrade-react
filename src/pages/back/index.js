@@ -13,6 +13,7 @@ import DaytradeDatasets from './daytrade/Datasets';
 import DaytradeDatasetsNovo from './daytrade/Datasets/Novo';
 import DaytradeGerenciamentos from './daytrade/Gerenciamentos';
 import DaytradeGerenciamentosNovo from './daytrade/Gerenciamentos/Novo';
+import DaytradeOperacoesNovo from './daytrade/Operacoes/Novo';
 
 const content_switch = (url, urlParams) => {
     if (url.match(/^.*\/daytrade\/dashboard$/)) return <DaytradeDashboard />;
@@ -26,6 +27,7 @@ const content_switch = (url, urlParams) => {
     if (url.match(/^.*\/daytrade\/gerenciamentos\/novo$/)) return <DaytradeGerenciamentosNovo />;
     if (url.match(/^.*\/daytrade\/gerenciamentos\/editar\/\d*$/)) return <DaytradeGerenciamentosNovo editar={urlParams} />;
     if (url.match(/^.*\/daytrade\/cenarios$/)) return <DaytradeCenarios />;
+    if (url.match(/^.*\/daytrade\/operacoes\/novo$/)) return <DaytradeOperacoesNovo />;
     return <NoContent type='under-construction' />;
 };
 
