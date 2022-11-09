@@ -30,11 +30,19 @@
 .text {
     font-size: 1.2rem;
     line-height: 1;
+    font-weight: 600;
+}
+
+.text_bold {
+    font-weight: bold;
+}
+
+.text_color_black {
+    color: #3e5060 !important;
 }
 
 .text_small {
     font-size: 0.9rem;
-    font-weight: 600;
 }
 
 .text_padding_1 {

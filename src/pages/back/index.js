@@ -2,6 +2,7 @@ import { Stack } from '@mui/material';
 import React from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
+import NavbarTop from '../../components/back/NavbarTop';
 import NavSide from '../../components/back/NavSide';
 import NoContent from '../../components/ui/NoContent';
 import styles from './back.module.scss';
@@ -37,8 +38,8 @@ const BackWrapper = () => {
 
     return (
         <div className={styles.wrapper}>
-            <Stack spacing={2} className={styles.container} direction='row'>
-                <NavSide />
+            <Stack spacing={2} className={styles.container}>
+                <NavbarTop />
                 {content_switch(location.pathname, urlParams)}
             </Stack>
         </div>

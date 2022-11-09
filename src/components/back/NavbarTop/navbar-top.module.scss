@@ -1,0 +1,87 @@
+.appbar {
+    border-radius: 0;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 65px;
+
+    & div.right {
+        display: flex;
+        justify-content: end;
+        align-items: center;
+        height: 100%;
+
+        hr {
+            background-color: rgba(200, 200, 200, 0.7);
+            margin: 0 20px;
+            height: 40%;
+        }
+    }
+}
+
+.search__left_section {
+    display: flex;
+    align-items: center;
+    border: solid 1px rgba(0, 0, 0, 0.23);
+    border-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    background-color: rgba(0, 0, 0, 0.08);
+    color: #555;
+}
+
+.search__input {
+    width: 300px;
+}
+
+.search__right_section {
+    display: flex;
+    align-items: center;
+    border: solid 1px rgba(0, 0, 0, 0.23);
+    border-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    background-color: rgba(0, 0, 0, 0.08);
+    color: #555;
+
+    span {
+        font-size: 0.6rem;
+        font-weight: 700;
+    }
+}
+
+.search__option {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}
+
+.search__option_sub {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+
+    .search__option_item__icon {
+        padding-left: 24px !important;
+    }
+}
+
+.search__option_item {
+    > span {
+        display: flex;
+        align-items: center;
+    }
+
+    > .search__option_item__icon {
+        color: #555;
+    }
+
+    > .search__option_item__label {
+        font: 'Roboto, Helvetica, Arial, sans-serif';
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.08333em;
+        text-transform: uppercase;
+    }
+}

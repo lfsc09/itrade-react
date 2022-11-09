@@ -23,16 +23,15 @@ const DatagridStats = (props) => {
     /***********
      * HANDLERS
      ***********/
-    const handlerChangeGrid = useCallback(() => {
-        setShowGrid((prevState) => (showGrid + 1) % 2);
-    }, [showGrid]);
+    // const handlerChangeGrid = useCallback(() => {
+    //     setShowGrid((prevState) => (showGrid + 1) % 2);
+    // }, [showGrid]);
 
     return (
-        <Paper sx={{ px: 2, pb: 2 }}>
-            <Tabs className={styles.tabs} value={showGrid} onChange={handlerChangeGrid} sx={{ py: 1 }}>
-                <Tab className={styles.tab} label='Acert.' />
-                <Tab className={styles.tab} label='R:G' />
-            </Tabs>
+        <Paper sx={{ px: 2, py: 2 }}>
+            {/* <Tabs className={styles.tabs} value={showGrid} sx={{ py: 1 }}>
+                <Tab className={styles.tab} label='Indicadores' />
+            </Tabs> */}
             {showGrid === 0 ? (
                 <Table size='small'>
                     <TableHead>
@@ -59,6 +58,24 @@ const DatagridStats = (props) => {
                                 Result.
                             </TableCell>
                             <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
+                                R:G
+                            </TableCell>
+                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
+                                Gain Médio
+                            </TableCell>
+                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
+                                Loss Médio
+                            </TableCell>
+                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
+                                Expect.
+                            </TableCell>
+                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
+                                DP
+                            </TableCell>
+                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
+                                FL
+                            </TableCell>
+                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center' colSpan={2}>
                                 Edge
                             </TableCell>
                         </TableRow>
@@ -121,177 +138,6 @@ const DatagridStats = (props) => {
                                 <TableCell align='center'>
                                     {/* prettier-ignore */}
                                     <span className={`${styles.result__lucro_perc} ${gstyles.text_bold} ${gstyles.text_small}`}>{c.result__lucro_perc !== '--' ? `${c.result__lucro_perc.toFixed(2)}%` : c.result__lucro_perc}</span>
-                                </TableCell>
-                                {/*
-                                    EDGE
-                                */}
-                                <TableCell className={`${styles.col_divider}`} align='center'>
-                                    {/* prettier-ignore */}
-                                    <span className={`${styles.stats__edge} ${gstyles.text_bold} ${gstyles.text_small}`}>{`${c.stats__edge.toFixed(2)}%`}</span>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                    <TableFooter>
-                        <TableRow>
-                            <TableCell></TableCell>
-                            <TableCell variant='body'>
-                                {/* prettier-ignore */}
-                                <span className={`${gstyles.text_bold}`}>Total</span>
-                            </TableCell>
-                            {/*
-                                N° TRADES 
-                            */}
-                            <TableCell className={`${styles.col_divider}`} variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__total} ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.trades__total}</span>
-                            </TableCell>
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__positivo} ${gstyles.text_bold} ${gstyles.text_small} ${gstyles.text_success}`}>{props.stats.dashboard_ops__table_stats.trades__positivo}</span>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__positivo_perc} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny} ${gstyles.text_success}`}>{`(${props.stats.dashboard_ops__table_stats.trades__positivo_perc.toFixed(2)}%)`}</span>
-                            </TableCell>
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__negativo} ${gstyles.text_bold} ${gstyles.text_small} ${gstyles.text_danger}`}>{props.stats.dashboard_ops__table_stats.trades__negativo}</span>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__negativo_perc} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny} ${gstyles.text_danger}`}>{`(${props.stats.dashboard_ops__table_stats.trades__negativo_perc.toFixed(2)}%)`}</span>
-                            </TableCell>
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__empate} ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.trades__empate}</span>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__empate_perc} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny}`}>{`(${props.stats.dashboard_ops__table_stats.trades__empate_perc.toFixed(2)}%)`}</span>
-                            </TableCell>
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__erro} ${gstyles.text_bold} ${gstyles.text_small} ${gstyles.text_primary}`}>{props.stats.dashboard_ops__table_stats.trades__erro}</span>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__erro_perc} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny} ${gstyles.text_primary}`}>{`(${props.stats.dashboard_ops__table_stats.trades__erro_perc !== '--' ? `${props.stats.dashboard_ops__table_stats.trades__erro_perc.toFixed(2)}%` : '--' })`}</span>
-                            </TableCell>
-                            {/*
-                                RESULT.
-                            */}
-                            <TableCell className={`${styles.col_divider}`} variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.result__lucro_brl} ${gstyles.text_bold} ${gstyles.text_small}`}>{`R$ ${props.stats.dashboard_ops__table_stats.result__lucro_brl.toFixed(2)}`}</span>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.result__lucro_S} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny}`}>{`${props.stats.dashboard_ops__table_stats.result__lucro_S.toFixed(1).replace(/[.]0+$/, '')}S`}</span>
-                            </TableCell>
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.result__lucro_R} ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.result__lucro_R !== '--' ? `${props.stats.dashboard_ops__table_stats.result__lucro_R.toFixed(3)}R` : props.stats.dashboard_ops__table_stats.result__lucro_R}</span>
-                            </TableCell>
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.result__lucro_perc} ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.result__lucro_perc !== '--' ? `${props.stats.dashboard_ops__table_stats.result__lucro_perc.toFixed(2)}%` : props.stats.dashboard_ops__table_stats.result__lucro_perc}</span>
-                            </TableCell>
-                            {/*
-                                EDGE
-                            */}
-                            <TableCell className={`${styles.col_divider}`} variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.stats__edge} ${gstyles.text_bold} ${gstyles.text_small}`}>{`${props.stats.dashboard_ops__table_stats.stats__edge.toFixed(2)}%`}</span>
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} variant='head' colSpan={2} align='center'>
-                                Seq. Máxima
-                            </TableCell>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} variant='head' colSpan={2} align='center'>
-                                Vol. Média
-                            </TableCell>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} variant='head' colSpan={3} align='center'>
-                                Result. Médio p/ Mês
-                            </TableCell>
-                            <TableCell></TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            {/*
-                                Seq. Máx e Média de trades
-                            */}
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__max_seq_positivo} ${gstyles.text_bold} ${gstyles.text_small} ${gstyles.text_success}`}>{props.stats.dashboard_ops__table_stats.trades__max_seq_positivo}</span>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__max_seq_positivo_medio} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny} ${gstyles.text_success}`}>{`(~${props.stats.dashboard_ops__table_stats.trades__max_seq_positivo_medio.toFixed(2)})`}</span>
-                            </TableCell>
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__max_seq_negativo} ${gstyles.text_bold} ${gstyles.text_small} ${gstyles.text_danger}`}>{props.stats.dashboard_ops__table_stats.trades__max_seq_negativo}</span>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.trades__max_seq_negativo_medio} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny} ${gstyles.text_danger}`}>{`(~${props.stats.dashboard_ops__table_stats.trades__max_seq_negativo_medio.toFixed(2)})`}</span>
-                            </TableCell>
-                            <TableCell variant='body' align='center' colSpan={2}>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.stats__media_vol} ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.stats__media_vol !== '--' ? props.stats.dashboard_ops__table_stats.stats__media_vol.toFixed(2) : props.stats.dashboard_ops__table_stats.stats__media_vol}</span>
-                            </TableCell>
-                            {/*
-                                Média Lucro por Período
-                            */}
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.result__lucro_medio_brl} ${gstyles.text_bold} ${gstyles.text_small}`}>{`R$ ${props.stats.dashboard_ops__table_stats.result__lucro_medio_brl.toFixed(2)}`}</span>
-                            </TableCell>
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.result__lucro_medio_R } ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.result__lucro_medio_R  !== '--' ? `${props.stats.dashboard_ops__table_stats.result__lucro_medio_R .toFixed(3)}R` : props.stats.dashboard_ops__table_stats.result__lucro_medio_R }</span>
-                            </TableCell>
-                            <TableCell variant='body' align='center'>
-                                {/* prettier-ignore */}
-                                <span className={`${styles.result__lucro_medio_perc } ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.result__lucro_medio_perc  !== '--' ? `${props.stats.dashboard_ops__table_stats.result__lucro_medio_perc .toFixed(2)}%` : props.stats.dashboard_ops__table_stats.result__lucro_medio_perc }</span>
-                            </TableCell>
-                            <TableCell></TableCell>
-                        </TableRow>
-                    </TableFooter>
-                </Table>
-            ) : (
-                <Table size='small'>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='left' colSpan={2}>
-                                Cenário
-                            </TableCell>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
-                                R:G
-                            </TableCell>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
-                                Gain Médio
-                            </TableCell>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
-                                Loss Médio
-                            </TableCell>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
-                                Expect.
-                            </TableCell>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
-                                DP
-                            </TableCell>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center'>
-                                FL
-                            </TableCell>
-                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} align='center' colSpan={2}>
-                                Edge
-                            </TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {Object.entries(props.stats.dashboard_ops__table_stats__byCenario).map(([c_name, c]) => (
-                            <TableRow key={`dg2_cenario_row_${c_name}`}>
-                                <TableCell align='left'>
-                                    {/* prettier-ignore */}
-                                    <span className={`${styles.trades__total_perc} ${gstyles.text_bold} ${gstyles.text_muted} ${gstyles.text_tiny}`}>{`(${c.trades__total_perc.toFixed(2)}%)`}</span>
-                                </TableCell>
-                                <TableCell align='left'>
-                                    {/* prettier-ignore */}
-                                    <span className={`${styles.cenario} ${gstyles.text_bold}`}>{c_name}</span>
                                 </TableCell>
                                 {/*
                                     R:G 
@@ -367,6 +213,54 @@ const DatagridStats = (props) => {
                                 <span className={`${gstyles.text_bold}`}>Total</span>
                             </TableCell>
                             {/*
+                                N° TRADES 
+                            */}
+                            <TableCell className={`${styles.col_divider}`} variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__total} ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.trades__total}</span>
+                            </TableCell>
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__positivo} ${gstyles.text_bold} ${gstyles.text_small} ${gstyles.text_success}`}>{props.stats.dashboard_ops__table_stats.trades__positivo}</span>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__positivo_perc} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny} ${gstyles.text_success}`}>{`(${props.stats.dashboard_ops__table_stats.trades__positivo_perc.toFixed(2)}%)`}</span>
+                            </TableCell>
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__negativo} ${gstyles.text_bold} ${gstyles.text_small} ${gstyles.text_danger}`}>{props.stats.dashboard_ops__table_stats.trades__negativo}</span>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__negativo_perc} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny} ${gstyles.text_danger}`}>{`(${props.stats.dashboard_ops__table_stats.trades__negativo_perc.toFixed(2)}%)`}</span>
+                            </TableCell>
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__empate} ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.trades__empate}</span>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__empate_perc} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny}`}>{`(${props.stats.dashboard_ops__table_stats.trades__empate_perc.toFixed(2)}%)`}</span>
+                            </TableCell>
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__erro} ${gstyles.text_bold} ${gstyles.text_small} ${gstyles.text_primary}`}>{props.stats.dashboard_ops__table_stats.trades__erro}</span>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__erro_perc} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny} ${gstyles.text_primary}`}>{`(${props.stats.dashboard_ops__table_stats.trades__erro_perc !== '--' ? `${props.stats.dashboard_ops__table_stats.trades__erro_perc.toFixed(2)}%` : '--' })`}</span>
+                            </TableCell>
+                            {/*
+                                RESULT.
+                            */}
+                            <TableCell className={`${styles.col_divider}`} variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.result__lucro_brl} ${gstyles.text_bold} ${gstyles.text_small}`}>{`R$ ${props.stats.dashboard_ops__table_stats.result__lucro_brl.toFixed(2)}`}</span>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.result__lucro_S} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny}`}>{`${props.stats.dashboard_ops__table_stats.result__lucro_S.toFixed(1).replace(/[.]0+$/, '')}S`}</span>
+                            </TableCell>
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.result__lucro_R} ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.result__lucro_R !== '--' ? `${props.stats.dashboard_ops__table_stats.result__lucro_R.toFixed(3)}R` : props.stats.dashboard_ops__table_stats.result__lucro_R}</span>
+                            </TableCell>
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.result__lucro_perc} ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.result__lucro_perc !== '--' ? `${props.stats.dashboard_ops__table_stats.result__lucro_perc.toFixed(2)}%` : props.stats.dashboard_ops__table_stats.result__lucro_perc}</span>
+                            </TableCell>
+                            {/*
                                 R:G 
                             */}
                             <TableCell className={`${styles.col_divider}`} variant='body' align='center'>
@@ -433,6 +327,16 @@ const DatagridStats = (props) => {
                         <TableRow>
                             <TableCell></TableCell>
                             <TableCell></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} variant='head' colSpan={2} align='center'>
+                                Seq. Máxima
+                            </TableCell>
+                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} variant='head' colSpan={2} align='center'>
+                                Vol. Média
+                            </TableCell>
+                            <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} variant='head' colSpan={3} align='center'>
+                                Result. Médio p/ Mês
+                            </TableCell>
                             <TableCell className={`${styles.dg_header} ${styles.col_subheader}`} variant='head' align='center'>
                                 Total DD
                             </TableCell>
@@ -457,6 +361,41 @@ const DatagridStats = (props) => {
                         <TableRow>
                             <TableCell></TableCell>
                             <TableCell></TableCell>
+                            <TableCell></TableCell>
+                            {/*
+                                Seq. Máx e Média de trades
+                            */}
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__max_seq_positivo} ${gstyles.text_bold} ${gstyles.text_small} ${gstyles.text_success}`}>{props.stats.dashboard_ops__table_stats.trades__max_seq_positivo}</span>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__max_seq_positivo_medio} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny} ${gstyles.text_success}`}>{`(~${props.stats.dashboard_ops__table_stats.trades__max_seq_positivo_medio.toFixed(2)})`}</span>
+                            </TableCell>
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__max_seq_negativo} ${gstyles.text_bold} ${gstyles.text_small} ${gstyles.text_danger}`}>{props.stats.dashboard_ops__table_stats.trades__max_seq_negativo}</span>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.trades__max_seq_negativo_medio} ${gstyles.text_margin_left} ${gstyles.text_bold} ${gstyles.text_tiny} ${gstyles.text_danger}`}>{`(~${props.stats.dashboard_ops__table_stats.trades__max_seq_negativo_medio.toFixed(2)})`}</span>
+                            </TableCell>
+                            <TableCell variant='body' align='center' colSpan={2}>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.stats__media_vol} ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.stats__media_vol !== '--' ? props.stats.dashboard_ops__table_stats.stats__media_vol.toFixed(2) : props.stats.dashboard_ops__table_stats.stats__media_vol}</span>
+                            </TableCell>
+                            {/*
+                                Média Lucro por Período
+                            */}
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.result__lucro_medio_brl} ${gstyles.text_bold} ${gstyles.text_small}`}>{`R$ ${props.stats.dashboard_ops__table_stats.result__lucro_medio_brl.toFixed(2)}`}</span>
+                            </TableCell>
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.result__lucro_medio_R } ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.result__lucro_medio_R  !== '--' ? `${props.stats.dashboard_ops__table_stats.result__lucro_medio_R .toFixed(3)}R` : props.stats.dashboard_ops__table_stats.result__lucro_medio_R }</span>
+                            </TableCell>
+                            <TableCell variant='body' align='center'>
+                                {/* prettier-ignore */}
+                                <span className={`${styles.result__lucro_medio_perc } ${gstyles.text_bold} ${gstyles.text_small}`}>{props.stats.dashboard_ops__table_stats.result__lucro_medio_perc  !== '--' ? `${props.stats.dashboard_ops__table_stats.result__lucro_medio_perc .toFixed(2)}%` : props.stats.dashboard_ops__table_stats.result__lucro_medio_perc }</span>
+                            </TableCell>
                             {/*
                                 Drawdown
                             */}
@@ -502,6 +441,8 @@ const DatagridStats = (props) => {
                         </TableRow>
                     </TableFooter>
                 </Table>
+            ) : (
+                <></>
             )}
         </Paper>
     );

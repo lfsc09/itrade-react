@@ -1,9 +1,10 @@
-import { CheckBox, CheckBoxOutlineBlank, KeyboardDoubleArrowUp, NavigateNext } from '@mui/icons-material';
+import { Add, CheckBox, CheckBoxOutlineBlank, ConstructionOutlined, DeleteSweep, NavigateNext, Telegram } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
     Autocomplete,
     Box,
     Breadcrumbs,
+    Button,
     Checkbox,
     Divider,
     FormControl,
@@ -16,10 +17,16 @@ import {
     Select,
     Stack,
     Switch,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
     TextField,
     Typography,
 } from '@mui/material';
 import { motion } from 'framer-motion';
+import cloneDeep from 'lodash.clonedeep';
 import React, { useCallback, useEffect, useState } from 'react';
 import { batch } from 'react-redux';
 import { useDispatch } from 'react-redux';
@@ -28,10 +35,12 @@ import { Link } from 'react-router-dom';
 
 import gStyles from '../../../../../assets/back/scss/global.module.scss';
 import MessageController from '../../../../../components/ui/MessageController';
+import NoContent from '../../../../../components/ui/NoContent';
 import { axiosCon } from '../../../../../helpers/axios-con';
-import { isObjectEmpty } from '../../../../../helpers/global';
+import { generateHash, isObjectEmpty } from '../../../../../helpers/global';
 import { add } from '../../../../../store/api-messages/api-messages-slice';
 import { handleLogout } from '../../../../../store/auth/auth-action';
+import Operacao from './Operacao';
 import styles from './operacoes-novo.module.scss';
 
 const temposGraficos = [{ value: 5, label: '5min' }];
@@ -66,7 +75,80 @@ const DaytradeOperacoesNovo = () => {
     const [gerenciamento, setGerenciamento] = useState([]);
     const [tempoGrafico, setTempoGrafico] = useState(5);
     // Linhas de Operação
-    const [operacoes, setOperacoes] = useState([]);
+    const [linhasOperacao, setLinhasOperacao] = useState([]);
+
+    /********************************
+     * GERA NOVAS LINHAS DE OPERAÇÃO
+     ********************************/
+    const groupData_struct = useCallback(() => {
+        let groupData_struct = [];
+        let group_id = generateHash(15);
+        if (isBacktest) {
+            groupData_struct.push({});
+        } else {
+            for (let gerenc of gerenciamento) {
+                groupData_struct.push({
+                    linha_id: generateHash(10),
+                    grupo_id: group_id,
+                    date: { value: autoDate, disabled: autoDate !== '' },
+                    ativo: { value: autoAtivo, disabled: autoAtivo !== '' },
+                    gerenciamento: { value: gerenc.label, disabled: true },
+                    op: { value: '', disabled: false },
+                    barra: { value: '', disabled: false },
+                    vol: { value: '', disabled: false },
+                    cts: { value: autoCts, disabled: autoCts !== '' },
+                    escalada: { value: '', disabled: false },
+                    result: { value: '', disabled: false },
+                    cenario: { value: autoCenario, disabled: autoCenario !== '' },
+                    observacoes: { value: '', disabled: false },
+                    erro: { value: '', disabled: false },
+                });
+            }
+        }
+        return groupData_struct;
+    }, [isBacktest, gerenciamento, autoDate, autoAtivo, autoCts, autoCenario]);
+
+    /*****************************
+     * ATUALIZA A LINHA E O GRUPO
+     *****************************/
+    const updateLinhasOperacao = useCallback(
+        (lO) => {
+            let cpyLinhasOperacao = cloneDeep(linhasOperacao);
+
+            // Busca as linhas
+            for (let i = 0; i < cpyLinhasOperacao.length; i++) {
+                // Da própria linha alterada
+                if (lO.linha_id === cpyLinhasOperacao[i].linha_id) {
+                    cpyLinhasOperacao[i].date.value = lO.date.value;
+                    cpyLinhasOperacao[i].ativo.value = lO.ativo.value;
+                    cpyLinhasOperacao[i].op.value = lO.op.value;
+                    cpyLinhasOperacao[i].barra.value = lO.barra.value;
+                    cpyLinhasOperacao[i].vol.value = lO.vol.value;
+                    cpyLinhasOperacao[i].cts.value = lO.cts.value;
+                    cpyLinhasOperacao[i].escalada.value = lO.escalada.value;
+                    cpyLinhasOperacao[i].result.value = lO.result.value;
+                    cpyLinhasOperacao[i].cenario.value = lO.cenario.value;
+                    cpyLinhasOperacao[i].observacoes.value = lO.observacoes.value;
+                    cpyLinhasOperacao[i].erro.value = lO.erro.value;
+                }
+                // Do grupo da linha alterada
+                else if (lO.grupo_id === cpyLinhasOperacao[i].grupo_id) {
+                    cpyLinhasOperacao[i].date.value = lO.date.value;
+                    cpyLinhasOperacao[i].ativo.value = lO.ativo.value;
+                    cpyLinhasOperacao[i].op.value = lO.op.value;
+                    cpyLinhasOperacao[i].barra.value = lO.barra.value;
+                    cpyLinhasOperacao[i].vol.value = lO.vol.value;
+                    cpyLinhasOperacao[i].cts.value = lO.cts.value;
+                    cpyLinhasOperacao[i].cenario.value = lO.cenario.value;
+                    cpyLinhasOperacao[i].observacoes.value = lO.observacoes.value;
+                    cpyLinhasOperacao[i].erro.value = lO.erro.value;
+                }
+            }
+
+            setLinhasOperacao((prevState) => cpyLinhasOperacao);
+        },
+        [linhasOperacao]
+    );
 
     /***********
      * HANDLERS
@@ -84,7 +166,7 @@ const DaytradeOperacoesNovo = () => {
     }, []);
 
     const handleAutoCts = useCallback((e) => {
-        setAutoAtivo((prevState) => e.target.value);
+        setAutoCts((prevState) => e.target.value);
     }, []);
 
     const handleTempoGrafico = useCallback((e) => {
@@ -98,6 +180,11 @@ const DaytradeOperacoesNovo = () => {
     const handleGerenciamentoAutocomplete = useCallback((e, values) => {
         setGerenciamento((prevState) => values);
     }, []);
+
+    const handleMaisOperacoes = useCallback(() => {
+        let cpyLinhasOperacao = [...cloneDeep(linhasOperacao), ...groupData_struct()];
+        setLinhasOperacao((prevState) => cpyLinhasOperacao);
+    }, [linhasOperacao, groupData_struct]);
 
     /********************************
      * DATASET AUTOCOMPLETE HANDLERS
@@ -312,6 +399,51 @@ const DaytradeOperacoesNovo = () => {
                             </FormControl>
                         </Stack>
                     </Paper>
+                    <Stack direction='row' spacing={2}>
+                        <Button variant='contained' sx={{ flex: 1 }} startIcon={<Add />} onClick={handleMaisOperacoes}>
+                            Operações
+                        </Button>
+                        <Button variant='contained' sx={{ flex: 1 }} color='success' endIcon={<Telegram />}>
+                            Enviar
+                        </Button>
+                        <Button variant='outlined' sx={{ flex: 1 }} color='error' startIcon={<DeleteSweep />}>
+                            Limpa Tudo
+                        </Button>
+                    </Stack>
+                    <Stack direction='row' spacing={2}>
+                        <Paper sx={{ flex: 3, p: 2 }}>
+                            {linhasOperacao.length > 0 ? (
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Data</TableCell>
+                                            <TableCell>Ativo</TableCell>
+                                            <TableCell>Gerenc.</TableCell>
+                                            <TableCell>Op</TableCell>
+                                            <TableCell>Barra</TableCell>
+                                            <TableCell>Vol</TableCell>
+                                            <TableCell>Cts</TableCell>
+                                            <TableCell>Escalada</TableCell>
+                                            <TableCell>Result.</TableCell>
+                                            <TableCell>Cenário</TableCell>
+                                            <TableCell>Observações</TableCell>
+                                            <TableCell>Erro</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {linhasOperacao.map((lO) => (
+                                            <Operacao key={`linhaOp_${lO.linha_id}`} isBacktest={isBacktest} linhaOperacao={lO} updateLinhasOperacao={updateLinhasOperacao} />
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <NoContent type='empty-data' empty_text='Nada a mostrar' text_color='black' text_bold={true} text_size='small' />
+                            )}
+                        </Paper>
+                        <Paper sx={{ flex: 1, p: 2 }}>
+                            <NoContent type='empty-data' empty_text='Nada a mostrar' text_color='black' text_bold={true} text_size='small' />
+                        </Paper>
+                    </Stack>
                 </Stack>
             </Box>
         </>
