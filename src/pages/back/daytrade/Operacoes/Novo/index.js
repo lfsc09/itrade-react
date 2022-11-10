@@ -413,7 +413,7 @@ const DaytradeOperacoesNovo = () => {
                     <Stack direction='row' spacing={2}>
                         <Paper sx={{ flex: 3, p: 2 }}>
                             {linhasOperacao.length > 0 ? (
-                                <Table>
+                                <Table size='small'>
                                     <TableHead>
                                         <TableRow>
                                             <TableCell>Data</TableCell>
