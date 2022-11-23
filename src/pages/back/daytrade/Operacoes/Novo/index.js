@@ -7,6 +7,7 @@ import {
     Button,
     Checkbox,
     Divider,
+    fabClasses,
     FormControl,
     FormControlLabel,
     FormGroup,
@@ -25,9 +26,10 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
+import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import cloneDeep from 'lodash.clonedeep';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { batch } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -38,8 +40,10 @@ import MessageController from '../../../../../components/ui/MessageController';
 import NoContent from '../../../../../components/ui/NoContent';
 import { axiosCon } from '../../../../../helpers/axios-con';
 import { generateHash, isObjectEmpty } from '../../../../../helpers/global';
+import useLongPress from '../../../../../helpers/useLongPress';
 import { add } from '../../../../../store/api-messages/api-messages-slice';
 import { handleLogout } from '../../../../../store/auth/auth-action';
+import ObservacoesPainel from './ObservacoesPainel';
 import Operacao from './Operacao';
 import styles from './operacoes-novo.module.scss';
 
@@ -76,6 +80,13 @@ const DaytradeOperacoesNovo = () => {
     const [tempoGrafico, setTempoGrafico] = useState(5);
     // Linhas de Operação
     const [linhasOperacao, setLinhasOperacao] = useState([]);
+    const [observacoesPainel_Cenario, setObservacoesPainel_Cenario] = useState('');
+
+    /*******
+     * REFS
+     *******/
+    const cenarioHasObsRef = useRef(false);
+    const gerenciamentoPrevStateRef = useRef(0);
 
     /********************************
      * GERA NOVAS LINHAS DE OPERAÇÃO
@@ -83,27 +94,44 @@ const DaytradeOperacoesNovo = () => {
     const groupData_struct = useCallback(() => {
         let groupData_struct = [];
         let group_id = generateHash(15);
-        if (isBacktest) {
-            groupData_struct.push({});
-        } else {
-            for (let gerenc of gerenciamento) {
+        for (let t = 0; t < 1; t++) {
+            if (gerenciamento.length > 0) {
+                for (let gerenc of gerenciamento) {
+                    groupData_struct.push({
+                        linha_id: generateHash(10),
+                        grupo_id: group_id,
+                        last_of_group: false,
+                        date: { value: autoDate, disabled: autoDate !== '' },
+                        ativo: { value: autoAtivo, disabled: autoAtivo !== '' },
+                        gerenciamento: { value: gerenc.label, disabled: true },
+                        op: { value: '', disabled: false },
+                        barra: { value: '', disabled: false },
+                        cts: { value: autoCts, disabled: autoCts !== '' },
+                        cenario: { value: autoCenario?.label ?? '', disabled: autoCenario !== null && autoCenario.label !== '' },
+                        observacoes: { value: '', disabled: false },
+                        result: { value: '', disabled: false },
+                        retornoRisco: { value: '', disabled: false },
+                        ...(isBacktest && { erro: { value: false, disabled: false } }),
+                    });
+                }
+            } else {
                 groupData_struct.push({
                     linha_id: generateHash(10),
                     grupo_id: group_id,
+                    last_of_group: false,
                     date: { value: autoDate, disabled: autoDate !== '' },
                     ativo: { value: autoAtivo, disabled: autoAtivo !== '' },
-                    gerenciamento: { value: gerenc.label, disabled: true },
                     op: { value: '', disabled: false },
                     barra: { value: '', disabled: false },
-                    vol: { value: '', disabled: false },
                     cts: { value: autoCts, disabled: autoCts !== '' },
-                    escalada: { value: '', disabled: false },
-                    result: { value: '', disabled: false },
-                    cenario: { value: autoCenario, disabled: autoCenario !== '' },
+                    cenario: { value: autoCenario?.label ?? '', disabled: autoCenario !== null && autoCenario.label !== '' },
                     observacoes: { value: '', disabled: false },
-                    erro: { value: '', disabled: false },
+                    result: { value: '', disabled: false },
+                    retornoRisco: { value: '', disabled: false },
+                    ...(isBacktest && { erro: { value: false, disabled: false } }),
                 });
             }
+            if (groupData_struct.length) groupData_struct[groupData_struct.length - 1].last_of_group = true;
         }
         return groupData_struct;
     }, [isBacktest, gerenciamento, autoDate, autoAtivo, autoCts, autoCenario]);
@@ -114,37 +142,32 @@ const DaytradeOperacoesNovo = () => {
     const updateLinhasOperacao = useCallback(
         (lO) => {
             let cpyLinhasOperacao = cloneDeep(linhasOperacao);
-
             // Busca as linhas
             for (let i = 0; i < cpyLinhasOperacao.length; i++) {
+                // Atualiza colunas que devem se copiar se estiverem vazios (Ex: Data)
+                if (cpyLinhasOperacao[i].date.value === '') cpyLinhasOperacao[i].date.value = lO.date;
+                if (cpyLinhasOperacao[i].ativo.value === '') cpyLinhasOperacao[i].ativo.value = lO.ativo;
                 // Da própria linha alterada
                 if (lO.linha_id === cpyLinhasOperacao[i].linha_id) {
-                    cpyLinhasOperacao[i].date.value = lO.date.value;
-                    cpyLinhasOperacao[i].ativo.value = lO.ativo.value;
-                    cpyLinhasOperacao[i].op.value = lO.op.value;
-                    cpyLinhasOperacao[i].barra.value = lO.barra.value;
-                    cpyLinhasOperacao[i].vol.value = lO.vol.value;
-                    cpyLinhasOperacao[i].cts.value = lO.cts.value;
-                    cpyLinhasOperacao[i].escalada.value = lO.escalada.value;
-                    cpyLinhasOperacao[i].result.value = lO.result.value;
-                    cpyLinhasOperacao[i].cenario.value = lO.cenario.value;
-                    cpyLinhasOperacao[i].observacoes.value = lO.observacoes.value;
-                    cpyLinhasOperacao[i].erro.value = lO.erro.value;
+                    cpyLinhasOperacao[i].op.value = lO.op;
+                    cpyLinhasOperacao[i].barra.value = lO.barra;
+                    cpyLinhasOperacao[i].cts.value = lO.cts;
+                    cpyLinhasOperacao[i].cenario.value = lO.cenario;
+                    cpyLinhasOperacao[i].observacoes.value = lO.observacoes;
+                    cpyLinhasOperacao[i].result.value = lO.result;
+                    cpyLinhasOperacao[i].retornoRisco.value = lO.retornoRisco;
+                    if ('erro' in lO) cpyLinhasOperacao[i].erro.value = lO.erro;
                 }
                 // Do grupo da linha alterada
                 else if (lO.grupo_id === cpyLinhasOperacao[i].grupo_id) {
-                    cpyLinhasOperacao[i].date.value = lO.date.value;
-                    cpyLinhasOperacao[i].ativo.value = lO.ativo.value;
-                    cpyLinhasOperacao[i].op.value = lO.op.value;
-                    cpyLinhasOperacao[i].barra.value = lO.barra.value;
-                    cpyLinhasOperacao[i].vol.value = lO.vol.value;
-                    cpyLinhasOperacao[i].cts.value = lO.cts.value;
-                    cpyLinhasOperacao[i].cenario.value = lO.cenario.value;
-                    cpyLinhasOperacao[i].observacoes.value = lO.observacoes.value;
-                    cpyLinhasOperacao[i].erro.value = lO.erro.value;
+                    cpyLinhasOperacao[i].op.value = lO.op;
+                    cpyLinhasOperacao[i].barra.value = lO.barra;
+                    cpyLinhasOperacao[i].cts.value = lO.cts;
+                    cpyLinhasOperacao[i].cenario.value = lO.cenario;
+                    cpyLinhasOperacao[i].observacoes.value = lO.observacoes;
+                    if ('erro' in lO) cpyLinhasOperacao[i].erro.value = lO.erro;
                 }
             }
-
             setLinhasOperacao((prevState) => cpyLinhasOperacao);
         },
         [linhasOperacao]
@@ -154,16 +177,30 @@ const DaytradeOperacoesNovo = () => {
      * HANDLERS
      ***********/
     const handleIsBacktest = useCallback(() => {
-        setIsBacktest((prevState) => !prevState);
+        batch(() => {
+            setIsBacktest((prevState) => !prevState);
+            setLinhasOperacao((prevState) => []);
+            setObservacoesPainel_Cenario((prevState) => '');
+        });
     }, []);
 
     const handleAutoDate = useCallback(() => {
-        setAutoDate((prevState) => (prevState !== '' ? '' : 0));
+        setAutoDate((prevState) => (prevState !== '' ? '' : format(new Date(), 'dd/MM/yyyy')));
     }, []);
 
-    const handleAutoAtivo = useCallback((e) => {
-        setAutoAtivo((prevState) => e.target.value);
-    }, []);
+    const handleAutoAtivo = useCallback(
+        (e) => {
+            let newValue = e.target.value;
+            for (let a of ativos) {
+                if (a.nome.toLowerCase() === e.target.value.toLowerCase()) {
+                    newValue = a.nome;
+                    break;
+                }
+            }
+            setAutoAtivo((prevState) => newValue);
+        },
+        [ativos]
+    );
 
     const handleAutoCts = useCallback((e) => {
         setAutoCts((prevState) => e.target.value);
@@ -178,13 +215,36 @@ const DaytradeOperacoesNovo = () => {
     }, []);
 
     const handleGerenciamentoAutocomplete = useCallback((e, values) => {
-        setGerenciamento((prevState) => values);
+        if (gerenciamentoPrevStateRef.current > 0 && values.length > 0) setGerenciamento((prevState) => values);
+        else {
+            batch(() => {
+                setGerenciamento((prevState) => values);
+                setLinhasOperacao((prevState) => []);
+                setObservacoesPainel_Cenario((prevState) => '');
+            });
+        }
+        gerenciamentoPrevStateRef.current = values.length;
     }, []);
 
+    /*******************
+     * HANDLERS BUTTONS
+     *******************/
     const handleMaisOperacoes = useCallback(() => {
         let cpyLinhasOperacao = [...cloneDeep(linhasOperacao), ...groupData_struct()];
         setLinhasOperacao((prevState) => cpyLinhasOperacao);
     }, [linhasOperacao, groupData_struct]);
+
+    const handleLimpaTudo = useCallback(() => {
+        batch(() => {
+            setLinhasOperacao((prevState) => groupData_struct());
+            setObservacoesPainel_Cenario((prevState) => '');
+        });
+    }, [groupData_struct]);
+
+    /************
+     * LONGPRESS
+     ************/
+    const [onStart_handleLimpaTudo, onEnd_handleLimpaTudo] = useLongPress(handleLimpaTudo, 500);
 
     /********************************
      * DATASET AUTOCOMPLETE HANDLERS
@@ -239,6 +299,7 @@ const DaytradeOperacoesNovo = () => {
                 .then((resp) => {
                     let cenario_suggest = resp.data.cenarios.map((c) => ({ value: c.nome, label: c.nome }));
                     let gerenciamento_suggest = resp.data.gerenciamentos.map((g) => ({ value: g.id, label: g.nome }));
+                    cenarioHasObsRef.current = resp.data.cenarios.reduce((rC, c) => rC || c.observacoes.length > 0, false);
                     batch(() => {
                         setAtivos((prevState) => resp.data.ativos);
                         setCenarios((prevState) => resp.data.cenarios);
@@ -276,7 +337,7 @@ const DaytradeOperacoesNovo = () => {
                 animate={{ y: 0, transition: { duration: 0.25 } }}
                 exit={{ transition: { duration: 0.1 } }}
             >
-                <Stack direction='column' spacing={2} sx={{ height: '100%' }}>
+                <Stack direction='column' spacing={2} sx={{ height: '100%', flexGrow: '1' }}>
                     <div className={gStyles.title_panel}>
                         <Breadcrumbs separator={<NavigateNext fontSize='small' />}>
                             <Typography className={gStyles.title_link} variant='overline' component={Link} to='/daytrade/dashboard' replace={true}>
@@ -366,7 +427,7 @@ const DaytradeOperacoesNovo = () => {
                                 size='small'
                                 openOnFocus
                                 multiple
-                                limitTags={2}
+                                limitTags={3}
                                 options={gerenciamentoSuggest}
                                 value={gerenciamento}
                                 onChange={handleGerenciamentoAutocomplete}
@@ -403,14 +464,22 @@ const DaytradeOperacoesNovo = () => {
                         <Button variant='contained' sx={{ flex: 1 }} startIcon={<Add />} onClick={handleMaisOperacoes}>
                             Operações
                         </Button>
-                        <Button variant='contained' sx={{ flex: 1 }} color='success' endIcon={<Telegram />}>
+                        <Button variant='contained' sx={{ flex: 1 }} color='success' endIcon={<Telegram />} disabled={linhasOperacao.length === 0}>
                             Enviar
                         </Button>
-                        <Button variant='outlined' sx={{ flex: 1 }} color='error' startIcon={<DeleteSweep />}>
+                        <Button
+                            variant='outlined'
+                            sx={{ flex: 1 }}
+                            color='error'
+                            startIcon={<DeleteSweep />}
+                            onMouseDown={onStart_handleLimpaTudo}
+                            onMouseUp={onEnd_handleLimpaTudo}
+                            disabled={linhasOperacao.length === 0}
+                        >
                             Limpa Tudo
                         </Button>
                     </Stack>
-                    <Stack direction='row' spacing={2}>
+                    <Stack direction='row' spacing={2} sx={{ flexGrow: '1' }}>
                         <Paper sx={{ flex: 3, p: 2 }}>
                             {linhasOperacao.length > 0 ? (
                                 <Table size='small'>
@@ -418,21 +487,29 @@ const DaytradeOperacoesNovo = () => {
                                         <TableRow>
                                             <TableCell>Data</TableCell>
                                             <TableCell>Ativo</TableCell>
-                                            <TableCell>Gerenc.</TableCell>
+                                            {gerenciamento.length > 0 ? <TableCell>Gerenc.</TableCell> : <></>}
                                             <TableCell>Op</TableCell>
                                             <TableCell>Barra</TableCell>
-                                            <TableCell>Vol</TableCell>
                                             <TableCell>Cts</TableCell>
-                                            <TableCell>Escalada</TableCell>
-                                            <TableCell>Result.</TableCell>
                                             <TableCell>Cenário</TableCell>
                                             <TableCell>Observações</TableCell>
-                                            <TableCell>Erro</TableCell>
+                                            <TableCell>Result.</TableCell>
+                                            <TableCell>Retorno x Risco</TableCell>
+                                            {!isBacktest ? <TableCell align='center'>Erro</TableCell> : <></>}
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {linhasOperacao.map((lO) => (
-                                            <Operacao key={`linhaOp_${lO.linha_id}`} isBacktest={isBacktest} linhaOperacao={lO} updateLinhasOperacao={updateLinhasOperacao} />
+                                            <Operacao
+                                                key={`linhaOp_${lO.linha_id}`}
+                                                hasGerenciamento={gerenciamento.length > 0}
+                                                isBacktest={isBacktest}
+                                                linhaOperacao={lO}
+                                                cenarios={cenarios}
+                                                ativos={ativos}
+                                                updateLinhasOperacao={updateLinhasOperacao}
+                                                updateObservacoesPainel_Cenario={setObservacoesPainel_Cenario}
+                                            />
                                         ))}
                                     </TableBody>
                                 </Table>
@@ -440,9 +517,13 @@ const DaytradeOperacoesNovo = () => {
                                 <NoContent type='empty-data' empty_text='Nada a mostrar' text_color='black' text_bold={true} text_size='small' />
                             )}
                         </Paper>
-                        <Paper sx={{ flex: 1, p: 2 }}>
-                            <NoContent type='empty-data' empty_text='Nada a mostrar' text_color='black' text_bold={true} text_size='small' />
-                        </Paper>
+                        {cenarioHasObsRef.current ? (
+                            <Paper sx={{ flex: 1, p: 2 }}>
+                                <ObservacoesPainel cenario={observacoesPainel_Cenario} cenarios={cenarios} container_name='observacoes_portal' />
+                            </Paper>
+                        ) : (
+                            <></>
+                        )}
                     </Stack>
                 </Stack>
             </Box>

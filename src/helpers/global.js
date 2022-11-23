@@ -147,4 +147,59 @@ const formatValue_fromRaw = (options, value) => {
     }
 };
 
-export { generateHash, isObjectEmpty, divide, desvpad, SMA, BBollinger, formatValue_fromRaw };
+/*
+    Mascara de valores, verificando se está correspondendo as condições e auto-preenchendo alguns valores da máscara.
+*/
+const maskValue = (type, value, finishCallback = null) => {
+    let new_value = { value: value.current };
+    // Para permitir apenas numeros '\d'
+    if (type === 'number') {
+        new_value.check = true;
+        if (new_value.value !== '' && isNaN(new_value.value)) new_value.check = false;
+    }
+    // Para permitir e mascarar Datas no formato xx/xx/xxxx
+    else if (type === 'date') {
+        new_value.check = false;
+        if (
+            new_value.value === '' ||
+            /^([0-3])$/.test(new_value.value) ||
+            /^((0[1-9])|([1-2][0-9])|(3[0-1]))\/$/.test(new_value.value) ||
+            /^((0[1-9])|([1-2][0-9])|(3[0-1]))\/([0-1])$/.test(new_value.value) ||
+            /^((0[1-9])|([1-2][0-9])|(3[0-1]))\/((0[1-9])|(1[0-2]))\/$/.test(new_value.value) ||
+            /^((0[1-9])|([1-2][0-9])|(3[0-1]))\/((0[1-9])|(1[0-2]))\/([1-2])$/.test(new_value.value) ||
+            /^((0[1-9])|([1-2][0-9])|(3[0-1]))\/((0[1-9])|(1[0-2]))\/((19)|(2[0-9]))$/.test(new_value.value) ||
+            /^((0[1-9])|([1-2][0-9])|(3[0-1]))\/((0[1-9])|(1[0-2]))\/((19[0-9])|(2[0-9][0-9]))$/.test(new_value.value)
+        )
+            new_value.check = true;
+        else if (/^((0[1-9])|([1-2][0-9])|(3[0-1]))$/.test(new_value.value)) {
+            if ((value.old.match(/\//g) || []).length === 0) new_value.value += '/';
+            new_value.check = true;
+        } else if (/^((0[1-9])|([1-2][0-9])|(3[0-1]))\/((0[1-9])|(1[0-2]))$/.test(new_value.value)) {
+            if ((value.old.match(/\//g) || []).length === 1) new_value.value += '/';
+            new_value.check = true;
+        } else if (/^((0[1-9])|([1-2][0-9])|(3[0-1]))\/((0[1-9])|(1[0-2]))\/((19[0-9][0-9])|(2[0-9][0-9][0-9]))$/.test(new_value.value)) {
+            new_value.check = true;
+            if (finishCallback !== null && finishCallback instanceof Function) finishCallback();
+        }
+    }
+    // Para permitir e mastacar valores financeiros com decimais (Ex: xxxx.xx)
+    else if (type === 'valor_financeiro') {
+        new_value.check = true;
+        new_value.value = new_value.value.replace(/\,/g, '.').replace(/[.](?=.*[.])/g, '');
+        if (new_value.value !== '' && isNaN(new_value.value)) new_value.check = false;
+    }
+    // Especifico para inputs de Op, para permitir apenas 'c' ou 'v'
+    else if (type === 'inputOp') {
+        new_value.check = true;
+        if (new_value.value !== '' && new_value.value.toLowerCase() !== 'c' && new_value.value.toLowerCase() !== 'v') new_value.check = false;
+        if (finishCallback !== null && finishCallback instanceof Function) finishCallback(new_value.value, new_value.check);
+    }
+    // Especifico para inputs de Observação, permitindo apenas Numeros e Virgulas
+    else if (type === 'inputObservacao') {
+        new_value.check = false;
+        if (new_value.value === '' || /^[\d,]+$/g.test(new_value.value)) new_value.check = true;
+    }
+    return new_value;
+};
+
+export { generateHash, isObjectEmpty, divide, desvpad, SMA, BBollinger, formatValue_fromRaw, maskValue };

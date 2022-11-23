@@ -5,6 +5,8 @@
 
 /*------------- GLOBAL PAGE WRAPPER -------------*/
 .wrapper {
+    display: flex;
+    flex-direction: column;
     flex-grow: 1;
     padding: 16px 16px 16px 16px;
     margin-left: 0 !important;
@@ -58,18 +60,6 @@
                 text-transform: uppercase;
             }
         }
-    }
-}
-/*------------ GLOBAL DATAGRID TABLE ------------*/
-/*
-Referente as areas mais genéricas dos Datagrids. 
-Coisas mais especificas como Cells serão especificadas nos scss de cada módulo.
-*/
-.table_panel {
-    flex-grow: 1;
-
-    .table_container {
-        height: 100%;
     }
 }
 /*----------------- GLOBAL MISC -----------------*/

@@ -1,0 +1,21 @@
+.wrapper {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 30px;
+}
+
+.list_item {
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.list_item__ref {
+    font-weight: bold;
+    color: #212529;
+}
+
+.list_item__text span {
+    font-weight: bold;
+    font-size: 11px;
+    color: #212529;
+}

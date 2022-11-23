@@ -181,7 +181,7 @@ const Gerenciamentos = () => {
                 animate={{ y: 0, transition: { duration: 0.25 } }}
                 exit={{ transition: { duration: 0.1 } }}
             >
-                <Stack direction='column' spacing={2} alignItems='strech' sx={{ height: '100%' }}>
+                <Stack direction='column' spacing={2} sx={{ height: '100%', flexGrow: '1' }}>
                     <div className={gStyles.title_panel}>
                         <Breadcrumbs separator={<NavigateNext fontSize='small' />}>
                             <Typography className={gStyles.title_link} variant='overline' component={Link} to='/daytrade/dashboard' replace={true}>
@@ -198,8 +198,8 @@ const Gerenciamentos = () => {
                         </Stack>
                     </div>
                     <Divider />
-                    <div className={gStyles.table_panel}>
-                        <Paper className={gStyles.table_container}>
+                    <Stack direction='row' spacing={2} sx={{ flexGrow: '1' }}>
+                        <Paper sx={{ flex: 1 }}>
                             <DataGrid
                                 components={{
                                     LoadingOverlay: LinearProgress,
@@ -226,7 +226,7 @@ const Gerenciamentos = () => {
                                 sx={{ px: 2 }}
                             />
                         </Paper>
-                    </div>
+                    </Stack>
                 </Stack>
             </Box>
         </>

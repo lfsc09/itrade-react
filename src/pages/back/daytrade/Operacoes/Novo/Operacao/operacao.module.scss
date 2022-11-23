@@ -1,3 +1,51 @@
+.table_row td {
+    border: 0;
+    padding: 6px;
+}
+
+.table_row__last_of_group td {
+    padding-bottom: 20px;
+}
+
 .table_cell__date {
+    width: 7%;
+}
+
+.table_cell__ativo {
+    width: 8%;
+}
+
+.table_cell__gerenciamento {
+    width: 12%;
+}
+
+.table_cell__op {
+    width: 5%;
+}
+
+.table_cell__barra {
+    width: 5%;
+}
+
+.table_cell__cts {
+    width: 5%;
+}
+
+.table_cell__cenario {
+}
+
+.table_cell__observacoes {
+}
+
+.table_cell__result {
     width: 10%;
+}
+
+.table_cell__retornoRisco {
+    width: 10%;
+}
+
+.table_cell__erro {
+    width: 6%;
+    align-items: center;
 }

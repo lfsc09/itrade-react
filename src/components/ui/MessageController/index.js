@@ -1,7 +1,7 @@
 import { Check } from '@mui/icons-material';
 import { Alert, AlertTitle, Button } from '@mui/material';
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { remove, removeAll } from '../../../store/api-messages/api-messages-slice';
@@ -50,7 +50,7 @@ const MessageController = (props) => {
     ));
 
     return props?.overlay ?? true
-        ? ReactDOM.createPortal(
+        ? createPortal(
               <div className={styles.container}>
                   {messages.length > 1 ? (
                       <div className={styles.container__apaga_tudo}>

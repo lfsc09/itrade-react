@@ -3,6 +3,7 @@
 }
 
 .u_input {
+    width: 100%;
     font-family: IBM Plex Sans, sans-serif;
     font-size: 0.85rem;
     font-weight: 400;
@@ -35,5 +36,12 @@
 }
 
 .inputSize__small {
-    padding: 4px;
+    line-height: 0;
+    padding: 8px;
+}
+
+.inputSize__tiny {
+    line-height: 0;
+    padding: 7px;
+    font-size: 0.8rem;
 }

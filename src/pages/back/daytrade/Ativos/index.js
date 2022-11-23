@@ -207,7 +207,7 @@ const Ativos = () => {
                 animate={{ y: 0, transition: { duration: 0.25 } }}
                 exit={{ transition: { duration: 0.1 } }}
             >
-                <Stack direction='column' spacing={2} alignItems='strech' sx={{ height: '100%' }}>
+                <Stack direction='column' spacing={2} sx={{ height: '100%', flexGrow: '1' }}>
                     <div className={gStyles.title_panel}>
                         <Breadcrumbs separator={<NavigateNext fontSize='small' />}>
                             <Typography className={gStyles.title_link} variant='overline' component={Link} to='/daytrade/dashboard' replace={true}>
@@ -257,59 +257,53 @@ const Ativos = () => {
                     ) : (
                         <></>
                     )}
-                    <div className={gStyles.table_panel}>
-                        <Grid container spacing={2} sx={{ height: '100%' }}>
-                            <Grid item md={6} xs={12}>
-                                <Paper className={gStyles.table_container}>
-                                    <DataGrid
-                                        components={{
-                                            LoadingOverlay: LinearProgress,
-                                        }}
-                                        sortingOrder={['asc', 'desc']}
-                                        disableColumnFilter
-                                        disableSelectionOnClick
-                                        rowsPerPageOptions={[datagridState.pageSize]}
-                                        columns={columns}
-                                        rows={datagridState.rows}
-                                        rowCount={datagridState.rowCount}
-                                        loading={datagridState.isLoading}
-                                        page={datagridState.page}
-                                        pageSize={datagridState.pageSize}
-                                        paginationMode='server'
-                                        onPageChange={handlePageChangeDatagrid}
-                                        sortingMode='server'
-                                        onSortModelChange={handleSortModelChangeDatagrid}
-                                        initialState={{
-                                            sorting: {
-                                                sortModel: datagridState.sortingModel,
-                                            },
-                                        }}
-                                        sx={{ px: 2 }}
-                                    />
-                                </Paper>
-                            </Grid>
-                            <Grid item md={6} xs={12}>
-                                <Paper className={styles.venc_container}>
-                                    <Tabs
-                                        orientation='vertical'
-                                        variant='scrollable'
-                                        value={vencTabControl}
-                                        onChange={handleVencTabControl}
-                                        sx={{ borderRight: 1, borderColor: 'divider', overflow: 'unset' }}
-                                    >
-                                        <Tab label='WIN' />
-                                        <Tab label='WDO' />
-                                    </Tabs>
-                                    <div className={styles.venc_tab_container} role='tabpanel' hidden={vencTabControl !== 0}>
-                                        <VencTable rows={vencWinSeries} />
-                                    </div>
-                                    <div className={styles.venc_tab_container} role='tabpanel' hidden={vencTabControl !== 1}>
-                                        <VencTable rows={vencWdoSeries} />
-                                    </div>
-                                </Paper>
-                            </Grid>
-                        </Grid>
-                    </div>
+                    <Stack direction='row' spacing={2} sx={{ flexGrow: '1' }}>
+                        <Paper sx={{ flex: 1 }}>
+                            <DataGrid
+                                components={{
+                                    LoadingOverlay: LinearProgress,
+                                }}
+                                sortingOrder={['asc', 'desc']}
+                                disableColumnFilter
+                                disableSelectionOnClick
+                                rowsPerPageOptions={[datagridState.pageSize]}
+                                columns={columns}
+                                rows={datagridState.rows}
+                                rowCount={datagridState.rowCount}
+                                loading={datagridState.isLoading}
+                                page={datagridState.page}
+                                pageSize={datagridState.pageSize}
+                                paginationMode='server'
+                                onPageChange={handlePageChangeDatagrid}
+                                sortingMode='server'
+                                onSortModelChange={handleSortModelChangeDatagrid}
+                                initialState={{
+                                    sorting: {
+                                        sortModel: datagridState.sortingModel,
+                                    },
+                                }}
+                                sx={{ px: 2 }}
+                            />
+                        </Paper>
+                        <Paper className={styles.venc_container}>
+                            <Tabs
+                                orientation='vertical'
+                                variant='scrollable'
+                                value={vencTabControl}
+                                onChange={handleVencTabControl}
+                                sx={{ borderRight: 1, borderColor: 'divider', overflow: 'unset' }}
+                            >
+                                <Tab label='WIN' />
+                                <Tab label='WDO' />
+                            </Tabs>
+                            <div className={styles.venc_tab_container} role='tabpanel' hidden={vencTabControl !== 0}>
+                                <VencTable rows={vencWinSeries} />
+                            </div>
+                            <div className={styles.venc_tab_container} role='tabpanel' hidden={vencTabControl !== 1}>
+                                <VencTable rows={vencWdoSeries} />
+                            </div>
+                        </Paper>
+                    </Stack>
                 </Stack>
             </Box>
         </>
