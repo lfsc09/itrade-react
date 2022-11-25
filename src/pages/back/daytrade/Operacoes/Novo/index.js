@@ -94,7 +94,7 @@ const DaytradeOperacoesNovo = () => {
     const groupData_struct = useCallback(() => {
         let groupData_struct = [];
         let group_id = generateHash(15);
-        for (let t = 0; t < 1; t++) {
+        for (let t = 0; t < 3; t++) {
             if (gerenciamento.length > 0) {
                 for (let gerenc of gerenciamento) {
                     groupData_struct.push({
@@ -514,7 +514,7 @@ const DaytradeOperacoesNovo = () => {
                                     </TableBody>
                                 </Table>
                             ) : (
-                                <NoContent type='empty-data' empty_text='Nada a mostrar' text_color='black' text_bold={true} text_size='small' />
+                                <NoContent type='empty-data' empty_text='Nada a mostrar' />
                             )}
                         </Paper>
                         {cenarioHasObsRef.current ? (

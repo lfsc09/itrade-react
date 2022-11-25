@@ -112,7 +112,6 @@ const Gerenciamentos = () => {
     const columns = useMemo(
         () => [
             { field: 'nome', headerName: 'Nome', flex: 1, cellClassName: styles.table_cell__nome },
-            { field: 'acoes', headerName: 'Ações', type: 'number', flex: 1, cellClassName: styles.table_cell__acoes, renderCell: acoesCell },
             {
                 field: 'actions',
                 type: 'actions',

@@ -188,7 +188,7 @@ const Dashboard = () => {
                 animate={{ y: 0, transition: { duration: 0.25 } }}
                 exit={{ transition: { duration: 0.1 } }}
             >
-                <Stack direction='column' spacing={2} alignItems='strech' sx={{ height: '100%' }}>
+                <Stack direction='column' spacing={2} sx={{ height: '100%', flexGrow: '1' }}>
                     <div className={styles.greetings_panel}>
                         <Typography className={styles.greetings_user} variant='overline'>
                             Bem vindo, {user.nome} &#128075;
@@ -223,7 +223,11 @@ const Dashboard = () => {
                                             style={{ marginRight: 8 }}
                                             checked={selected}
                                         />
-                                        <ListItemText primary={option.nome} />
+                                        <ListItemText
+                                            primary={option.nome}
+                                            secondary={option.data_atualizacao}
+                                            secondaryTypographyProps={{ className: styles.dataset_atualizadoEm }}
+                                        />
                                     </li>
                                 )}
                                 style={{ width: '100%' }}
@@ -245,12 +249,22 @@ const Dashboard = () => {
                     {statistics !== null && !isObjectEmpty(statistics.dashboard_ops__table_stats) ? (
                         <DatagridStats stats={statistics} periodoCalc={dataState.simulations?.periodo_calc} />
                     ) : (
-                        <NoContent type='empty-data' withContainer={true} empty_text='Sem Dados' />
+                        <NoContent
+                            type='empty-data'
+                            empty_text='Sem Dados'
+                            withContainer={true}
+                            addedClasses={{ wrapper: `${styles.no_content__wrapper}`, container: `${styles.no_content__container}` }}
+                        />
                     )}
                     {statistics !== null && statistics.dashboard_ops__table_trades.length ? (
                         <DatagridOps rows={statistics.dashboard_ops__table_trades} periodoCalc={dataState.simulations?.periodo_calc} />
                     ) : (
-                        <NoContent type='empty-data' withContainer={true} empty_text='Sem Dados' />
+                        <NoContent
+                            type='empty-data'
+                            empty_text='Sem Dados'
+                            withContainer={true}
+                            addedClasses={{ wrapper: `${styles.no_content__wrapper}`, container: `${styles.no_content__container}` }}
+                        />
                     )}
                 </Stack>
             </Box>

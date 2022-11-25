@@ -201,7 +201,6 @@ const Operacao = (props) => {
      **********************************************/
     useEffect(() => {
         if (propsLinhaOperacaoRef_checksum.current !== generateChecksum()) {
-            console.log('Mudou');
             batch(() => {
                 setDate((prevState) => props.linhaOperacao.date.value);
                 setAtivo((prevState) => props.linhaOperacao.ativo.value);
@@ -219,32 +218,32 @@ const Operacao = (props) => {
         <TableRow className={`${styles.table_row} ${props.linhaOperacao.last_of_group ? styles.table_row__last_of_group : ''}`}>
             <TableCell className={styles.table_cell__date}>
                 <Input
-                    extraClasses={['textAlign__center', 'inputSize__tiny']}
                     id={`${props.linhaOperacao.linha_id}__date`}
                     value={date}
                     onChange={handleDateChange}
                     onBlur={handleBlur_Generic}
                     disabled={props.linhaOperacao.date.disabled}
+                    addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                 />
             </TableCell>
             <TableCell className={styles.table_cell__ativo}>
                 <Input
                     ref={ativoRef}
-                    extraClasses={['textAlign__center', 'inputSize__tiny']}
                     id={`${props.linhaOperacao.linha_id}__ativo`}
                     value={ativo}
                     onChange={handleAtivoChange}
                     onBlur={handleAtivoBlur}
                     disabled={props.linhaOperacao.ativo.disabled}
+                    addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                 />
             </TableCell>
             {props.hasGerenciamento ? (
                 <TableCell className={styles.table_cell__gerenciamento}>
                     <Input
-                        extraClasses={['textAlign__center', 'inputSize__tiny']}
                         id={`${props.linhaOperacao.linha_id}__gerenciamento`}
                         value={gerenciamento}
                         disabled={props.linhaOperacao?.gerenciamento?.disabled ?? false}
+                        addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                     />
                 </TableCell>
             ) : (
@@ -252,73 +251,73 @@ const Operacao = (props) => {
             )}
             <TableCell className={styles.table_cell__op}>
                 <Input
-                    extraClasses={['textAlign__center', 'inputSize__tiny']}
                     id={`${props.linhaOperacao.linha_id}__op`}
                     value={op}
                     onChange={handleOpChange}
                     onBlur={handleBlur_Generic}
                     disabled={props.linhaOperacao.op.disabled}
+                    addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                 />
             </TableCell>
             <TableCell className={styles.table_cell__barra}>
                 <Input
                     ref={barraRef}
-                    extraClasses={['textAlign__center', 'inputSize__tiny']}
                     id={`${props.linhaOperacao.linha_id}__barra`}
                     value={barra}
                     onChange={handleBarraChange}
                     onBlur={handleBlur_Generic}
                     disabled={props.linhaOperacao.barra.disabled}
+                    addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                 />
             </TableCell>
             <TableCell className={styles.table_cell__cts}>
                 <Input
-                    extraClasses={['textAlign__center', 'inputSize__tiny']}
                     id={`${props.linhaOperacao.linha_id}__cts`}
                     value={cts}
                     onChange={handleCtsChange}
                     onBlur={handleBlur_Generic}
                     disabled={props.linhaOperacao.cts.disabled}
+                    addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                 />
             </TableCell>
             <TableCell className={styles.table_cell__cenario}>
                 <Input
-                    extraClasses={['textAlign__center', 'inputSize__tiny']}
                     id={`${props.linhaOperacao.linha_id}__cenario`}
                     value={cenario}
                     onChange={handleCenarioChange}
                     onBlur={handleCenarioBlur}
                     disabled={props.linhaOperacao.cenario.disabled}
+                    addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                 />
             </TableCell>
             <TableCell className={styles.table_cell__observacoes}>
                 <Input
-                    extraClasses={['textAlign__center', 'inputSize__tiny']}
                     id={`${props.linhaOperacao.linha_id}__observacoes`}
                     value={observacoes}
                     onChange={handleObservacoesChange}
                     onBlur={handleBlur_Generic}
                     disabled={props.linhaOperacao.observacoes.disabled}
+                    addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                 />
             </TableCell>
             <TableCell className={styles.table_cell__result}>
                 <Input
-                    extraClasses={['textAlign__center', 'inputSize__tiny']}
                     id={`${props.linhaOperacao.linha_id}__result`}
                     value={result}
                     onChange={handleResultChange}
                     onBlur={handleBlur_Generic}
                     disabled={props.linhaOperacao.result.disabled}
+                    addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                 />
             </TableCell>
             <TableCell className={styles.table_cell__retornoRisco}>
                 <Input
-                    extraClasses={['textAlign__center', 'inputSize__tiny']}
                     id={`${props.linhaOperacao.linha_id}__retornoRisco`}
                     value={retornoRisco}
                     onChange={handleRetornoRiscoChange}
                     onBlur={handleBlur_Generic}
                     disabled={props.linhaOperacao.retornoRisco.disabled}
+                    addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                 />
             </TableCell>
             {!props.isBacktest ? (

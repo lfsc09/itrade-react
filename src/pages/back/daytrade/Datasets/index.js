@@ -1,4 +1,4 @@
-import { Add, Check, Delete, DriveFileRenameOutline, FilterList, InsertDriveFile, NavigateNext, ThreeSixty, Tv, VideoLibrary } from '@mui/icons-material';
+import { Add, Check, CloudDownload, Delete, DriveFileRenameOutline, FilterList, InsertDriveFile, NavigateNext, ThreeSixty, Tv, VideoLibrary } from '@mui/icons-material';
 import { Box, Breadcrumbs, Button, Chip, Divider, Grid, IconButton, LinearProgress, Paper, Stack, Typography } from '@mui/material';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { motion } from 'framer-motion';
@@ -102,6 +102,10 @@ const Datasets = () => {
         []
     );
 
+    const handlerDownloadCSVDatagridAction = useCallback(() => {
+        console.log('Baixa');
+    }, []);
+
     const handlePageChangeDatagrid = useCallback((newPage) => {
         datagridDispatch({ type: DGR_TYPES.PAGE_CHANGE, payload: newPage });
     }, []);
@@ -184,8 +188,10 @@ const Datasets = () => {
             {
                 field: 'actions',
                 type: 'actions',
-                width: 120,
+                width: 150,
+                align: 'right',
                 getActions: (params) => [
+                    <GridActionsCellItem icon={<CloudDownload />} label='Download CSV' onClick={handlerDownloadCSVDatagridAction(params.id)} />,
                     <GridActionsCellItem icon={<DriveFileRenameOutline />} label='Editar' onClick={handlerEditaDatagridAction(params.id)} />,
                     <GridActionsCellItem icon={<Delete />} label='Apagar' onClick={handlerDeletaDatagridAction(params.id)} />,
                 ],

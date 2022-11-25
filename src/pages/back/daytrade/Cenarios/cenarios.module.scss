@@ -2,6 +2,12 @@
     margin-top: 16px;
 }
 
+.dataset_atualizadoEm {
+    font-size: 10px;
+    font-weight: bold;
+    color: rgba(0, 0, 0, 0.6);
+}
+
 .cenarios_panel {
     margin-top: 32px !important;
     padding: 16px 0;
@@ -9,4 +15,8 @@
 
 .send_panel {
     margin-top: 32px;
+}
+
+.no_content__wrapper {
+    flex: 1;
 }

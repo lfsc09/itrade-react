@@ -29,7 +29,7 @@ const content_switch = (url, urlParams) => {
     if (url.match(/^.*\/daytrade\/gerenciamentos\/editar\/\d*$/)) return <DaytradeGerenciamentosNovo editar={urlParams} />;
     if (url.match(/^.*\/daytrade\/cenarios$/)) return <DaytradeCenarios />;
     if (url.match(/^.*\/daytrade\/operacoes\/novo$/)) return <DaytradeOperacoesNovo />;
-    return <NoContent type='under-construction' />;
+    return <NoContent type='under-construction' addedClasses={{ wrapper: `${styles.no_content__wrapper}` }} />;
 };
 
 const BackWrapper = () => {

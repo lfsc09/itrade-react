@@ -1,6 +1,5 @@
 import { List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
-import React, { useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React from 'react';
 
 import NoContent from '../../../../../../components/ui/NoContent';
 import styles from './observacoes-painel.module.scss';
@@ -20,7 +19,7 @@ const ObservacoesPainal = (props) => {
             </List>
         </div>
     ) : (
-        <NoContent type='empty-data' empty_text='Nada a mostrar' text_color='black' text_bold={true} text_size='small' />
+        <NoContent type='empty-data' empty_text='Nada a mostrar' />
     );
 };
 

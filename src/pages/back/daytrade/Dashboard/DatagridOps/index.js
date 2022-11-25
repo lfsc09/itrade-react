@@ -43,7 +43,7 @@ const erroCell = ({ value }) => {
 
 const dataFormatter = ({ value }) => formatValue_fromRaw({ style: 'date' }, value);
 const mesFormatter = ({ value }) => formatValue_fromRaw({ style: 'date', options: { month: 'short', year: 'numeric', timeZone: 'UTC' } }, value);
-const volMediaFormatter = ({ value }) => value.toFixed(0);
+// const volMediaFormatter = ({ value }) => value.toFixed(0);
 
 const DatagridOps = (props) => {
     const dg_options = useMemo(() => {
@@ -84,15 +84,15 @@ const DatagridOps = (props) => {
                         headerAlign: 'center',
                         cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
                     },
-                    {
-                        field: 'trade__vol',
-                        headerName: 'Vol',
-                        width: 70,
-                        disableColumnMenu: true,
-                        align: 'center',
-                        headerAlign: 'center',
-                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
-                    },
+                    // {
+                    //     field: 'trade__vol',
+                    //     headerName: 'Vol',
+                    //     width: 70,
+                    //     disableColumnMenu: true,
+                    //     align: 'center',
+                    //     headerAlign: 'center',
+                    //     cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    // },
                     { field: 'trade__result_bruto__brl', headerName: 'Bruto BRL', flex: 1, disableColumnMenu: true, renderCell: resultCell_BRL },
                     { field: 'trade__custo', headerName: 'Custo', flex: 1, disableColumnMenu: true, renderCell: debitoCell },
                     {
@@ -152,16 +152,16 @@ const DatagridOps = (props) => {
                         headerAlign: 'center',
                         cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
                     },
-                    {
-                        field: 'dia__vol_media',
-                        headerName: 'Vol M.',
-                        width: 70,
-                        disableColumnMenu: true,
-                        align: 'center',
-                        headerAlign: 'center',
-                        valueFormatter: volMediaFormatter,
-                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
-                    },
+                    // {
+                    //     field: 'dia__vol_media',
+                    //     headerName: 'Vol M.',
+                    //     width: 70,
+                    //     disableColumnMenu: true,
+                    //     align: 'center',
+                    //     headerAlign: 'center',
+                    //     valueFormatter: volMediaFormatter,
+                    //     cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    // },
                     { field: 'dia__lucro_bruto__brl', headerName: 'L. Bruto', flex: 1, disableColumnMenu: true, renderCell: creditoCell },
                     { field: 'dia__prejuizo_bruto__brl', headerName: 'P. Bruto', flex: 1, disableColumnMenu: true, renderCell: debitoCell },
                     { field: 'dia__result_bruto__S', headerName: 'Bruto S', flex: 1, disableColumnMenu: true, renderCell: resultCell_S },
@@ -216,16 +216,16 @@ const DatagridOps = (props) => {
                         headerAlign: 'center',
                         cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
                     },
-                    {
-                        field: 'mes__vol_media',
-                        headerName: 'Vol M.',
-                        width: 70,
-                        disableColumnMenu: true,
-                        align: 'center',
-                        headerAlign: 'center',
-                        valueFormatter: volMediaFormatter,
-                        cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
-                    },
+                    // {
+                    //     field: 'mes__vol_media',
+                    //     headerName: 'Vol M.',
+                    //     width: 70,
+                    //     disableColumnMenu: true,
+                    //     align: 'center',
+                    //     headerAlign: 'center',
+                    //     valueFormatter: volMediaFormatter,
+                    //     cellClassName: `${gstyles.text_bold} ${styles.dg_cell__small}`,
+                    // },
                     { field: 'mes__lucro_bruto__brl', headerName: 'L. Bruto', flex: 1, disableColumnMenu: true, renderCell: creditoCell },
                     { field: 'mes__prejuizo_bruto__brl', headerName: 'P. Bruto', flex: 1, disableColumnMenu: true, renderCell: debitoCell },
                     { field: 'mes__result_bruto__S', headerName: 'Bruto S', flex: 1, disableColumnMenu: true, renderCell: resultCell_S },

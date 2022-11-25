@@ -215,7 +215,7 @@ const FilterCenarioObs = (props) => {
                                     )}
                                 </List>
                             ) : (
-                                <NoContent type='empty-data' empty_text='Nenhum cenário selecionado' text_size='small' />
+                                <NoContent type='empty-data' empty_text='Nenhum cenário selecionado' addedClasses={{ text: `${styles.no_content__text}` }} />
                             )}
                         </div>
                     </Stack>

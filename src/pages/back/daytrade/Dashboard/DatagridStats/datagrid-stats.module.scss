@@ -19,10 +19,86 @@
     }
 }
 
+.col_less_padding {
+    padding: 6px;
+}
+
 .col_divider {
     border-left: 1px solid #dee2e6;
 }
 
 .col_subheader {
     font-size: 11px;
+}
+
+.col_footer_section_divider {
+    padding-top: 24px;
+}
+
+.trades__total_perc {
+    width: 3%;
+}
+
+.trades__total {
+    width: 3%;
+}
+
+.trades__positivo {
+    width: 6%;
+}
+
+.trades__negativo {
+    width: 6%;
+}
+
+.trades__empate {
+    width: 4%;
+}
+
+.trades__erro {
+    width: 4%;
+}
+
+.result__lucro_brl {
+    width: 8%;
+}
+
+.result__lucro_R {
+    width: 5%;
+}
+
+.result__lucro_perc {
+    width: 5%;
+}
+
+.stats__rrMedio {
+    width: 4%;
+}
+
+.result__mediaGain {
+    width: 10%;
+}
+
+.result__mediaLoss {
+    width: 10%;
+}
+
+.stats__expect {
+    width: 8%;
+}
+
+.stats__dp {
+    width: 8%;
+}
+
+.stats__fatorLucro {
+    width: 3%;
+}
+
+.stats__breakeven {
+    width: 3%;
+}
+
+.stats__edge {
+    width: 4%;
 }

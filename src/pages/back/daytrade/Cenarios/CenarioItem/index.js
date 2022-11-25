@@ -1,7 +1,8 @@
 import { Add, ArrowDropDown, ArrowDropUp, Delete } from '@mui/icons-material';
 import { Button, Chip, Collapse, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 import cloneDeep from 'lodash.clonedeep';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { batch } from 'react-redux';
 
 import Input from '../../../../../components/ui/Input';
 import NoContent from '../../../../../components/ui/NoContent';
@@ -25,6 +26,22 @@ const CenarioItem = (props) => {
         },
         { added: 0, deleted: 0 }
     );
+
+    /********
+     * FUNCS
+     ********/
+    const generateChecksum = useCallback(() => {
+        let checksum = '';
+        checksum += `&id=${props?.row?.id ?? ''}`;
+        checksum += `&n=${props?.row?.nome ?? ''}`;
+        checksum += `&obs=[${props?.row?.observacoes?.reduce((r, curr) => `&{id=${curr?.id ?? ''}&ref=${curr.ref}&n=${curr.nome}}`, '') ?? ''}]`;
+        return checksum;
+    }, [props?.row]);
+
+    /*******
+     * REFS
+     *******/
+    const propsRow_checksum = useRef(generateChecksum());
 
     /***********
      * HANDLERS
@@ -139,6 +156,19 @@ const CenarioItem = (props) => {
         }
     }, [rowData.id]);
 
+    /**********************************************
+     * ATUALIZA OS INPUTS, POR ALTERAÇÕES EXTERNAS
+     **********************************************/
+    useEffect(() => {
+        if (propsRow_checksum.current !== generateChecksum()) {
+            batch(() => {
+                setOpenRow(false);
+                setRowData((prevState) => props.row);
+            });
+            propsRow_checksum.current = generateChecksum();
+        }
+    });
+
     return (
         <Paper sx={{ px: 3, py: 1 }}>
             <Stack className={styles.row_container} direction='row' spacing={1} onClick={handleOpenRow}>
@@ -190,7 +220,7 @@ const CenarioItem = (props) => {
                                                 onChange={(e) => handleObsRefChange(obs.id, e.target.value)}
                                                 onBlur={(e) => handleObsRefChange_Blur(obs.id, e.target.value)}
                                                 disabled={obs?.delete ?? false}
-                                                extraClasses={['textAlign__center', 'inputSize__small']}
+                                                addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputSmall__input}` }}
                                             />
                                         </TableCell>
                                         <TableCell className={styles.table_cell__nome}>
@@ -199,7 +229,7 @@ const CenarioItem = (props) => {
                                                 onChange={(e) => handleObsNomeChange(obs.id, e.target.value)}
                                                 onBlur={(e) => handleObsNomeChange_Blur(obs.id, e.target.value)}
                                                 disabled={obs?.delete ?? false}
-                                                extraClasses={['inputSize__small']}
+                                                addedClasses={{ input: `${styles.inputSmall__input}` }}
                                             />
                                         </TableCell>
                                         <TableCell align='center' className={styles.table_cell__delete}>
@@ -219,7 +249,7 @@ const CenarioItem = (props) => {
                             </TableBody>
                         </Table>
                     ) : (
-                        <NoContent type='empty-data' text_size='small' text_padding='2' empty_text='Não há observações' />
+                        <NoContent type='empty-data' empty_text='Não há observações' addedClasses={{ text: `${styles.no_content__text}` }} />
                     )}
                 </div>
             </Collapse>

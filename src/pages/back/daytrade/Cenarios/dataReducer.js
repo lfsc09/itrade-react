@@ -1,11 +1,10 @@
 import cloneDeep from 'lodash.clonedeep';
 
 export const TYPES = {
-    STOP_LOADING: 0,
-    ROWS_UPDATED__FETCH: 1,
-    ROWS_UPDATED: 2,
-    ROW_UPDATED: 3,
-    ROW_DELETE: 4,
+    ROWS_UPDATED__FETCH: 0,
+    ROWS_UPDATED: 1,
+    ROW_UPDATED: 2,
+    ROW_DELETE: 3,
 };
 
 export const INI_STATE = {
@@ -18,11 +17,6 @@ export const INI_STATE = {
 export const reducer = (state, action) => {
     let newRows;
     switch (action.type) {
-        case TYPES.STOP_LOADING:
-            return {
-                rows: cloneDeep(state.rows),
-                originalRows: cloneDeep(state.originalRows),
-            };
         case TYPES.ROWS_UPDATED__FETCH:
             return {
                 rows: action.payload,

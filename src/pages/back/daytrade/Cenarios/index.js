@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
+import { batch } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -87,8 +88,10 @@ const Cenarios = () => {
         // Joga o novo cenario no começo
         newRows.unshift(newRow);
         // Reseta o select
-        setCenarioCopy(0);
-        dataDispatch({ type: DGR_TYPES.ROWS_UPDATED, payload: newRows });
+        batch(() => {
+            setCenarioCopy(0);
+            dataDispatch({ type: DGR_TYPES.ROWS_UPDATED, payload: newRows });
+        });
     }, [cenarioCopy, dataState.rows]);
 
     const handleDatasetCopy = useCallback(() => {
@@ -110,8 +113,10 @@ const Cenarios = () => {
                     }
                 }
                 // Reseta o select
-                setDatasetCopy(0);
-                dataDispatch({ type: DGR_TYPES.ROWS_UPDATED, payload: newRows });
+                batch(() => {
+                    setDatasetCopy(0);
+                    dataDispatch({ type: DGR_TYPES.ROWS_UPDATED, payload: newRows });
+                });
             })
             .catch((error) => {
                 if (error.response) {
@@ -128,12 +133,16 @@ const Cenarios = () => {
                 } else console.log('Error Axios: ', error.message);
                 // Reseta o select
                 setDatasetCopy(0);
-                dataDispatch({ type: DGR_TYPES.STOP_LOADING });
             });
     }, [datasetCopy, dataState.rows, dispatch, navigate]);
 
+    /********************
+     * SEND DATA HANDLER
+     ********************/
     const handleAtualizaCenariosAction = useCallback(() => {
         if (dataset === null) return false;
+
+        console.log(dataState.rows);
 
         let sendData = {
             id_dataset: dataset?.id,
@@ -225,14 +234,32 @@ const Cenarios = () => {
                     changedRow.id = cenario.id;
                     sendData.cenarios_update.push(changedRow);
                 }
-
-                console.log(sendData);
-                /**
-                 * TODO: REMOVER CENARIOS E OBS EM BRANCO
-                 */
             }
         }
-        if (sendData.cenarios_delete.length || sendData.cenarios_create.length || sendData.cenarios_update.length) console.log(sendData);
+        if (sendData.cenarios_delete.length > 0 || sendData.cenarios_create.length > 0 || sendData.cenarios_update.length > 0) {
+            axiosCon
+                .post('/cenario/gerencia', sendData)
+                .then((resp) => {
+                    batch(() => {
+                        setCenarioCopy(0);
+                        dataDispatch({ type: DGR_TYPES.ROWS_UPDATED__FETCH, payload: resp.data.datarows });
+                    });
+                })
+                .catch((error) => {
+                    if (error.response) {
+                        if (error.response.status === 401) dispatch(handleLogout());
+                        else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
+                        else if (error.response.status === 500) {
+                            dispatch(
+                                add({
+                                    message: error.response.data,
+                                    severity: 'error',
+                                })
+                            );
+                        }
+                    } else console.log('Error Axios: ', error.message);
+                });
+        }
     }, [dataState.rows]);
 
     /****************************
@@ -291,7 +318,6 @@ const Cenarios = () => {
                             );
                         }
                     } else console.log('Error Axios: ', error.message);
-                    dataDispatch({ type: DGR_TYPES.STOP_LOADING });
                 });
         return () => {
             abortController.abort();
@@ -337,7 +363,11 @@ const Cenarios = () => {
                                             style={{ marginRight: 8 }}
                                             checked={selected}
                                         />
-                                        <ListItemText primary={option.nome} />
+                                        <ListItemText
+                                            primary={option.nome}
+                                            secondary={option.data_atualizacao}
+                                            secondaryTypographyProps={{ className: styles.dataset_atualizadoEm }}
+                                        />
                                     </li>
                                 )}
                                 style={{ width: '100%' }}
@@ -345,104 +375,106 @@ const Cenarios = () => {
                             />
                         </Paper>
                     </div>
-                    {dataset !== null ? (
-                        <>
-                            <Paper sx={{ p: 1, pt: 2 }}>
-                                <Grid container spacing={2}>
-                                    <Grid item md={6} xs={12}>
-                                        <Stack direction='row' spacing={1}>
-                                            <FormControl sx={{ flexGrow: 4 }}>
-                                                <InputLabel id='copy_dataset_select_label'>Copiar do Dataset</InputLabel>
-                                                <Select
-                                                    label='Copiar do Dataset'
-                                                    labelId='copy_dataset_select_label'
-                                                    name='copy_dataset'
-                                                    size='small'
-                                                    value={datasetCopy}
-                                                    onChange={handleChangeDatasetCopy}
-                                                >
-                                                    <MenuItem key={0} value={0}>
-                                                        ---
-                                                    </MenuItem>
-                                                    {datasetSuggest.map((row) =>
-                                                        dataset?.id !== row.id ? (
-                                                            <MenuItem key={row.id} value={row.id}>
-                                                                {row.nome}
-                                                            </MenuItem>
-                                                        ) : (
-                                                            ''
-                                                        )
-                                                    )}
-                                                </Select>
-                                            </FormControl>
-                                            <Button variant='outlined' sx={{ flexGrow: 1 }} endIcon={<ContentCopy />} onClick={handleDatasetCopy}>
-                                                Copiar
-                                            </Button>
-                                        </Stack>
+                    <Stack direction='column' sx={{ flexGrow: '1' }}>
+                        {dataset !== null ? (
+                            <>
+                                <Paper sx={{ p: 1, pt: 2 }}>
+                                    <Grid container spacing={2}>
+                                        <Grid item md={6} xs={12}>
+                                            <Stack direction='row' spacing={1}>
+                                                <FormControl sx={{ flexGrow: 4 }}>
+                                                    <InputLabel id='copy_dataset_select_label'>Copiar do Dataset</InputLabel>
+                                                    <Select
+                                                        label='Copiar do Dataset'
+                                                        labelId='copy_dataset_select_label'
+                                                        name='copy_dataset'
+                                                        size='small'
+                                                        value={datasetCopy}
+                                                        onChange={handleChangeDatasetCopy}
+                                                    >
+                                                        <MenuItem key={0} value={0}>
+                                                            ---
+                                                        </MenuItem>
+                                                        {datasetSuggest.map((row) =>
+                                                            dataset?.id !== row.id ? (
+                                                                <MenuItem key={row.id} value={row.id}>
+                                                                    {row.nome}
+                                                                </MenuItem>
+                                                            ) : (
+                                                                ''
+                                                            )
+                                                        )}
+                                                    </Select>
+                                                </FormControl>
+                                                <Button variant='outlined' sx={{ flexGrow: 1 }} endIcon={<ContentCopy />} onClick={handleDatasetCopy}>
+                                                    Copiar
+                                                </Button>
+                                            </Stack>
+                                        </Grid>
+                                        <Grid item md={6} xs={12}>
+                                            <Stack direction='row' spacing={1}>
+                                                <FormControl sx={{ flexGrow: 4 }}>
+                                                    <InputLabel id='copy_dataset_select_label'>Copiar Cenário</InputLabel>
+                                                    <Select
+                                                        label='Copiar Cenário'
+                                                        labelId='copy_cenario_select_label'
+                                                        name='copy_cenario'
+                                                        size='small'
+                                                        value={cenarioCopy}
+                                                        onChange={handleChangeCenarioCopy}
+                                                    >
+                                                        <MenuItem key={0} value={0}>
+                                                            Novo Cenário
+                                                        </MenuItem>
+                                                        {dataState.rows.map((row) =>
+                                                            row.nome !== '' || row.observacoes.length > 0 ? (
+                                                                <MenuItem key={row.id} value={row.id}>
+                                                                    {row.nome}
+                                                                </MenuItem>
+                                                            ) : (
+                                                                ''
+                                                            )
+                                                        )}
+                                                    </Select>
+                                                </FormControl>
+                                                <Button variant='outlined' sx={{ flexGrow: 1 }} endIcon={<Add />} onClick={handleCenarioCopy}>
+                                                    {cenarioCopy === 0 ? 'Criar' : 'Copiar'}
+                                                </Button>
+                                            </Stack>
+                                        </Grid>
                                     </Grid>
-                                    <Grid item md={6} xs={12}>
-                                        <Stack direction='row' spacing={1}>
-                                            <FormControl sx={{ flexGrow: 4 }}>
-                                                <InputLabel id='copy_dataset_select_label'>Copiar Cenário</InputLabel>
-                                                <Select
-                                                    label='Copiar Cenário'
-                                                    labelId='copy_cenario_select_label'
-                                                    name='copy_cenario'
-                                                    size='small'
-                                                    value={cenarioCopy}
-                                                    onChange={handleChangeCenarioCopy}
-                                                >
-                                                    <MenuItem key={0} value={0}>
-                                                        Novo Cenário
-                                                    </MenuItem>
-                                                    {dataState.rows.map((row) =>
-                                                        row.nome !== '' || row.observacoes.length > 0 ? (
-                                                            <MenuItem key={row.id} value={row.id}>
-                                                                {row.nome}
-                                                            </MenuItem>
-                                                        ) : (
-                                                            ''
-                                                        )
-                                                    )}
-                                                </Select>
-                                            </FormControl>
-                                            <Button variant='outlined' sx={{ flexGrow: 1 }} endIcon={<Add />} onClick={handleCenarioCopy}>
-                                                {cenarioCopy === 0 ? 'Criar' : 'Copiar'}
-                                            </Button>
-                                        </Stack>
-                                    </Grid>
-                                </Grid>
-                            </Paper>
-                            {dataState.rows.length > 0 ? (
-                                <>
-                                    <div className={styles.cenarios_panel}>
-                                        <Stack spacing={3}>
-                                            {dataState.rows.map((row, i) => (
-                                                <CenarioItem key={row.id} row={row} dataDispatch={dataDispatch} />
-                                            ))}
-                                        </Stack>
-                                    </div>
-                                    <div className={styles.send_panel}>
-                                        <LoadingButton
-                                            loading={false}
-                                            variant='contained'
-                                            color='primary'
-                                            type='submit'
-                                            endIcon={<KeyboardDoubleArrowUp />}
-                                            sx={{ width: '100%' }}
-                                            onClick={handleAtualizaCenariosAction}
-                                        >
-                                            Atualizar Cenário
-                                        </LoadingButton>
-                                    </div>
-                                </>
-                            ) : (
-                                <NoContent type='empty-data' empty_text='Não há cenários ainda' />
-                            )}
-                        </>
-                    ) : (
-                        <NoContent type='empty-data' empty_text='Nenhum Dataset selecionado' />
-                    )}
+                                </Paper>
+                                {dataState.rows.length > 0 ? (
+                                    <>
+                                        <div className={styles.cenarios_panel}>
+                                            <Stack spacing={3}>
+                                                {dataState.rows.map((row, i) => (
+                                                    <CenarioItem key={row.id} row={row} dataDispatch={dataDispatch} />
+                                                ))}
+                                            </Stack>
+                                        </div>
+                                        <div className={styles.send_panel}>
+                                            <LoadingButton
+                                                loading={false}
+                                                variant='contained'
+                                                color='primary'
+                                                type='submit'
+                                                endIcon={<KeyboardDoubleArrowUp />}
+                                                sx={{ width: '100%' }}
+                                                onClick={handleAtualizaCenariosAction}
+                                            >
+                                                Atualizar Cenário
+                                            </LoadingButton>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <NoContent type='empty-data' empty_text='Não há cenários ainda' addedClasses={{ wrapper: `${styles.no_content__wrapper}` }} />
+                                )}
+                            </>
+                        ) : (
+                            <NoContent type='empty-data' empty_text='Nenhum Dataset selecionado' addedClasses={{ wrapper: `${styles.no_content__wrapper}` }} />
+                        )}
+                    </Stack>
                 </Stack>
             </Box>
         </>
