@@ -143,7 +143,7 @@ const DatagridStats = (props) => {
                                     */}
                                     <TableCell className={`${styles.col_less_padding} ${styles.col_divider} ${styles.stats__rrMedio}`} align='center'>
                                         {/* prettier-ignore */}
-                                        <span className={`${gstyles.text_bold} ${gstyles.text_small}`}>{`${c.stats__rrMedio.toFixed(3)}R`}</span>
+                                        <span className={`${gstyles.text_bold} ${gstyles.text_small}`}>{`${c.stats__rrMedio.toFixed(3)}`}</span>
                                     </TableCell>
                                     <TableCell className={`${styles.col_less_padding} ${styles.result__mediaGain}`} align='center'>
                                         {/* prettier-ignore */}
@@ -260,7 +260,7 @@ const DatagridStats = (props) => {
                                 */}
                                 <TableCell className={`${styles.col_less_padding} ${styles.col_divider} ${styles.stats__rrMedio}`} align='center'>
                                     {/* prettier-ignore */}
-                                    <span className={`${gstyles.text_bold} ${gstyles.text_small}`}>{`${props.stats.dashboard_ops__table_stats.stats__rrMedio.toFixed(3)}R`}</span>
+                                    <span className={`${gstyles.text_bold} ${gstyles.text_small}`}>{`${props.stats.dashboard_ops__table_stats.stats__rrMedio.toFixed(3)}`}</span>
                                 </TableCell>
                                 <TableCell className={`${styles.col_less_padding} ${styles.result__mediaGain}`} align='center'>
                                     {/* prettier-ignore */}

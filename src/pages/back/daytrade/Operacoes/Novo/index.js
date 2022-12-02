@@ -1,5 +1,4 @@
-import { Add, CheckBox, CheckBoxOutlineBlank, ConstructionOutlined, DeleteSweep, NavigateNext, Telegram } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
+import { Add, CheckBox, CheckBoxOutlineBlank, DeleteSweep, NavigateNext, Telegram } from '@mui/icons-material';
 import {
     Autocomplete,
     Box,
@@ -7,7 +6,6 @@ import {
     Button,
     Checkbox,
     Divider,
-    fabClasses,
     FormControl,
     FormControlLabel,
     FormGroup,
@@ -26,7 +24,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import { format } from 'date-fns';
+import { addMinutes, format, set } from 'date-fns';
 import { motion } from 'framer-motion';
 import cloneDeep from 'lodash.clonedeep';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -39,7 +37,7 @@ import gStyles from '../../../../../assets/back/scss/global.module.scss';
 import MessageController from '../../../../../components/ui/MessageController';
 import NoContent from '../../../../../components/ui/NoContent';
 import { axiosCon } from '../../../../../helpers/axios-con';
-import { generateHash, isObjectEmpty } from '../../../../../helpers/global';
+import { formatValue_fromRaw, generateHash, maskValue } from '../../../../../helpers/global';
 import useLongPress from '../../../../../helpers/useLongPress';
 import { add } from '../../../../../store/api-messages/api-messages-slice';
 import { handleLogout } from '../../../../../store/auth/auth-action';
@@ -75,6 +73,7 @@ const DaytradeOperacoesNovo = () => {
     const [autoDate, setAutoDate] = useState('');
     const [autoAtivo, setAutoAtivo] = useState('');
     const [autoCts, setAutoCts] = useState('');
+    const [autoRetornoRisco, setAutoRetornoRisco] = useState('');
     const [autoCenario, setAutoCenario] = useState(null);
     const [gerenciamento, setGerenciamento] = useState([]);
     const [tempoGrafico, setTempoGrafico] = useState(5);
@@ -93,8 +92,9 @@ const DaytradeOperacoesNovo = () => {
      ********************************/
     const groupData_struct = useCallback(() => {
         let groupData_struct = [];
-        let group_id = generateHash(15);
+        let group_id = null;
         for (let t = 0; t < 3; t++) {
+            group_id = generateHash(15);
             if (gerenciamento.length > 0) {
                 for (let gerenc of gerenciamento) {
                     groupData_struct.push({
@@ -110,8 +110,8 @@ const DaytradeOperacoesNovo = () => {
                         cenario: { value: autoCenario?.label ?? '', disabled: autoCenario !== null && autoCenario.label !== '' },
                         observacoes: { value: '', disabled: false },
                         result: { value: '', disabled: false },
-                        retornoRisco: { value: '', disabled: false },
-                        ...(isBacktest && { erro: { value: false, disabled: false } }),
+                        retornoRisco: { value: autoRetornoRisco, disabled: autoRetornoRisco !== '' },
+                        ...(!isBacktest && { erro: { value: false, disabled: false } }),
                     });
                 }
             } else {
@@ -127,8 +127,8 @@ const DaytradeOperacoesNovo = () => {
                     cenario: { value: autoCenario?.label ?? '', disabled: autoCenario !== null && autoCenario.label !== '' },
                     observacoes: { value: '', disabled: false },
                     result: { value: '', disabled: false },
-                    retornoRisco: { value: '', disabled: false },
-                    ...(isBacktest && { erro: { value: false, disabled: false } }),
+                    retornoRisco: { value: autoRetornoRisco, disabled: autoRetornoRisco !== '' },
+                    ...(!isBacktest && { erro: { value: false, disabled: false } }),
                 });
             }
             if (groupData_struct.length) groupData_struct[groupData_struct.length - 1].last_of_group = true;
@@ -146,9 +146,10 @@ const DaytradeOperacoesNovo = () => {
             for (let i = 0; i < cpyLinhasOperacao.length; i++) {
                 // Atualiza colunas que devem se copiar se estiverem vazios (Ex: Data)
                 if (cpyLinhasOperacao[i].date.value === '') cpyLinhasOperacao[i].date.value = lO.date;
-                if (cpyLinhasOperacao[i].ativo.value === '') cpyLinhasOperacao[i].ativo.value = lO.ativo;
                 // Da própria linha alterada
                 if (lO.linha_id === cpyLinhasOperacao[i].linha_id) {
+                    cpyLinhasOperacao[i].date.value = lO.date;
+                    cpyLinhasOperacao[i].ativo.value = lO.ativo;
                     cpyLinhasOperacao[i].op.value = lO.op;
                     cpyLinhasOperacao[i].barra.value = lO.barra;
                     cpyLinhasOperacao[i].cts.value = lO.cts;
@@ -160,6 +161,8 @@ const DaytradeOperacoesNovo = () => {
                 }
                 // Do grupo da linha alterada
                 else if (lO.grupo_id === cpyLinhasOperacao[i].grupo_id) {
+                    cpyLinhasOperacao[i].date.value = lO.date;
+                    cpyLinhasOperacao[i].ativo.value = lO.ativo;
                     cpyLinhasOperacao[i].op.value = lO.op;
                     cpyLinhasOperacao[i].barra.value = lO.barra;
                     cpyLinhasOperacao[i].cts.value = lO.cts;
@@ -203,7 +206,13 @@ const DaytradeOperacoesNovo = () => {
     );
 
     const handleAutoCts = useCallback((e) => {
-        setAutoCts((prevState) => e.target.value);
+        let newValue = maskValue('number', { current: e.target.value });
+        setAutoCts((prevState) => (newValue.check ? newValue.value : prevState));
+    }, []);
+
+    const handleAutoRetornoRisco = useCallback((e) => {
+        let newValue = maskValue('number_decimal', { current: e.target.value });
+        setAutoRetornoRisco((prevState) => (newValue.check ? newValue.value : prevState));
     }, []);
 
     const handleTempoGrafico = useCallback((e) => {
@@ -240,6 +249,95 @@ const DaytradeOperacoesNovo = () => {
             setObservacoesPainel_Cenario((prevState) => '');
         });
     }, [groupData_struct]);
+
+    const handleSendInfo = useCallback(() => {
+        if (dataset === null) return false;
+        let sendData = { id_dataset: dataset.id, operacoes: [] };
+
+        for (let linha of linhasOperacao) {
+            // Encara como linhas não utilizadas
+            if (
+                (linha.ativo.value === '' || linha.ativo.disabled) &&
+                (linha.op.value === '' || linha.op.disabled) &&
+                (linha.barra.value === '' || linha.barra.disabled) &&
+                (linha.cts.value === '' || linha.cts.disabled) &&
+                (linha.cenario.value === '' || linha.cenario.disabled) &&
+                linha.result.value === ''
+            )
+                continue;
+            else if (
+                linha.ativo.value === '' ||
+                linha.op.value === '' ||
+                linha.barra.value === '' ||
+                linha.cts.value === '' ||
+                linha.cenario.value === '' ||
+                linha.result.value === ''
+            ) {
+                dispatch(
+                    add({
+                        message: 'Existe(m) linha(s) incompleta(s)',
+                        severity: 'error',
+                    })
+                );
+                return false;
+            }
+
+            let ativo_i = ativos.findIndex((a) => a.nome === linha.ativo.value);
+            let op_value = linha.op.value === 'c' ? 1 : linha.op.value === 'v' ? 2 : 0;
+            let erro_value = 'erro' in linha ? (linha.erro.value ? 1 : 0) : 0;
+            let hora_value = format(addMinutes(set(new Date(), { hours: 9, minutes: 0, seconds: 0 }), tempoGrafico * (parseInt(linha.barra.value) - 1)), 'HH:mm:ss');
+
+            if (ativo_i !== -1) {
+                sendData.operacoes.push({
+                    gerenciamento: linha?.gerenciamento?.value ?? '',
+                    data: formatValue_fromRaw({ style: 'date-reverse' }, linha.date.value),
+                    ativo: ativos[ativo_i].nome,
+                    op: op_value,
+                    cts: linha.cts.value,
+                    hora: hora_value,
+                    erro: erro_value,
+                    cenario: linha.cenario.value,
+                    observacoes: linha.observacoes.value,
+                    resultado: linha.result.value,
+                    retorno_risco: linha.retornoRisco.value,
+                    ativo_custo: ativos[ativo_i].custo,
+                    ativo_valor_tick: ativos[ativo_i].valor_tick,
+                    ativo_pts_tick: ativos[ativo_i].pts_tick,
+                });
+            }
+        }
+
+        if (sendData.operacoes.length > 0) {
+            axiosCon
+                .post('/operacao/novo', sendData)
+                .then((resp) => {
+                    batch(() => {
+                        dispatch(
+                            add({
+                                message: 'Operações adicionadas',
+                                severity: 'success',
+                            })
+                        );
+                        setLinhasOperacao((prevState) => groupData_struct());
+                        setObservacoesPainel_Cenario((prevState) => '');
+                    });
+                })
+                .catch((error) => {
+                    if (error.response) {
+                        if (error.response.status === 401) dispatch(handleLogout());
+                        else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
+                        else if (error.response.status === 500) {
+                            dispatch(
+                                add({
+                                    message: error.response.data,
+                                    severity: 'error',
+                                })
+                            );
+                        }
+                    } else console.log('Error Axios: ', error.message);
+                });
+        }
+    }, [dataset?.id, linhasOperacao]);
 
     /************
      * LONGPRESS
@@ -313,12 +411,19 @@ const DaytradeOperacoesNovo = () => {
                         if (error.response.status === 401) dispatch(handleLogout());
                         else if (error.response.status === 403) navigate('/daytrade/dashboard', { replace: true });
                         else if (error.response.status === 500) {
-                            dispatch(
-                                add({
-                                    message: error.response.data,
-                                    severity: 'error',
-                                })
-                            );
+                            batch(() => {
+                                setAtivos((prevState) => []);
+                                setCenarios((prevState) => []);
+                                setGerenciamentos((prevState) => []);
+                                setCenarioSuggest((prevState) => []);
+                                setGerenciamentoSuggest((prevState) => []);
+                                dispatch(
+                                    add({
+                                        message: error.response.data,
+                                        severity: 'error',
+                                    })
+                                );
+                            });
                         }
                     } else console.log('Error Axios: ', error.message);
                 });
@@ -398,6 +503,7 @@ const DaytradeOperacoesNovo = () => {
                             </FormGroup>
                             <TextField label='Ativo (Padrão)' variant='outlined' value={autoAtivo} onChange={handleAutoAtivo} size='small' sx={{ flex: 1 }} />
                             <TextField label='Cts (Padrão)' variant='outlined' value={autoCts} onChange={handleAutoCts} size='small' sx={{ flex: 1 }} />
+                            <TextField label='Retorno Risco (Padrão)' variant='outlined' value={autoRetornoRisco} onChange={handleAutoRetornoRisco} size='small' sx={{ flex: 1 }} />
                             <Autocomplete
                                 name='cenario'
                                 size='small'
@@ -461,10 +567,17 @@ const DaytradeOperacoesNovo = () => {
                         </Stack>
                     </Paper>
                     <Stack direction='row' spacing={2}>
-                        <Button variant='contained' sx={{ flex: 1 }} startIcon={<Add />} onClick={handleMaisOperacoes}>
+                        <Button variant='contained' sx={{ flex: 1 }} startIcon={<Add />} onClick={handleMaisOperacoes} disabled={cenarios.length === 0 && ativos.length === 0}>
                             Operações
                         </Button>
-                        <Button variant='contained' sx={{ flex: 1 }} color='success' endIcon={<Telegram />} disabled={linhasOperacao.length === 0}>
+                        <Button
+                            variant='contained'
+                            sx={{ flex: 1 }}
+                            color='success'
+                            endIcon={<Telegram />}
+                            onClick={handleSendInfo}
+                            disabled={(cenarios.length === 0 && ativos.length === 0) || linhasOperacao.length === 0}
+                        >
                             Enviar
                         </Button>
                         <Button
@@ -474,7 +587,7 @@ const DaytradeOperacoesNovo = () => {
                             startIcon={<DeleteSweep />}
                             onMouseDown={onStart_handleLimpaTudo}
                             onMouseUp={onEnd_handleLimpaTudo}
-                            disabled={linhasOperacao.length === 0}
+                            disabled={(cenarios.length === 0 && ativos.length === 0) || linhasOperacao.length === 0}
                         >
                             Limpa Tudo
                         </Button>

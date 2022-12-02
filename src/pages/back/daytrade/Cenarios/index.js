@@ -142,8 +142,6 @@ const Cenarios = () => {
     const handleAtualizaCenariosAction = useCallback(() => {
         if (dataset === null) return false;
 
-        console.log(dataState.rows);
-
         let sendData = {
             id_dataset: dataset?.id,
             cenarios_delete: [],

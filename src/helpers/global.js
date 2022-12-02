@@ -137,6 +137,13 @@ const formatValue_fromRaw = (options, value) => {
         return fDate.toLocaleDateString('pt-BR', options.options);
     }
 
+    // 0000-00-00
+    if (options.style === 'date-reverse') {
+        if (!/^((0[1-9])|([1-2][0-9])|(3[0-1]))\/((0[1-9])|(1[0-2]))\/((19[0-9][0-9])|(2[0-9][0-9][0-9]))$/.test(value)) return '';
+        const fDate = value.split('/');
+        return `${fDate[2]}-${fDate[1]}-${fDate[0]}`;
+    }
+
     // 00/00/0000 00:00:00
     if (options.style === 'datetime') {
         if (value === '0000-00-00 00:00:00' || value === '0000-00-00T00:00:00Z') return '';
@@ -155,7 +162,13 @@ const maskValue = (type, value, finishCallback = null) => {
     // Para permitir apenas numeros '\d'
     if (type === 'number') {
         new_value.check = true;
-        if (new_value.value !== '' && isNaN(new_value.value)) new_value.check = false;
+        if (new_value.value !== '' && !/^[0-9]*$/.test(new_value.value)) new_value.check = false;
+    }
+    // Para permitir e mascarar valores com decimais (Ex: xxxx.xx)
+    else if (type === 'number_decimal') {
+        new_value.check = true;
+        new_value.value = new_value.value.replace(/\,/g, '.').replace(/[.](?=.*[.])/g, '');
+        if (new_value.value !== '' && !/^(\-)?[0-9]*(\.)?[0-9]*$/g.test(new_value.value)) new_value.check = false;
     }
     // Para permitir e mascarar Datas no formato xx/xx/xxxx
     else if (type === 'date') {
@@ -181,12 +194,6 @@ const maskValue = (type, value, finishCallback = null) => {
             new_value.check = true;
             if (finishCallback !== null && finishCallback instanceof Function) finishCallback();
         }
-    }
-    // Para permitir e mastacar valores financeiros com decimais (Ex: xxxx.xx)
-    else if (type === 'valor_financeiro') {
-        new_value.check = true;
-        new_value.value = new_value.value.replace(/\,/g, '.').replace(/[.](?=.*[.])/g, '');
-        if (new_value.value !== '' && isNaN(new_value.value)) new_value.check = false;
     }
     // Especifico para inputs de Op, para permitir apenas 'c' ou 'v'
     else if (type === 'inputOp') {

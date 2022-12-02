@@ -28,9 +28,9 @@ const Operacao = (props) => {
     const [op, setOp] = useState(props.linhaOperacao.op.value);
     const [barra, setBarra] = useState(props.linhaOperacao.barra.value);
     const [cts, setCts] = useState(props.linhaOperacao.cts.value);
-    const [result, setResult] = useState(props.linhaOperacao.result.value);
     const [cenario, setCenario] = useState(props.linhaOperacao.cenario.value);
     const [observacoes, setObservacoes] = useState(props.linhaOperacao.observacoes.value);
+    const [result, setResult] = useState(props.linhaOperacao.result.value);
     const [retornoRisco, setRetornoRisco] = useState(props.linhaOperacao.retornoRisco.value);
     const [erro, setErro] = useState(props.linhaOperacao?.erro?.value ?? null);
 
@@ -68,7 +68,16 @@ const Operacao = (props) => {
 
     const updateInfo = useCallback(
         (value = null) => {
-            if (date !== '' && ativo !== '' && op !== '' && barra !== '' && cts !== '' && result !== '' && cenario !== '') {
+            // Atualiza se os valores não forem vazios, ou se forem, se anteriormente tinha valor
+            if (
+                /* prettier-ignore */ ((value !== null && value.key === 'date'    && (value.value !== '' || (value.value === '' && dateOldValueRef.current !== '')))    || (date !== ''    || (date === ''    && dateOldValueRef.current !== ''))) &&
+                /* prettier-ignore */ ((value !== null && value.key === 'ativo'   && (value.value !== '' || (value.value === '' && ativoOldValueRef.current !== '')))   || (ativo !== ''   || (ativo === ''   && ativoOldValueRef.current !== ''))) &&
+                /* prettier-ignore */ ((value !== null && value.key === 'op'      && (value.value !== '' || (value.value === '' && opOldValueRef.current !== '')))      || (op !== ''      || (op === ''      && opOldValueRef.current !== ''))) &&
+                /* prettier-ignore */ ((value !== null && value.key === 'barra'   && (value.value !== '' || (value.value === '' && barraOldValueRef.current !== '')))   || (barra !== ''   || (barra === ''   && barraOldValueRef.current !== ''))) &&
+                /* prettier-ignore */ ((value !== null && value.key === 'cts'     && (value.value !== '' || (value.value === '' && ctsOldValueRef.current !== '')))     || (cts !== ''     || (cts === ''     && ctsOldValueRef.current !== ''))) &&
+                /* prettier-ignore */ ((value !== null && value.key === 'result'  && (value.value !== '' || (value.value === '' && resultOldValueRef.current !== '')))  || (result !== ''  || (result === ''  && resultOldValueRef.current !== ''))) &&
+                /* prettier-ignore */ ((value !== null && value.key === 'cenario' && (value.value !== '' || (value.value === '' && cenarioOldValueRef.current !== ''))) || (cenario !== '' || (cenario === '' && cenarioOldValueRef.current !== '')))
+            ) {
                 let updatedValues = {
                     linha_id: props.linhaOperacao.linha_id,
                     grupo_id: props.linhaOperacao.grupo_id,
@@ -85,19 +94,33 @@ const Operacao = (props) => {
                     ...(value !== null && { [value.key]: value.value }),
                 };
                 propsLinhaOperacaoRef_checksum.current = generateChecksum(updatedValues);
+                // Reseta o valor anterior para zero, pois seu propósito já foi comprido nesse momento
+                /* prettier-ignore */ if ((value !== null && value.key === 'date'    && (value.value === '' && dateOldValueRef.current !== ''))    || (date === ''    && dateOldValueRef.current !== '')) dateOldValueRef.current = '';
+                /* prettier-ignore */ if ((value !== null && value.key === 'ativo'   && (value.value === '' && ativoOldValueRef.current !== ''))   || (ativo === ''   && ativoOldValueRef.current !== '')) ativoOldValueRef.current = '';
+                /* prettier-ignore */ if ((value !== null && value.key === 'op'      && (value.value === '' && opOldValueRef.current !== ''))      || (op === ''      && opOldValueRef.current !== '')) opOldValueRef.current = '';
+                /* prettier-ignore */ if ((value !== null && value.key === 'barra'   && (value.value === '' && barraOldValueRef.current !== ''))   || (barra === ''   && barraOldValueRef.current !== '')) barraOldValueRef.current = '';
+                /* prettier-ignore */ if ((value !== null && value.key === 'cts'     && (value.value === '' && ctsOldValueRef.current !== ''))     || (cts === ''     && ctsOldValueRef.current !== '')) ctsOldValueRef.current = '';
+                /* prettier-ignore */ if ((value !== null && value.key === 'result'  && (value.value === '' && resultOldValueRef.current !== ''))  || (result === ''  && resultOldValueRef.current !== '')) resultOldValueRef.current = '';
+                /* prettier-ignore */ if ((value !== null && value.key === 'cenario' && (value.value === '' && cenarioOldValueRef.current !== '')) || (cenario === '' && cenarioOldValueRef.current !== '')) cenarioOldValueRef.current = '';
                 props.updateLinhasOperacao(updatedValues);
             }
         },
-        [date, ativo, op, barra, cts, cenario, observacoes, result, retornoRisco, erro, props.linhaOperacao.linha_id, props.linhaOperacao.grupo_id, generateChecksum]
+        [date, ativo, op, barra, cts, result, cenario, observacoes, retornoRisco, erro, props.linhaOperacao.linha_id, props.linhaOperacao.grupo_id, generateChecksum]
     );
 
     /*******
      * REFS
      *******/
     const propsLinhaOperacaoRef_checksum = useRef(generateChecksum());
+    // Propósito desses valores antigos é atualiar o componente Pai, quando o valor do input for apagado, ai eu preciso saber se tinha valor anterior
+    // Porque se sempre foi vazio, ai não deve atualizar
     const dateOldValueRef = useRef(props.linhaOperacao.date.value);
-    const ativoRef = useRef();
-    const barraRef = useRef();
+    const ativoOldValueRef = useRef(props.linhaOperacao.ativo.value);
+    const opOldValueRef = useRef(props.linhaOperacao.op.value);
+    const barraOldValueRef = useRef(props.linhaOperacao.barra.value);
+    const ctsOldValueRef = useRef(props.linhaOperacao.cts.value);
+    const cenarioOldValueRef = useRef(props.linhaOperacao.cenario.value);
+    const resultOldValueRef = useRef(props.linhaOperacao.result.value);
 
     /***********
      * HANDLERS
@@ -106,16 +129,25 @@ const Operacao = (props) => {
         updateInfo();
     }, [updateInfo]);
 
-    const handleDateChange = useCallback((e) => {
-        let newValue = maskValue('date', { current: e.target.value, old: dateOldValueRef.current }, () => {
-            ativoRef.current.querySelector('input')?.focus();
-        });
-        setDate((prevState) => (newValue.check ? newValue.value : prevState));
-        if (newValue.check) dateOldValueRef.current = newValue.value;
-    }, []);
+    const handleDateChange = useCallback(
+        (e) => {
+            let newValue = maskValue('date', { current: e.target.value, old: date });
+            setDate((prevState) => {
+                if (newValue.check) {
+                    dateOldValueRef.current = prevState;
+                    return newValue.value;
+                }
+                return prevState;
+            });
+        },
+        [date]
+    );
 
     const handleAtivoChange = useCallback((e) => {
-        setAtivo(e.target.value);
+        setAtivo((prevState) => {
+            ativoOldValueRef.current = prevState;
+            return e.target.value;
+        });
     }, []);
     const handleAtivoBlur = useCallback(() => {
         let value = { value: ativo, check: false };
@@ -127,30 +159,61 @@ const Operacao = (props) => {
             }
         }
         batch(() => {
-            setAtivo((prevState) => (value.check ? value.value : ''));
-            updateInfo({ key: 'ativo', value: value.value });
+            if (value.check) {
+                batch(() => {
+                    setAtivo((prevState) => {
+                        ativoOldValueRef.current = prevState;
+                        return value.value;
+                    });
+                    updateInfo({ key: 'ativo', value: value.value });
+                });
+            } else {
+                setAtivo((prevState) => {
+                    ativoOldValueRef.current = prevState;
+                    return '';
+                });
+            }
         });
-    }, [ativo]);
+    }, [ativo, updateInfo]);
 
     const handleOpChange = useCallback((e) => {
-        let newValue = maskValue('inputOp', { current: e.target.value }, (value, check) => {
-            if (check && value !== '') barraRef.current.querySelector('input')?.focus();
+        let newValue = maskValue('inputOp', { current: e.target.value });
+        setOp((prevState) => {
+            if (newValue.check) {
+                opOldValueRef.current = prevState;
+                return newValue.value;
+            }
+            return prevState;
         });
-        setOp((prevState) => (newValue.check ? newValue.value : prevState));
     }, []);
 
     const handleBarraChange = useCallback((e) => {
         let newValue = maskValue('number', { current: e.target.value });
-        setBarra((prevState) => (newValue.check ? newValue.value : prevState));
+        setBarra((prevState) => {
+            if (newValue.check) {
+                barraOldValueRef.current = prevState;
+                return newValue.value;
+            }
+            return prevState;
+        });
     }, []);
 
     const handleCtsChange = useCallback((e) => {
         let newValue = maskValue('number', { current: e.target.value });
-        setCts((prevState) => (newValue.check ? newValue.value : prevState));
+        setCts((prevState) => {
+            if (newValue.check) {
+                ctsOldValueRef.current = prevState;
+                return newValue.value;
+            }
+            return prevState;
+        });
     }, []);
 
     const handleCenarioChange = useCallback((e) => {
-        setCenario(e.target.value);
+        setCenario((prevState) => {
+            cenarioOldValueRef.current = prevState;
+            return e.target.value;
+        });
     }, []);
     const handleCenarioBlur = useCallback(() => {
         let value = { value: cenario, check: false };
@@ -163,16 +226,24 @@ const Operacao = (props) => {
         }
         if (value.check) {
             batch(() => {
-                setCenario((prevState) => value.value);
+                setCenario((prevState) => {
+                    cenarioOldValueRef.current = prevState;
+                    return value.value;
+                });
                 props.updateObservacoesPainel_Cenario((prevState) => value.value);
+                updateInfo({ key: 'cenario', value: value.value });
             });
         } else {
             batch(() => {
-                setCenario((prevState) => '');
+                setCenario((prevState) => {
+                    cenarioOldValueRef.current = prevState;
+                    return '';
+                });
                 props.updateObservacoesPainel_Cenario((prevState) => '');
+                updateInfo({ key: 'cenario', value: value.value });
             });
         }
-    }, [cenario]);
+    }, [cenario, updateInfo]);
 
     const handleObservacoesChange = useCallback((e) => {
         let newValue = maskValue('inputObservacao', { current: e.target.value });
@@ -180,12 +251,30 @@ const Operacao = (props) => {
     }, []);
 
     const handleResultChange = useCallback((e) => {
-        let newValue = maskValue('valor_financeiro', { current: e.target.value });
-        setResult((prevState) => (newValue.check ? newValue.value : prevState));
+        let newValue = maskValue('number_decimal', { current: e.target.value });
+        setResult((prevState) => {
+            if (newValue.check) {
+                resultOldValueRef.current = prevState;
+                return newValue.value;
+            }
+            return prevState;
+        });
     }, []);
+    const handleResultBlur = useCallback(() => {
+        if (/^.*\.$/g.test(result)) {
+            let newValue = result + '00';
+            batch(() => {
+                setResult((prevState) => {
+                    resultOldValueRef.current = prevState;
+                    return newValue;
+                });
+                updateInfo({ key: 'result', value: newValue });
+            });
+        } else updateInfo();
+    }, [result, updateInfo]);
 
     const handleRetornoRiscoChange = useCallback((e) => {
-        let newValue = maskValue('valor_financeiro', { current: e.target.value });
+        let newValue = maskValue('number_decimal', { current: e.target.value });
         setRetornoRisco((prevState) => (newValue.check ? newValue.value : prevState));
     }, []);
 
@@ -194,7 +283,7 @@ const Operacao = (props) => {
             setErro((prevState) => !erro);
             updateInfo({ key: 'erro', value: !erro });
         });
-    }, [erro]);
+    }, [erro, updateInfo]);
 
     /**********************************************
      * ATUALIZA OS INPUTS, POR ALTERAÇÕES EXTERNAS
@@ -210,6 +299,11 @@ const Operacao = (props) => {
                 setObservacoes((prevState) => props.linhaOperacao.observacoes.value);
                 setErro((prevState) => props.linhaOperacao?.erro?.value ?? null);
             });
+            dateOldValueRef.current = props.linhaOperacao.date.value;
+            ativoOldValueRef.current = props.linhaOperacao.ativo.value;
+            opOldValueRef.current = props.linhaOperacao.op.value;
+            barraOldValueRef.current = props.linhaOperacao.barra.value;
+            cenarioOldValueRef.current = props.linhaOperacao.cenario.value;
             propsLinhaOperacaoRef_checksum.current = generateChecksum();
         }
     });
@@ -228,7 +322,6 @@ const Operacao = (props) => {
             </TableCell>
             <TableCell className={styles.table_cell__ativo}>
                 <Input
-                    ref={ativoRef}
                     id={`${props.linhaOperacao.linha_id}__ativo`}
                     value={ativo}
                     onChange={handleAtivoChange}
@@ -261,7 +354,6 @@ const Operacao = (props) => {
             </TableCell>
             <TableCell className={styles.table_cell__barra}>
                 <Input
-                    ref={barraRef}
                     id={`${props.linhaOperacao.linha_id}__barra`}
                     value={barra}
                     onChange={handleBarraChange}
@@ -305,7 +397,7 @@ const Operacao = (props) => {
                     id={`${props.linhaOperacao.linha_id}__result`}
                     value={result}
                     onChange={handleResultChange}
-                    onBlur={handleBlur_Generic}
+                    onBlur={handleResultBlur}
                     disabled={props.linhaOperacao.result.disabled}
                     addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputTiny__input}` }}
                 />

@@ -1,4 +1,4 @@
-import { AccessTime, AutoFixHigh, CheckBox, CheckBoxOutlineBlank, FilterListOff } from '@mui/icons-material';
+import { AccessTime, CheckBox, CheckBoxOutlineBlank, FilterListOff } from '@mui/icons-material';
 import {
     Autocomplete,
     Button,
@@ -58,7 +58,6 @@ const ignoraErros = [
 const tiposCts = [
     { value: 1, label: 'Padrão' },
     { value: 2, label: 'Quantidade Fixa' },
-    { value: 3, label: 'Quantidade Fixa por R' },
 ];
 
 const data_format = {

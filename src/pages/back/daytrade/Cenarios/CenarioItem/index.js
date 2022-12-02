@@ -1,5 +1,5 @@
 import { Add, ArrowDropDown, ArrowDropUp, Delete } from '@mui/icons-material';
-import { Button, Chip, Collapse, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
+import { Button, Chip, Collapse, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import cloneDeep from 'lodash.clonedeep';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { batch } from 'react-redux';
@@ -15,7 +15,7 @@ const CenarioItem = (props) => {
      * STATES
      *********/
     const [openRow, setOpenRow] = useState(false);
-    const [rowData, setRowData] = useState(props?.row ?? { nome: '', observacoes: [] });
+    const [rowData, setRowData] = useState(props.row);
 
     /*******
      * VARS
@@ -30,13 +30,37 @@ const CenarioItem = (props) => {
     /********
      * FUNCS
      ********/
-    const generateChecksum = useCallback(() => {
-        let checksum = '';
-        checksum += `&id=${props?.row?.id ?? ''}`;
-        checksum += `&n=${props?.row?.nome ?? ''}`;
-        checksum += `&obs=[${props?.row?.observacoes?.reduce((r, curr) => `&{id=${curr?.id ?? ''}&ref=${curr.ref}&n=${curr.nome}}`, '') ?? ''}]`;
-        return checksum;
-    }, [props?.row]);
+    const generateChecksum = useCallback(
+        (values = null) => {
+            let checksum = '';
+            checksum += `&id=${values?.id ?? props.row.id ?? ''}`;
+            checksum += `&n=${values?.nome ?? props.row.nome ?? ''}`;
+            if ((values !== null && 'deleta' in values) || 'deleta' in props.row) checksum += `&del=${values?.deleta ?? props.row?.deleta ?? ''}`;
+            let obs_checksum = '';
+            if (values !== null) {
+                for (let obs of values.observacoes) {
+                    obs_checksum += `,{`;
+                    obs_checksum += `id=${obs.id}`;
+                    obs_checksum += `&ref=${obs.ref}`;
+                    obs_checksum += `&n=${obs.nome}`;
+                    if ('deleta' in obs) obs_checksum += `&del=${obs.deleta}`;
+                    obs_checksum += `}`;
+                }
+            } else {
+                for (let obs of props.row.observacoes) {
+                    obs_checksum += `,{`;
+                    obs_checksum += `id=${obs.id}`;
+                    obs_checksum += `&ref=${obs.ref}`;
+                    obs_checksum += `&n=${obs.nome}`;
+                    if ('deleta' in obs) obs_checksum += `&del=${obs.deleta}`;
+                    obs_checksum += `}`;
+                }
+            }
+            checksum += `&obs=[${obs_checksum}]`;
+            return checksum;
+        },
+        [props.row]
+    );
 
     /*******
      * REFS
@@ -56,11 +80,14 @@ const CenarioItem = (props) => {
     const handleNomeChange = useCallback((e) => {
         setRowData((prevState) => ({ ...prevState, nome: e.target.value }));
     }, []);
-
     // Propaga as mudanças para o 'Cenarios'
-    const handleNomeChange_Blur = useCallback(
+    const handleNomeBlur = useCallback(
         (e) => {
-            if (props?.row?.nome !== e.target.value) props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: cloneDeep(rowData) });
+            if (props?.row?.nome !== e.target.value) {
+                let cpyRowData = cloneDeep(rowData);
+                propsRow_checksum.current = generateChecksum(cpyRowData);
+                props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: cpyRowData });
+            }
         },
         [rowData.nome]
     );
@@ -77,13 +104,16 @@ const CenarioItem = (props) => {
         },
         [rowData.observacoes]
     );
-
     // Propaga as mudanças para o 'Cenarios'
-    const handleObsRefChange_Blur = useCallback(
+    const handleObsRefBlur = useCallback(
         (id, value) => {
             // Verifica se é uma observação nova, ou se ja existe se foi mesmo alterada
             let changed = String(id).includes('new') || rowData.observacoes.reduce((res, curr) => res || (curr.id === id && curr.ref !== value), false);
-            if (changed) props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: cloneDeep(rowData) });
+            if (changed) {
+                let cpyRowData = cloneDeep(rowData);
+                propsRow_checksum.current = generateChecksum(cpyRowData);
+                props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: cpyRowData });
+            }
         },
         [rowData.observacoes]
     );
@@ -98,61 +128,67 @@ const CenarioItem = (props) => {
         },
         [rowData.observacoes]
     );
-
     // Propaga as mudanças para o 'Cenarios'
-    const handleObsNomeChange_Blur = useCallback(
+    const handleObsNomeBlur = useCallback(
         (id, value) => {
             // Verifica se é uma observação nova, ou se ja existe se foi mesmo alterada
             let changed = String(id).includes('new') || rowData.observacoes.reduce((res, curr) => res || (curr.id === id && curr.nome !== value), false);
-            if (changed) props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: cloneDeep(rowData) });
+            if (changed) {
+                let cpyRowData = cloneDeep(rowData);
+                propsRow_checksum.current = generateChecksum(cpyRowData);
+                props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: cpyRowData });
+            }
         },
         [rowData.observacoes]
     );
 
-    // Propaga as mudanças para o 'Cenarios'
+    // Remove obs e propaga as mudanças para o 'Cenarios'
     const handleObsDeleteAction = useCallback(
         (id) => {
-            let changedObs = [];
+            let cpyRowData = cloneDeep(rowData);
             // Se for nova, apenas deleta
             if (String(id).includes('new')) {
-                changedObs = rowData.observacoes.filter((obs) => {
+                cpyRowData.observacoes = cpyRowData.observacoes.filter((obs) => {
                     return obs.id !== id;
                 });
             }
             // Se for existente, marca para apagar
-            else changedObs = rowData.observacoes.map((obs) => (obs.id === id ? { ...obs, delete: true } : obs));
-            setRowData((prevState) => {
-                let changedRow = { ...prevState, observacoes: changedObs };
-                props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: changedRow });
-                return changedRow;
+            else cpyRowData.observacoes = cpyRowData.observacoes.map((obs) => (obs.id === id ? { ...obs, delete: true } : obs));
+            batch(() => {
+                setRowData((prevState) => cpyRowData);
+                propsRow_checksum.current = generateChecksum(cpyRowData);
+                props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: cpyRowData });
             });
         },
-        [rowData.observacoes]
+        [rowData]
     );
 
+    // Add obs e propaga as mudanças para o 'Cenarios'
     const handleObsAddAction = useCallback(() => {
-        let newObs = [...rowData.observacoes],
-            newHash = generateHash(6),
-            nextRef = parseInt(newObs?.[newObs.length - 1]?.ref ?? 0) + 1;
-        newObs.push({ id: `new_${newHash}`, ref: nextRef, nome: '' });
-        setRowData((prevState) => {
-            let changedRow = { ...prevState, observacoes: newObs };
-            props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: changedRow });
-            return changedRow;
+        let cpyRowData = cloneDeep(rowData);
+        let nextRef = parseInt(cpyRowData.observacoes?.[cpyRowData.observacoes.length - 1]?.ref ?? 0) + 1;
+        cpyRowData.observacoes.push({ id: `new_${generateHash(6)}`, ref: nextRef, nome: '' });
+        batch(() => {
+            setOpenRow(true);
+            setRowData((prevState) => cpyRowData);
+            propsRow_checksum.current = generateChecksum(cpyRowData);
+            props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: cpyRowData });
         });
     }, [rowData]);
 
+    // Remove o proprio cenario e propaga as mudanças para o 'Cenarios'
     const handleCenarioDeleteAction = useCallback(() => {
         // Se for novo, apenas deleta
         if (String(rowData.id).includes('new')) props.dataDispatch({ type: DGR_TYPES.ROW_DELETE, payload: rowData.id });
         else {
-            let changedRow = cloneDeep(rowData);
-            changedRow.delete = true;
-            setRowData((prevState) => {
-                props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: changedRow });
-                return changedRow;
+            let cpyRowData = cloneDeep(rowData);
+            cpyRowData.delete = true;
+            batch(() => {
+                setOpenRow(false);
+                setRowData((prevState) => cpyRowData);
+                propsRow_checksum.current = generateChecksum(cpyRowData);
+                props.dataDispatch({ type: DGR_TYPES.ROW_UPDATED, payload: cpyRowData });
             });
-            setOpenRow(false);
         }
     }, [rowData.id]);
 
@@ -173,7 +209,7 @@ const CenarioItem = (props) => {
         <Paper sx={{ px: 3, py: 1 }}>
             <Stack className={styles.row_container} direction='row' spacing={1} onClick={handleOpenRow}>
                 <div className={styles.row_input}>
-                    <Input value={rowData.nome} onChange={handleNomeChange} onBlur={handleNomeChange_Blur} disabled={rowData?.delete ?? false} />
+                    <Input value={rowData.nome} onChange={handleNomeChange} onBlur={handleNomeBlur} disabled={rowData?.delete ?? false} />
                 </div>
                 <Button size='small' startIcon={<Add />} onClick={handleObsAddAction} disabled={rowData?.delete ?? false}>
                     Observação
@@ -218,7 +254,7 @@ const CenarioItem = (props) => {
                                             <Input
                                                 value={obs.ref}
                                                 onChange={(e) => handleObsRefChange(obs.id, e.target.value)}
-                                                onBlur={(e) => handleObsRefChange_Blur(obs.id, e.target.value)}
+                                                onBlur={(e) => handleObsRefBlur(obs.id, e.target.value)}
                                                 disabled={obs?.delete ?? false}
                                                 addedClasses={{ input: `${styles.inputCenter__input} ${styles.inputSmall__input}` }}
                                             />
@@ -227,7 +263,7 @@ const CenarioItem = (props) => {
                                             <Input
                                                 value={obs.nome}
                                                 onChange={(e) => handleObsNomeChange(obs.id, e.target.value)}
-                                                onBlur={(e) => handleObsNomeChange_Blur(obs.id, e.target.value)}
+                                                onBlur={(e) => handleObsNomeBlur(obs.id, e.target.value)}
                                                 disabled={obs?.delete ?? false}
                                                 addedClasses={{ input: `${styles.inputSmall__input}` }}
                                             />

@@ -14,7 +14,7 @@ const login = createAsyncThunk('auth/login', async ({ usuario, password }, { dis
         .then((resp) => {
             const token = resp.data.token;
 
-            localStorage.setItem('token', token);
+            localStorage.setItem('token:itrade-dongs', token);
             axiosCon.defaults.headers.Authorization = `Bearer ${token}`;
 
             return {

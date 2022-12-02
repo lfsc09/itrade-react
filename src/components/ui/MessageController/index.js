@@ -54,7 +54,7 @@ const MessageController = (props) => {
               <div className={styles.container}>
                   {messages.length > 1 ? (
                       <div className={styles.container__apaga_tudo}>
-                          <Button className={styles.apaga_tudo} size='small' color='warning' onClick={() => dispatch(removeAll())}>
+                          <Button className={styles.apaga_tudo} size='small' color='error' onClick={() => dispatch(removeAll())}>
                               Apagar Todos
                           </Button>
                       </div>
