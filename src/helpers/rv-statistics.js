@@ -4,7 +4,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 import { format, getDay, getISOWeek, getMonth, parseISO, startOfHour } from 'date-fns';
 
-import { BBollinger, desvpad, divide, isObjectEmpty, SMA } from './global';
+import { BBollinger, desvpad, divide, generateHash, isObjectEmpty, SMA } from './global';
 
 /*
     Compara duas datas ou dois horarios, retornando:
@@ -486,6 +486,7 @@ const groupData_byPeriodo = (ops, filters, simulation, options = {}) => {
                             ativo: ops[e].ativo,
                             op: ops[e].op,
                             cts: cts_usado,
+                            retornoRisco: ops[e].retorno_risco,
                             erro: ops[e].erro,
                             cenario: ops[e].cenario,
                             observacoes: ops[e].observacoes,
@@ -503,6 +504,7 @@ const groupData_byPeriodo = (ops, filters, simulation, options = {}) => {
                             op: ops[e].op,
                             erro: ops[e].erro,
                             cts_usado: cts_usado,
+                            retornoRisco: ops[e].retorno_risco,
                             custo: custo_operacao,
                             observacoes: ops[e].observacoes,
                             resultado_op: resultLiquido_operacao > 0 ? 1 : resultLiquido_operacao < 0 ? -1 : 0,
@@ -585,6 +587,7 @@ const groupData_byPeriodo = (ops, filters, simulation, options = {}) => {
                             erro: ops[e].erro,
                             cts_usado: cts_usado,
                             custo: custo_operacao,
+                            retornoRisco: ops[e].retorno_risco,
                             resultado_op: null,
                             lucro_bruto: {
                                 brl: resultBruto_operacao > 0 ? resultBruto_operacao : 0.0,
@@ -608,6 +611,7 @@ const groupData_byPeriodo = (ops, filters, simulation, options = {}) => {
                         if (new_list[index]['erro'] === 0) new_list[index]['erro'] = ops[e].erro;
                         new_list[index]['cts_usado'] += cts_usado;
                         new_list[index]['custo'] += custo_operacao;
+                        new_list[index]['retornoRisco'] += ops[e].retorno_risco;
                         new_list[index]['erro'] = new_list[index]['erro'] || ops[e].erro;
                         if (resultBruto_operacao > 0) {
                             new_list[index]['lucro_bruto']['brl'] += resultBruto_operacao;
@@ -625,9 +629,11 @@ const groupData_byPeriodo = (ops, filters, simulation, options = {}) => {
             }
         }
         // Termina para o ultimo
-        if (index > -1)
+        if (index > -1) {
             new_list[index]['resultado_op'] =
                 new_list[index]['result_liquido']['brl'] > new_list[index]['custo'] ? 1 : new_list[index]['result_liquido']['brl'] < new_list[index]['custo'] ? -1 : 0;
+            new_list[index]['retornoRisco'] = divide(new_list[index]['retornoRisco'], new_list[index]['qtd_trades']);
+        }
     }
     ////////////////////
     // Agrupa 'por Mes'
@@ -694,6 +700,7 @@ const groupData_byPeriodo = (ops, filters, simulation, options = {}) => {
                             erro: ops[e].erro,
                             cts_usado: cts_usado,
                             custo: custo_operacao,
+                            retornoRisco: ops[e].retorno_risco,
                             resultado_op: null,
                             lucro_bruto: {
                                 brl: resultBruto_operacao > 0 ? resultBruto_operacao : 0.0,
@@ -717,6 +724,7 @@ const groupData_byPeriodo = (ops, filters, simulation, options = {}) => {
                         if (new_list[index]['erro'] === 0) new_list[index]['erro'] = ops[e].erro;
                         new_list[index]['cts_usado'] += cts_usado;
                         new_list[index]['custo'] += custo_operacao;
+                        new_list[index]['retornoRisco'] += ops[e].retorno_risco;
                         new_list[index]['erro'] = new_list[index]['erro'] || ops[e].erro;
                         if (resultBruto_operacao > 0) {
                             new_list[index]['lucro_bruto']['brl'] += resultBruto_operacao;
@@ -734,9 +742,11 @@ const groupData_byPeriodo = (ops, filters, simulation, options = {}) => {
             }
         }
         // Termina para o ultimo
-        if (index > -1)
+        if (index > -1) {
             new_list[index]['resultado_op'] =
                 new_list[index]['result_liquido']['brl'] > new_list[index]['custo'] ? 1 : new_list[index]['result_liquido']['brl'] < new_list[index]['custo'] ? -1 : 0;
+            new_list[index]['retornoRisco'] = divide(new_list[index]['retornoRisco'], new_list[index]['qtd_trades']);
+        }
     }
     return new_list;
 };
@@ -792,7 +802,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
         R_filter_ops: 'R_filter_ops' in simulation && simulation.R_filter_ops === 1 ? true : false,
     };
     // Variaveis para a tabela de estatistica geral
-    let _dashboard_ops__table_stats = {
+    let _table_stats = {
         // Total de dias operados
         dias__total: 0,
         // Média de trades por dia
@@ -861,6 +871,8 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
         stats__dp_R: 0.0,
         // Desvio Padrão em % das operações
         stats__dp_perc: 0.0,
+        // Média do Retorno sobre o risco, informado nos trades
+        stats__retornoRiscoMedio: 0.0,
         // Risco Retorno médio das operações
         stats__rrMedio: 0.0,
         // Expectativa média em R$ a se esperar em futuras operações
@@ -889,9 +901,9 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
         stats__stops_ruina: 0,
     };
     // Variaveis para a tabela de resultados dos trades
-    let _dashboard_ops__table_trades = [];
+    let _table_trades = [];
     // Variaveis de listas para os gráficos
-    let _dashboard_ops__chart_data = {
+    let _chart_data = {
         resultados_normalizado: {
             labels: [],
             data: [],
@@ -915,11 +927,6 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             data_result: [],
             data_qtd: [],
         },
-        sequencia_de_resultados: {
-            labels: [],
-            data_positivos: [],
-            data_negativos: [],
-        },
         drawdowns: {
             labels: [],
             data: [],
@@ -928,7 +935,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             banda_superior2: [],
         },
     };
-    // Variaveis temporarias usadas em '_dashboard_ops__table_stats'
+    // Variaveis temporarias usadas em '_table_stats'
     let _temp__table_stats = {
         i_seq: 1,
         dias__unicos: {},
@@ -948,8 +955,8 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
         drawdowns_index: 0,
     };
     // Variaveis para a tabela de estatistica por cenario
-    let _dashboard_ops__table_stats__byCenario = {};
-    // Variaveis temporarias usadas em '_dashboard_ops__table_stats__byCenario'
+    let _table_stats__byCenario = {};
+    // Variaveis temporarias usadas em '_table_stats__byCenario'
     let _temp__table_stats__byCenario = {};
     let _ops = groupData_byPeriodo(ops, _filters, _simulation, _options);
     if (_options.only_FilterOps) {
@@ -965,7 +972,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             // Resultados do Trade
             //////////////////////////////////
             if (_options.get_tradeTableData) {
-                _dashboard_ops__table_trades.push({
+                _table_trades.push({
                     trade__id: _ops[o].id,
                     // Sequencia do trade, na ordem que vem do BD
                     trade__seq: _temp__table_stats['i_seq']++,
@@ -977,6 +984,8 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
                     trade__cenario: _ops[o].cenario,
                     // Contratos usados
                     trade__cts: _ops[o].cts_usado,
+                    // Retorno sobre o risco
+                    trade__retornoRisco: _ops[o].retornoRisco,
                     // Tipo da operação
                     trade__op: _ops[o].op,
                     // Se teve erro na operação
@@ -995,8 +1004,10 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             // Estatisticas Gerais
             //////////////////////////////////
             _temp__table_stats['dias__unicos'][_ops[o].data] = null;
+            // Para a média de Retorno sobre risco
+            _table_stats['stats__retornoRiscoMedio'] += _ops[o].retornoRisco;
             // Para o lucro em S
-            _dashboard_ops__table_stats['result__lucro_S'] += _ops[o].result_bruto['S'];
+            _table_stats['result__lucro_S'] += _ops[o].result_bruto['S'];
             if (_ops[o].hora !== '00:00:00') {
                 let round_time = format(startOfHour(parseISO(`2000-01-01T${_ops[o].hora}`)), 'HH:mm');
                 if (!(round_time in _temp__table_stats['horas__unicas'])) _temp__table_stats['horas__unicas'][round_time] = { result: 0.0, qtd: 0 };
@@ -1005,7 +1016,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             }
             // Se for uma operação 'Positiva'
             if (_ops[o].resultado_op === 1) {
-                _dashboard_ops__table_stats['trades__positivo']++;
+                _table_stats['trades__positivo']++;
                 _temp__table_stats['mediaGain'] += _ops[o].result_liquido['brl'];
                 if (_temp__table_stats['sequencias_positivo'][_temp__table_stats['sequencias_positivo__index']] === undefined)
                     _temp__table_stats['sequencias_positivo'][_temp__table_stats['sequencias_positivo__index']] = 0;
@@ -1015,7 +1026,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             }
             // Se for uma operação 'Negativa'
             else if (_ops[o].resultado_op === -1) {
-                _dashboard_ops__table_stats['trades__negativo']++;
+                _table_stats['trades__negativo']++;
                 _temp__table_stats['mediaLoss'] += _ops[o].result_liquido['brl'];
                 if (_temp__table_stats['sequencias_negativo'][_temp__table_stats['sequencias_negativo__index']] === undefined)
                     _temp__table_stats['sequencias_negativo'][_temp__table_stats['sequencias_negativo__index']] = 0;
@@ -1025,11 +1036,11 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             }
             // Se for uma operação 'Empate (0x0)'
             else if (_ops[o].resultado_op === 0) {
-                _dashboard_ops__table_stats['trades__empate']++;
+                _table_stats['trades__empate']++;
                 _temp__table_stats['mediaGain'] += _ops[o].result_liquido['brl'];
             }
             // Se for uma operação com Erro
-            if (_ops[o].erro === 1) _dashboard_ops__table_stats['trades__erro']++;
+            if (_ops[o].erro === 1) _table_stats['trades__erro']++;
             // Calcula o lucro corrente após cada operação
             _temp__table_stats['lucro_corrente']['brl'] += _ops[o].result_liquido['brl'];
             // Calcula o Lucro por Mes
@@ -1039,14 +1050,14 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             _temp__table_stats['lucro_por_periodo'][current_month_year] += _ops[o].result_liquido['brl'];
             // Para o Drawdown
             // Atualiza o topo historico
-            if (_temp__table_stats['lucro_corrente']['brl'] > _dashboard_ops__table_stats['stats__drawdown_topoHistorico']) {
-                _dashboard_ops__table_stats['stats__drawdown_topoHistorico'] = _temp__table_stats['lucro_corrente']['brl'];
-                _dashboard_ops__table_stats['stats__drawdown'] = 0;
-                _dashboard_ops__table_stats['stats__drawdown_periodo'] = 0;
+            if (_temp__table_stats['lucro_corrente']['brl'] > _table_stats['stats__drawdown_topoHistorico']) {
+                _table_stats['stats__drawdown_topoHistorico'] = _temp__table_stats['lucro_corrente']['brl'];
+                _table_stats['stats__drawdown'] = 0;
+                _table_stats['stats__drawdown_periodo'] = 0;
                 if (_temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']] !== undefined) _temp__table_stats['drawdowns_index']++;
             }
             // Se estiver abaixo do topo, está em drawdown
-            else if (_temp__table_stats['lucro_corrente']['brl'] < _dashboard_ops__table_stats['stats__drawdown_topoHistorico']) {
+            else if (_temp__table_stats['lucro_corrente']['brl'] < _table_stats['stats__drawdown_topoHistorico']) {
                 if (_temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']] === undefined) {
                     _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']] = {
                         brl: 0,
@@ -1057,15 +1068,15 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
                         periodo: 0,
                     };
                 }
-                let lucro__topo_diff = Math.abs(_dashboard_ops__table_stats['stats__drawdown_topoHistorico'] - Math.abs(_temp__table_stats['lucro_corrente']['brl']));
+                let lucro__topo_diff = Math.abs(_table_stats['stats__drawdown_topoHistorico'] - _temp__table_stats['lucro_corrente']['brl']);
                 if (lucro__topo_diff > _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']]['brl']) {
                     _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']]['brl'] = lucro__topo_diff;
                     _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns_index']]['brl'] = lucro__topo_diff;
                 }
                 _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']]['periodo']++;
                 _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns_index']]['periodo']++;
-                _dashboard_ops__table_stats['stats__drawdown'] = lucro__topo_diff;
-                _dashboard_ops__table_stats['stats__drawdown_periodo']++;
+                _table_stats['stats__drawdown'] = lucro__topo_diff;
+                _table_stats['stats__drawdown_periodo']++;
             }
             // Para o DP
             _temp__table_stats['lista_resultados'].push(_ops[o].result_liquido['brl']);
@@ -1075,20 +1086,20 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             //////////////////////////////////
             if (_options.get_graficoData) {
                 // Para o gráfico de Resultados por Trade
-                _dashboard_ops__chart_data['resultados_normalizado']['labels'].push(parseInt(o) + 1);
-                _dashboard_ops__chart_data['resultados_normalizado']['data'].push(_ops[o].result_liquido['brl']);
-                _dashboard_ops__chart_data['resultados_normalizado']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} ${_ops[o].hora}`);
+                _chart_data['resultados_normalizado']['labels'].push(parseInt(o) + 1);
+                _chart_data['resultados_normalizado']['data'].push(_ops[o].result_liquido['brl']);
+                _chart_data['resultados_normalizado']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} ${_ops[o].hora}`);
                 // Para o gráfico de Evolução Patrimonial
-                _dashboard_ops__chart_data['evolucao_patrimonial']['labels'].push(parseInt(o) + 1);
-                _dashboard_ops__chart_data['evolucao_patrimonial']['data'].push(_temp__table_stats['lucro_corrente']['brl']);
-                _dashboard_ops__chart_data['evolucao_patrimonial']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} ${_ops[o].hora}`);
+                _chart_data['evolucao_patrimonial']['labels'].push(parseInt(o) + 1);
+                _chart_data['evolucao_patrimonial']['data'].push(_temp__table_stats['lucro_corrente']['brl']);
+                _chart_data['evolucao_patrimonial']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} ${_ops[o].hora}`);
             }
             //////////////////////////////////
             // Estatisticas por Cenario
             //////////////////////////////////
             if (_options.get_byCenario) {
-                if (!(_ops[o].cenario in _dashboard_ops__table_stats__byCenario)) {
-                    _dashboard_ops__table_stats__byCenario[_ops[o].cenario] = {
+                if (!(_ops[o].cenario in _table_stats__byCenario)) {
+                    _table_stats__byCenario[_ops[o].cenario] = {
                         // Total de dias operados
                         dias__total: 0,
                         dias__trades_por_dia: 0,
@@ -1118,6 +1129,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
                         stats__dp_brl: 0.0,
                         stats__dp_R: 0.0,
                         stats__dp_perc: 0.0,
+                        stats__retornoRiscoMedio: 0.0,
                         stats__rrMedio: 0.0,
                         stats__expect_brl: 0.0,
                         stats__expect_R: 0.0,
@@ -1133,24 +1145,25 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
                     };
                 }
                 _temp__table_stats__byCenario[_ops[o].cenario]['dias__unicos'][_ops[o].data] = null;
-                _dashboard_ops__table_stats__byCenario[_ops[o].cenario]['trades__total']++;
+                _table_stats__byCenario[_ops[o].cenario]['trades__total']++;
+                _table_stats__byCenario[_ops[o].cenario]['stats__retornoRiscoMedio'] += _ops[o].retornoRisco;
                 // Se for uma operação 'Positiva'
                 if (_ops[o].resultado_op === 1) {
-                    _dashboard_ops__table_stats__byCenario[_ops[o].cenario]['trades__positivo']++;
+                    _table_stats__byCenario[_ops[o].cenario]['trades__positivo']++;
                     _temp__table_stats__byCenario[_ops[o].cenario]['mediaGain'] += _ops[o].result_liquido['brl'];
                 }
                 // Se for uma operação 'Negativa'
                 else if (_ops[o].resultado_op === -1) {
-                    _dashboard_ops__table_stats__byCenario[_ops[o].cenario]['trades__negativo']++;
+                    _table_stats__byCenario[_ops[o].cenario]['trades__negativo']++;
                     _temp__table_stats__byCenario[_ops[o].cenario]['mediaLoss'] += _ops[o].result_liquido['brl'];
                 }
                 // Se for uma operação 'Empate (0x0)'
                 else if (_ops[o].resultado_op === 0) {
-                    _dashboard_ops__table_stats__byCenario[_ops[o].cenario]['trades__empate']++;
+                    _table_stats__byCenario[_ops[o].cenario]['trades__empate']++;
                     _temp__table_stats__byCenario[_ops[o].cenario]['mediaGain'] += _ops[o].result_liquido['brl'];
                 }
                 // Se for uma operação com Erro
-                if (_ops[o].erro === 1) _dashboard_ops__table_stats__byCenario[_ops[o].cenario]['trades__erro']++;
+                if (_ops[o].erro === 1) _table_stats__byCenario[_ops[o].cenario]['trades__erro']++;
                 // Calcula o lucro corrente após cada operação
                 _temp__table_stats__byCenario[_ops[o].cenario]['lucro_corrente']['brl'] += _ops[o].result_liquido['brl'];
                 // Para o DP
@@ -1163,103 +1176,103 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
         // Estatisticas Gerais
         //////////////////////////////////
         // Termina de processar estatisticas de '_temp__table_stats'
-        /* prettier-ignore */ _temp__table_stats['mediaGain'] = divide(_temp__table_stats['mediaGain'], (_dashboard_ops__table_stats['trades__positivo'] + _dashboard_ops__table_stats['trades__empate']));
-        /* prettier-ignore */ _temp__table_stats['mediaLoss'] = divide(_temp__table_stats['mediaLoss'], _dashboard_ops__table_stats['trades__negativo']);
+        /* prettier-ignore */ _temp__table_stats['mediaGain']                = divide(_temp__table_stats['mediaGain'], (_table_stats['trades__positivo'] + _table_stats['trades__empate']));
+        /* prettier-ignore */ _temp__table_stats['mediaLoss']                = divide(_temp__table_stats['mediaLoss'], _table_stats['trades__negativo']);
 
-        // Termina de processar estatisticas do '_dashboard_ops__table_stats'
-        /* prettier-ignore */ _dashboard_ops__table_stats['dias__total']                    = Object.keys(_temp__table_stats['dias__unicos']).length;
+        // Termina de processar estatisticas do '_table_stats'
+        /* prettier-ignore */ _table_stats['dias__total']                    = Object.keys(_temp__table_stats['dias__unicos']).length;
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['dias__trades_por_dia']           = divide(_ops.length, _dashboard_ops__table_stats['dias__total']);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__total']                  = _ops.length;
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__positivo_perc']          = (divide(_dashboard_ops__table_stats['trades__positivo'], _dashboard_ops__table_stats['trades__total']) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__negativo_perc']          = (divide(_dashboard_ops__table_stats['trades__negativo'], _dashboard_ops__table_stats['trades__total']) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__empate_perc']            = (divide(_dashboard_ops__table_stats['trades__empate'], _dashboard_ops__table_stats['trades__total']) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_negativo']       = (_temp__table_stats['sequencias_negativo'].length) ? Math.max(..._temp__table_stats['sequencias_negativo']) : 0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_positivo']       = (_temp__table_stats['sequencias_positivo'].length) ? Math.max(..._temp__table_stats['sequencias_positivo']) : 0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_negativo_medio'] = (_temp__table_stats['sequencias_negativo'].length) ? divide(_temp__table_stats['sequencias_negativo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_negativo'].length) : 0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_positivo_medio'] = (_temp__table_stats['sequencias_positivo'].length) ? divide(_temp__table_stats['sequencias_positivo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_positivo'].length) : 0;
+        /* prettier-ignore */ _table_stats['dias__trades_por_dia']           = divide(_ops.length, _table_stats['dias__total']);
+        /* prettier-ignore */ _table_stats['trades__total']                  = _ops.length;
+        /* prettier-ignore */ _table_stats['trades__positivo_perc']          = (divide(_table_stats['trades__positivo'], _table_stats['trades__total']) * 100);
+        /* prettier-ignore */ _table_stats['trades__negativo_perc']          = (divide(_table_stats['trades__negativo'], _table_stats['trades__total']) * 100);
+        /* prettier-ignore */ _table_stats['trades__empate_perc']            = (divide(_table_stats['trades__empate'], _table_stats['trades__total']) * 100);
+        /* prettier-ignore */ _table_stats['trades__max_seq_negativo']       = (_temp__table_stats['sequencias_negativo'].length) ? Math.max(..._temp__table_stats['sequencias_negativo']) : 0;
+        /* prettier-ignore */ _table_stats['trades__max_seq_positivo']       = (_temp__table_stats['sequencias_positivo'].length) ? Math.max(..._temp__table_stats['sequencias_positivo']) : 0;
+        /* prettier-ignore */ _table_stats['trades__max_seq_negativo_medio'] = (_temp__table_stats['sequencias_negativo'].length) ? divide(_temp__table_stats['sequencias_negativo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_negativo'].length) : 0;
+        /* prettier-ignore */ _table_stats['trades__max_seq_positivo_medio'] = (_temp__table_stats['sequencias_positivo'].length) ? divide(_temp__table_stats['sequencias_positivo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_positivo'].length) : 0;
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_brl']              = _temp__table_stats['lucro_corrente']['brl'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_R']                = (_simulation['R'] !== null) ? divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_medio_brl']        = divide(Object.values(_temp__table_stats['lucro_por_periodo']).reduce((a, b) => a + b, 0), Object.keys(_temp__table_stats['lucro_por_periodo']).length);
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_medio_R']          = (_simulation['R'] !== null) ? divide(_dashboard_ops__table_stats['result__lucro_medio_brl'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_medio_perc']       = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats['result__lucro_medio_brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaGain_brl']          = _temp__table_stats['mediaGain'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaLoss_brl']          = _temp__table_stats['mediaLoss'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaGain_R'] 	        = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaGain'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaLoss_R']            = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaLoss'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaGain_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaGain'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaLoss_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaLoss'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_brl']              = _temp__table_stats['lucro_corrente']['brl'];
+        /* prettier-ignore */ _table_stats['result__lucro_R']                = (_simulation['R'] !== null) ? divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_medio_brl']        = divide(Object.values(_temp__table_stats['lucro_por_periodo']).reduce((a, b) => a + b, 0), Object.keys(_temp__table_stats['lucro_por_periodo']).length);
+        /* prettier-ignore */ _table_stats['result__lucro_medio_R']          = (_simulation['R'] !== null) ? divide(_table_stats['result__lucro_medio_brl'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_medio_perc']       = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats['result__lucro_medio_brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaGain_brl']          = _temp__table_stats['mediaGain'];
+        /* prettier-ignore */ _table_stats['result__mediaLoss_brl']          = _temp__table_stats['mediaLoss'];
+        /* prettier-ignore */ _table_stats['result__mediaGain_R'] 	         = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaGain'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaLoss_R']            = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaLoss'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaGain_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaGain'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaLoss_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaLoss'], _simulation['valor_inicial']) * 100) : '--';
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__rrMedio']                 = divide(_temp__table_stats['mediaGain'], Math.abs(_temp__table_stats['mediaLoss']));
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__breakeven']               = (divide(Math.abs(_temp__table_stats['mediaLoss']), (_temp__table_stats['mediaGain'] + Math.abs(_temp__table_stats['mediaLoss']))) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__edge']                    = _dashboard_ops__table_stats['trades__positivo_perc'] - _dashboard_ops__table_stats['stats__breakeven'];
+        /* prettier-ignore */ _table_stats['stats__retornoRiscoMedio']       = divide(_table_stats['stats__retornoRiscoMedio'], _table_stats['trades__total']);
+        /* prettier-ignore */ _table_stats['stats__rrMedio']                 = divide(_temp__table_stats['mediaGain'], Math.abs(_temp__table_stats['mediaLoss']));
+        /* prettier-ignore */ _table_stats['stats__breakeven']               = (divide(Math.abs(_temp__table_stats['mediaLoss']), (_temp__table_stats['mediaGain'] + Math.abs(_temp__table_stats['mediaLoss']))) * 100);
+        /* prettier-ignore */ _table_stats['stats__edge']                    = _table_stats['trades__positivo_perc'] - _table_stats['stats__breakeven'];
         /* prettier-ignore */ // Calculado da forma do Tainan
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__fatorLucro']              = divide((_dashboard_ops__table_stats['trades__positivo_perc'] * _dashboard_ops__table_stats['stats__rrMedio']), (100 - _dashboard_ops__table_stats['trades__positivo_perc']));
-        /* prettier-ignore */ // _dashboard_ops__table_stats['stats__fatorLucro']              = divide((_dashboard_ops__table_stats['trades__positivo_perc'] * _temp__table_stats['mediaGain']), Math.abs(_dashboard_ops__table_stats['trades__negativo_perc'] * _temp__table_stats['mediaLoss']));
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__expect_brl']              = divide(_temp__table_stats['lucro_corrente']['brl'], _dashboard_ops__table_stats['trades__total']);
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__expect_R']                = (_simulation['R'] !== null) ? divide(_dashboard_ops__table_stats['stats__expect_brl'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__expect_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats['stats__expect_brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__dp_brl']                  = desvpad(_temp__table_stats['lista_resultados'])['desvpad'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__dp_R']                    = (_simulation['R'] !== null) ? desvpad(_temp__table_stats['lista_resultados_R'])['desvpad'] : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__dp_perc']                 = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats['stats__dp_brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__sqn']                     = (_simulation['R'] !== null) ? (divide(_dashboard_ops__table_stats['stats__expect_R'], _dashboard_ops__table_stats['stats__dp_R']) * Math.sqrt(_dashboard_ops__table_stats['trades__total'])) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__valorInicial_com_lucro']  = (_simulation['valor_inicial'] !== null) ? (_simulation['valor_inicial'] + _temp__table_stats['lucro_corrente']['brl']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__stops_ruina']             = (_simulation['valor_inicial'] !== null && _simulation['R'] !== null) ? Math.floor(divide(_dashboard_ops__table_stats['stats__valorInicial_com_lucro'], _simulation['R'])) : '--';
+        /* prettier-ignore */ _table_stats['stats__fatorLucro']              = divide((_table_stats['trades__positivo_perc'] * _table_stats['stats__rrMedio']), (100 - _table_stats['trades__positivo_perc']));
+        /* prettier-ignore */ _table_stats['stats__expect_brl']              = divide(_temp__table_stats['lucro_corrente']['brl'], _table_stats['trades__total']);
+        /* prettier-ignore */ _table_stats['stats__expect_R']                = (_simulation['R'] !== null) ? divide(_table_stats['stats__expect_brl'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['stats__expect_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats['stats__expect_brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['stats__dp_brl']                  = desvpad(_temp__table_stats['lista_resultados'])['desvpad'];
+        /* prettier-ignore */ _table_stats['stats__dp_R']                    = (_simulation['R'] !== null) ? desvpad(_temp__table_stats['lista_resultados_R'])['desvpad'] : '--';
+        /* prettier-ignore */ _table_stats['stats__dp_perc']                 = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats['stats__dp_brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['stats__sqn']                     = (_simulation['R'] !== null) ? (divide(_table_stats['stats__expect_R'], _table_stats['stats__dp_R']) * Math.sqrt(_table_stats['trades__total'])) : '--';
+        /* prettier-ignore */ _table_stats['stats__valorInicial_com_lucro']  = (_simulation['valor_inicial'] !== null) ? (_simulation['valor_inicial'] + _temp__table_stats['lucro_corrente']['brl']) : '--';
+        /* prettier-ignore */ _table_stats['stats__stops_ruina']             = (_simulation['valor_inicial'] !== null && _simulation['R'] !== null) ? Math.floor(divide(_table_stats['stats__valorInicial_com_lucro'], _simulation['R'])) : '--';
 
         _temp__table_stats['sorted_drawdowns'].sort((a, b) => a.brl - b.brl);
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__drawdown_qtd']            = _temp__table_stats['drawdowns'].length;
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__drawdown_max']            = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['brl'] : 0.0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__drawdown_max_periodo']    = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['periodo'] : 0.0;
+        /* prettier-ignore */ _table_stats['stats__drawdown_qtd']            = _temp__table_stats['drawdowns'].length;
+        /* prettier-ignore */ _table_stats['stats__drawdown_max']            = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['brl'] : 0.0;
+        /* prettier-ignore */ _table_stats['stats__drawdown_max_periodo']    = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['periodo'] : 0.0;
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__erro']                   = ((!_simulation.ignora_erro) ? _dashboard_ops__table_stats['trades__erro'] : '--');
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__erro_perc']              = ((!_simulation.ignora_erro) ? (divide(_dashboard_ops__table_stats['trades__erro'], _dashboard_ops__table_stats['trades__total']) * 100) : '--');
+        /* prettier-ignore */ _table_stats['trades__erro']                   = ((!_simulation.ignora_erro) ? _table_stats['trades__erro'] : '--');
+        /* prettier-ignore */ _table_stats['trades__erro_perc']              = ((!_simulation.ignora_erro) ? (divide(_table_stats['trades__erro'], _table_stats['trades__total']) * 100) : '--');
 
         //////////////////////////////////
         // Estatisticas por Cenario
         //////////////////////////////////
         if (_options.get_byCenario) {
-            for (let cenario in _dashboard_ops__table_stats__byCenario) {
+            for (let cenario in _table_stats__byCenario) {
                 // Termina de processar estatisticas de '_temp__table_stats__byCenario'
-                /* prettier-ignore */ _temp__table_stats__byCenario[cenario]['mediaGain'] = divide(_temp__table_stats__byCenario[cenario]['mediaGain'], (_dashboard_ops__table_stats__byCenario[cenario]['trades__positivo'] + _dashboard_ops__table_stats__byCenario[cenario]['trades__empate']));
-                /* prettier-ignore */ _temp__table_stats__byCenario[cenario]['mediaLoss'] = divide(_temp__table_stats__byCenario[cenario]['mediaLoss'], _dashboard_ops__table_stats__byCenario[cenario]['trades__negativo']);
+                /* prettier-ignore */ _temp__table_stats__byCenario[cenario]['mediaGain']          = divide(_temp__table_stats__byCenario[cenario]['mediaGain'], (_table_stats__byCenario[cenario]['trades__positivo'] + _table_stats__byCenario[cenario]['trades__empate']));
+                /* prettier-ignore */ _temp__table_stats__byCenario[cenario]['mediaLoss']          = divide(_temp__table_stats__byCenario[cenario]['mediaLoss'], _table_stats__byCenario[cenario]['trades__negativo']);
 
-                // Termina de processar estatisticas do '_dashboard_ops__table_stats__byCenario'
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['dias__total']            = Object.keys(_temp__table_stats__byCenario[cenario]['dias__unicos']).length;
+                // Termina de processar estatisticas do '_table_stats__byCenario'
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['dias__total']              = Object.keys(_temp__table_stats__byCenario[cenario]['dias__unicos']).length;
 
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['trades__total_perc']     = (divide(_dashboard_ops__table_stats__byCenario[cenario]['trades__total'], _dashboard_ops__table_stats['trades__total']) * 100);
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['trades__positivo_perc']  = (divide(_dashboard_ops__table_stats__byCenario[cenario]['trades__positivo'], _dashboard_ops__table_stats__byCenario[cenario]['trades__total']) * 100);
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['trades__negativo_perc']  = (divide(_dashboard_ops__table_stats__byCenario[cenario]['trades__negativo'], _dashboard_ops__table_stats__byCenario[cenario]['trades__total']) * 100);
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['trades__empate_perc']    = (divide(_dashboard_ops__table_stats__byCenario[cenario]['trades__empate'], _dashboard_ops__table_stats__byCenario[cenario]['trades__total']) * 100);
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['trades__total_perc']       = (divide(_table_stats__byCenario[cenario]['trades__total'], _table_stats['trades__total']) * 100);
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['trades__positivo_perc']    = (divide(_table_stats__byCenario[cenario]['trades__positivo'], _table_stats__byCenario[cenario]['trades__total']) * 100);
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['trades__negativo_perc']    = (divide(_table_stats__byCenario[cenario]['trades__negativo'], _table_stats__byCenario[cenario]['trades__total']) * 100);
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['trades__empate_perc']      = (divide(_table_stats__byCenario[cenario]['trades__empate'], _table_stats__byCenario[cenario]['trades__total']) * 100);
 
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['result__lucro_brl']      = _temp__table_stats__byCenario[cenario]['lucro_corrente']['brl'];
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['result__lucro_R']        = (_simulation['R'] !== null) ? divide(_temp__table_stats__byCenario[cenario]['lucro_corrente']['brl'], _simulation['R']) : '--';
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['result__lucro_perc']     = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats__byCenario[cenario]['lucro_corrente']['brl'], _simulation['valor_inicial']) * 100) : '--';
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['result__mediaGain_brl']  = _temp__table_stats__byCenario[cenario]['mediaGain'];
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['result__mediaLoss_brl']  = _temp__table_stats__byCenario[cenario]['mediaLoss'];
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['result__mediaGain_R'] 	= (_simulation['R'] !== null) ? divide(_temp__table_stats__byCenario[cenario]['mediaGain'], _simulation['R']) : '--';
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['result__mediaLoss_R']    = (_simulation['R'] !== null) ? divide(_temp__table_stats__byCenario[cenario]['mediaLoss'], _simulation['R']) : '--';
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['result__mediaGain_perc'] = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats__byCenario[cenario]['mediaGain'], _simulation['valor_inicial']) * 100) : '--';
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['result__mediaLoss_perc'] = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats__byCenario[cenario]['mediaLoss'], _simulation['valor_inicial']) * 100) : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['result__lucro_brl']        = _temp__table_stats__byCenario[cenario]['lucro_corrente']['brl'];
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['result__lucro_R']          = (_simulation['R'] !== null) ? divide(_temp__table_stats__byCenario[cenario]['lucro_corrente']['brl'], _simulation['R']) : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['result__lucro_perc']       = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats__byCenario[cenario]['lucro_corrente']['brl'], _simulation['valor_inicial']) * 100) : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['result__mediaGain_brl']    = _temp__table_stats__byCenario[cenario]['mediaGain'];
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['result__mediaLoss_brl']    = _temp__table_stats__byCenario[cenario]['mediaLoss'];
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['result__mediaGain_R'] 	   = (_simulation['R'] !== null) ? divide(_temp__table_stats__byCenario[cenario]['mediaGain'], _simulation['R']) : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['result__mediaLoss_R']      = (_simulation['R'] !== null) ? divide(_temp__table_stats__byCenario[cenario]['mediaLoss'], _simulation['R']) : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['result__mediaGain_perc']   = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats__byCenario[cenario]['mediaGain'], _simulation['valor_inicial']) * 100) : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['result__mediaLoss_perc']   = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats__byCenario[cenario]['mediaLoss'], _simulation['valor_inicial']) * 100) : '--';
 
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__rrMedio']         = divide(_temp__table_stats__byCenario[cenario]['mediaGain'], Math.abs(_temp__table_stats__byCenario[cenario]['mediaLoss']));
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__breakeven']       = (divide(Math.abs(_temp__table_stats__byCenario[cenario]['mediaLoss']), (_temp__table_stats__byCenario[cenario]['mediaGain'] + Math.abs(_temp__table_stats__byCenario[cenario]['mediaLoss']))) * 100);
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__edge']            = _dashboard_ops__table_stats__byCenario[cenario]['trades__positivo_perc'] - _dashboard_ops__table_stats__byCenario[cenario]['stats__breakeven'];
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__retornoRiscoMedio'] = divide(_table_stats__byCenario[cenario]['stats__retornoRiscoMedio'], _table_stats__byCenario[cenario]['trades__total']);
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__rrMedio']           = divide(_temp__table_stats__byCenario[cenario]['mediaGain'], Math.abs(_temp__table_stats__byCenario[cenario]['mediaLoss']));
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__breakeven']         = (divide(Math.abs(_temp__table_stats__byCenario[cenario]['mediaLoss']), (_temp__table_stats__byCenario[cenario]['mediaGain'] + Math.abs(_temp__table_stats__byCenario[cenario]['mediaLoss']))) * 100);
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__edge']              = _table_stats__byCenario[cenario]['trades__positivo_perc'] - _table_stats__byCenario[cenario]['stats__breakeven'];
                 /* prettier-ignore */ // Calculado da forma do Tainan
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__fatorLucro']      = divide((_dashboard_ops__table_stats__byCenario[cenario]['trades__positivo_perc'] * _dashboard_ops__table_stats__byCenario[cenario]['stats__rrMedio']), (100 - _dashboard_ops__table_stats__byCenario[cenario]['trades__positivo_perc']));
-                /* prettier-ignore */ // _dashboard_ops__table_stats__byCenario[cenario]['stats__fatorLucro']      = divide((_dashboard_ops__table_stats__byCenario[cenario]['trades__positivo_perc'] * _temp__table_stats__byCenario[cenario]['mediaGain']), Math.abs(_dashboard_ops__table_stats__byCenario[cenario]['trades__negativo_perc'] * _temp__table_stats__byCenario[cenario]['mediaLoss']));
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__expect_brl']      = divide(_temp__table_stats__byCenario[cenario]['lucro_corrente']['brl'], _dashboard_ops__table_stats__byCenario[cenario]['trades__total']);
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__expect_R']        = (_simulation['R'] !== null) ? divide(_dashboard_ops__table_stats__byCenario[cenario]['stats__expect_brl'], _simulation['R']) : '--';
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__expect_perc']     = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats__byCenario[cenario]['stats__expect_brl'], _simulation['valor_inicial']) * 100) : '--';
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__dp_brl']          = desvpad(_temp__table_stats__byCenario[cenario]['lista_resultados'])['desvpad'];
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__dp_R']            = (_simulation['R'] !== null) ? desvpad(_temp__table_stats__byCenario[cenario]['lista_resultados_R'])['desvpad'] : '--';
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__dp_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats__byCenario[cenario]['stats__dp_brl'], _simulation['valor_inicial']) * 100) : '--';
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['stats__sqn']             = (_simulation['R'] !== null) ? (divide(_dashboard_ops__table_stats__byCenario[cenario]['stats__expect_R'], _dashboard_ops__table_stats__byCenario[cenario]['stats__dp_R']) * Math.sqrt(_dashboard_ops__table_stats__byCenario[cenario]['trades__total'])) : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__fatorLucro']        = divide((_table_stats__byCenario[cenario]['trades__positivo_perc'] * _table_stats__byCenario[cenario]['stats__rrMedio']), (100 - _table_stats__byCenario[cenario]['trades__positivo_perc']));
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__expect_brl']        = divide(_temp__table_stats__byCenario[cenario]['lucro_corrente']['brl'], _table_stats__byCenario[cenario]['trades__total']);
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__expect_R']          = (_simulation['R'] !== null) ? divide(_table_stats__byCenario[cenario]['stats__expect_brl'], _simulation['R']) : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__expect_perc']       = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats__byCenario[cenario]['stats__expect_brl'], _simulation['valor_inicial']) * 100) : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__dp_brl']            = desvpad(_temp__table_stats__byCenario[cenario]['lista_resultados'])['desvpad'];
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__dp_R']              = (_simulation['R'] !== null) ? desvpad(_temp__table_stats__byCenario[cenario]['lista_resultados_R'])['desvpad'] : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__dp_perc']           = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats__byCenario[cenario]['stats__dp_brl'], _simulation['valor_inicial']) * 100) : '--';
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['stats__sqn']               = (_simulation['R'] !== null) ? (divide(_table_stats__byCenario[cenario]['stats__expect_R'], _table_stats__byCenario[cenario]['stats__dp_R']) * Math.sqrt(_table_stats__byCenario[cenario]['trades__total'])) : '--';
 
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['trades__erro']           = ((!_simulation.ignora_erro) ? _dashboard_ops__table_stats__byCenario[cenario]['trades__erro'] : '--');
-                /* prettier-ignore */ _dashboard_ops__table_stats__byCenario[cenario]['trades__erro_perc']      = ((!_simulation.ignora_erro) ? (divide(_dashboard_ops__table_stats__byCenario[cenario]['trades__erro'], _dashboard_ops__table_stats__byCenario[cenario]['trades__total']) * 100) : '--');
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['trades__erro']             = ((!_simulation.ignora_erro) ? _table_stats__byCenario[cenario]['trades__erro'] : '--');
+                /* prettier-ignore */ _table_stats__byCenario[cenario]['trades__erro_perc']        = ((!_simulation.ignora_erro) ? (divide(_table_stats__byCenario[cenario]['trades__erro'], _table_stats__byCenario[cenario]['trades__total']) * 100) : '--');
             }
         }
 
@@ -1271,88 +1284,38 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             // Gráfico de Evolução Patrimonial
             //////////////////////////////////
             // Média móvel simples da evolução patrimonial
-            SMA(_dashboard_ops__chart_data['evolucao_patrimonial']['data'], _dashboard_ops__chart_data['evolucao_patrimonial']['sma20'], 20);
+            SMA(_chart_data['evolucao_patrimonial']['data'], _chart_data['evolucao_patrimonial']['sma20'], 20);
             // 2 Bandas de Desvio Padrão
-            BBollinger(_dashboard_ops__chart_data['evolucao_patrimonial'], 1, NaN, 2);
+            BBollinger(_chart_data['evolucao_patrimonial'], 1, null, 2);
             //////////////////////////////////
             // Gráfico de Resultados Normalizados
             //////////////////////////////////
             // Gráfico de barras dos resultados + bandas superior e inferior do desvio padrao + linha de risco
-            BBollinger(_dashboard_ops__chart_data['resultados_normalizado'], 1, NaN, 1);
+            BBollinger(_chart_data['resultados_normalizado'], 1, null, 1);
             //////////////////////////////////
             // Gráfico de Resultados por Hora
             //////////////////////////////////
             let sorted_horas__unicas = Object.keys(_temp__table_stats['horas__unicas']).sort();
             for (let h = 0; h < sorted_horas__unicas.length; h++) {
-                _dashboard_ops__chart_data['resultado_por_hora']['labels'].push(sorted_horas__unicas[h]);
-                _dashboard_ops__chart_data['resultado_por_hora']['data_result'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[h]]['result']);
-                _dashboard_ops__chart_data['resultado_por_hora']['data_qtd'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[h]]['qtd']);
+                _chart_data['resultado_por_hora']['labels'].push(sorted_horas__unicas[h]);
+                _chart_data['resultado_por_hora']['data_result'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[h]]['result']);
+                _chart_data['resultado_por_hora']['data_qtd'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[h]]['qtd']);
             }
-            //////////////////////////////////
-            // Gráfico Sequencia de Result.
-            //////////////////////////////////
-            let sequencia_sep_counter = {},
-                sequencia_sep_counter__max_key = 0;
-            for (let s = 0; s < _temp__table_stats['sequencias_positivo'].length; s++) {
-                if (!(_temp__table_stats['sequencias_positivo'][s] in sequencia_sep_counter)) sequencia_sep_counter[_temp__table_stats['sequencias_positivo'][s]] = 0;
-                sequencia_sep_counter[_temp__table_stats['sequencias_positivo'][s]]++;
-            }
-            sequencia_sep_counter__max_key = Math.max(...Object.keys(sequencia_sep_counter));
-            for (let s = 1; s <= sequencia_sep_counter__max_key; s++) {
-                if (s in sequencia_sep_counter) _dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos'].push(sequencia_sep_counter[s]);
-                else _dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos'].push(0);
-            }
-            sequencia_sep_counter = {};
-            sequencia_sep_counter__max_key = 0;
-            for (let s = 0; s < _temp__table_stats['sequencias_negativo'].length; s++) {
-                if (!(_temp__table_stats['sequencias_negativo'][s] in sequencia_sep_counter)) sequencia_sep_counter[_temp__table_stats['sequencias_negativo'][s]] = 0;
-                sequencia_sep_counter[_temp__table_stats['sequencias_negativo'][s]]++;
-            }
-            sequencia_sep_counter__max_key = Math.max(...Object.keys(sequencia_sep_counter));
-            for (let s = 1; s <= sequencia_sep_counter__max_key; s++) {
-                if (s in sequencia_sep_counter) _dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos'].push(sequencia_sep_counter[s] * -1);
-                else _dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos'].push(0);
-            }
-            _dashboard_ops__chart_data['sequencia_de_resultados']['labels'] =
-                _dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos'].length > _dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos'].length
-                    ? Object.keys(_dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos']).map((o) => parseInt(o) + 1)
-                    : Object.keys(_dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos']).map((o) => parseInt(o) + 1);
             //////////////////////////////////
             // Gráfico Historico de Drawdowns
             //////////////////////////////////
-            _dashboard_ops__chart_data['drawdowns']['data'] = _temp__table_stats['drawdowns'].map((o) => o.brl);
-            _dashboard_ops__chart_data['drawdowns']['labels'] = Object.keys(_dashboard_ops__chart_data['drawdowns']['data']).map((o) => parseInt(o) + 1);
-            BBollinger(_dashboard_ops__chart_data['drawdowns'], 1, NaN, 2, true, 'sup');
-            //////////////////////////////////
-            // Enche o dataset base com vazio para regular o zoom dos graficos com poucos elementos
-            //////////////////////////////////
-            if (_dashboard_ops__chart_data['evolucao_patrimonial']['labels'].length < 150) {
-                let diff_to_fill = 150 - _dashboard_ops__chart_data['evolucao_patrimonial']['labels'].length;
-                for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['evolucao_patrimonial']['labels'].push('');
-            }
-            if (_dashboard_ops__chart_data['resultados_normalizado']['labels'].length < 50) {
-                let diff_to_fill = 50 - _dashboard_ops__chart_data['resultados_normalizado']['labels'].length;
-                for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['resultados_normalizado']['labels'].push('');
-            }
-            if (_dashboard_ops__chart_data['resultado_por_hora']['labels'].length < 10) {
-                let diff_to_fill = 10 - _dashboard_ops__chart_data['resultado_por_hora']['labels'].length;
-                for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['resultado_por_hora']['labels'].push('');
-            }
-            if (_dashboard_ops__chart_data['sequencia_de_resultados']['labels'].length < 10) {
-                let diff_to_fill = 10 - _dashboard_ops__chart_data['sequencia_de_resultados']['labels'].length;
-                for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['sequencia_de_resultados']['labels'].push('');
-            }
-            if (_dashboard_ops__chart_data['drawdowns']['labels'].length < 10) {
-                let diff_to_fill = 10 - _dashboard_ops__chart_data['drawdowns']['labels'].length;
-                for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['drawdowns']['labels'].push('');
-            }
+            _chart_data['drawdowns']['data'] = _temp__table_stats['drawdowns'].map((o) => o.brl);
+            _chart_data['drawdowns']['labels'] = Object.keys(_chart_data['drawdowns']['data']).map((o) => parseInt(o) + 1);
+            BBollinger(_chart_data['drawdowns'], 1, null, 2, true, 'sup');
         }
         /*------------------------------- Retorno dos Dados ------------------------------*/
         return {
-            dashboard_ops__table_stats: _dashboard_ops__table_stats,
-            dashboard_ops__table_stats__byCenario: _dashboard_ops__table_stats__byCenario,
-            dashboard_ops__table_trades: _dashboard_ops__table_trades,
-            dashboard_ops__chart_data: _dashboard_ops__chart_data,
+            checksum: generateHash(6),
+            table_stats: _table_stats,
+            table_stats__byCenario: _table_stats__byCenario,
+            table_trades: _table_trades,
+            table_trades__periodo_calc: _simulation.periodo_calc,
+            chart_data: _chart_data,
         };
     } else if (_simulation.periodo_calc === 2) {
         /*------------------------------------ Por Dia -----------------------------------*/
@@ -1361,13 +1324,15 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             // Resultados do Trade
             //////////////////////////////////
             if (_options.get_tradeTableData) {
-                _dashboard_ops__table_trades.push({
+                _table_trades.push({
                     // Sequencia do trade, na ordem que vem do BD
                     dia__seq: _temp__table_stats['i_seq']++,
                     // Data do trade
                     dia__data: _ops[o].data,
                     // Contratos usados
                     dia__cts: _ops[o].cts_usado,
+                    // Média de Retorno sobre risco do dia
+                    dia__retornoRisco_medio: _ops[o].retornoRisco,
                     // Trades feitos no dia
                     dia__qtd_trades: _ops[o].qtd_trades,
                     // Se houve erro no dia
@@ -1391,9 +1356,10 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             if (!(day_of_week in _temp__table_stats['horas__unicas'])) _temp__table_stats['horas__unicas'][day_of_week] = { result: 0.0, qtd: 0 };
             _temp__table_stats['horas__unicas'][day_of_week]['result'] += _ops[o].result_liquido['brl'];
             _temp__table_stats['horas__unicas'][day_of_week]['qtd']++;
+            _table_stats['stats__retornoRiscoMedio'] += _ops[o].retornoRisco;
             // Se for uma operação 'Positiva'
             if (_ops[o].resultado_op === 1) {
-                _dashboard_ops__table_stats['trades__positivo']++;
+                _table_stats['trades__positivo']++;
                 _temp__table_stats['mediaGain'] += _ops[o].result_liquido['brl'];
                 if (_temp__table_stats['sequencias_positivo'][_temp__table_stats['sequencias_positivo__index']] === undefined)
                     _temp__table_stats['sequencias_positivo'][_temp__table_stats['sequencias_positivo__index']] = 0;
@@ -1403,7 +1369,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             }
             // Se for uma operação 'Negativa'
             else if (_ops[o].resultado_op === -1) {
-                _dashboard_ops__table_stats['trades__negativo']++;
+                _table_stats['trades__negativo']++;
                 _temp__table_stats['mediaLoss'] += _ops[o].result_liquido['brl'];
                 if (_temp__table_stats['sequencias_negativo'][_temp__table_stats['sequencias_negativo__index']] === undefined)
                     _temp__table_stats['sequencias_negativo'][_temp__table_stats['sequencias_negativo__index']] = 0;
@@ -1413,11 +1379,11 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             }
             // Se for uma operação 'Empate (0x0)'
             else if (_ops[o].resultado_op === 0) {
-                _dashboard_ops__table_stats['trades__empate']++;
+                _table_stats['trades__empate']++;
                 _temp__table_stats['mediaGain'] += _ops[o].result_liquido['brl'];
             }
             // Se for uma operação com Erro
-            if (_ops[o].erro === 1) _dashboard_ops__table_stats['trades__erro']++;
+            if (_ops[o].erro === 1) _table_stats['trades__erro']++;
             // Calcula o lucro corrente após cada operação
             _temp__table_stats['lucro_corrente']['brl'] += _ops[o].result_liquido['brl'];
             // Calcula o Lucro por Mes
@@ -1427,14 +1393,14 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             _temp__table_stats['lucro_por_periodo'][current_month_year] += _ops[o].result_liquido['brl'];
             // Para o Drawdown
             // Atualiza o topo historico
-            if (_temp__table_stats['lucro_corrente']['brl'] > _dashboard_ops__table_stats['stats__drawdown_topoHistorico']) {
-                _dashboard_ops__table_stats['stats__drawdown_topoHistorico'] = _temp__table_stats['lucro_corrente']['brl'];
-                _dashboard_ops__table_stats['stats__drawdown'] = 0;
-                _dashboard_ops__table_stats['stats__drawdown_periodo'] = 0;
+            if (_temp__table_stats['lucro_corrente']['brl'] > _table_stats['stats__drawdown_topoHistorico']) {
+                _table_stats['stats__drawdown_topoHistorico'] = _temp__table_stats['lucro_corrente']['brl'];
+                _table_stats['stats__drawdown'] = 0;
+                _table_stats['stats__drawdown_periodo'] = 0;
                 if (_temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']] !== undefined) _temp__table_stats['drawdowns_index']++;
             }
             // Se estiver abaixo do topo, está em drawdown
-            else if (_temp__table_stats['lucro_corrente']['brl'] < _dashboard_ops__table_stats['stats__drawdown_topoHistorico']) {
+            else if (_temp__table_stats['lucro_corrente']['brl'] < _table_stats['stats__drawdown_topoHistorico']) {
                 if (_temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']] === undefined) {
                     _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']] = {
                         brl: 0,
@@ -1445,15 +1411,15 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
                         periodo: 0,
                     };
                 }
-                let lucro__topo_diff = Math.abs(_dashboard_ops__table_stats['stats__drawdown_topoHistorico'] - Math.abs(_temp__table_stats['lucro_corrente']['brl']));
+                let lucro__topo_diff = Math.abs(_table_stats['stats__drawdown_topoHistorico'] - Math.abs(_temp__table_stats['lucro_corrente']['brl']));
                 if (lucro__topo_diff > _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']]['brl']) {
                     _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']]['brl'] = lucro__topo_diff;
                     _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns_index']]['brl'] = lucro__topo_diff;
                 }
                 _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']]['periodo']++;
                 _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns_index']]['periodo']++;
-                _dashboard_ops__table_stats['stats__drawdown'] = lucro__topo_diff;
-                _dashboard_ops__table_stats['stats__drawdown_periodo']++;
+                _table_stats['stats__drawdown'] = lucro__topo_diff;
+                _table_stats['stats__drawdown_periodo']++;
             }
             // Para o DP
             _temp__table_stats['lista_resultados'].push(_ops[o].result_liquido['brl']);
@@ -1463,13 +1429,13 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             //////////////////////////////////
             if (_options.get_graficoData) {
                 // Para o gráfico de Resultados por Trade
-                _dashboard_ops__chart_data['resultados_normalizado']['labels'].push(parseInt(o) + 1);
-                _dashboard_ops__chart_data['resultados_normalizado']['data'].push(_ops[o].result_liquido['brl']);
-                _dashboard_ops__chart_data['resultados_normalizado']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} Trades: ${_ops[o].qtd_trades}`);
+                _chart_data['resultados_normalizado']['labels'].push(parseInt(o) + 1);
+                _chart_data['resultados_normalizado']['data'].push(_ops[o].result_liquido['brl']);
+                _chart_data['resultados_normalizado']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} Trades: ${_ops[o].qtd_trades}`);
                 // Para o gráfico de Evolução Patrimonial
-                _dashboard_ops__chart_data['evolucao_patrimonial']['labels'].push(parseInt(o) + 1);
-                _dashboard_ops__chart_data['evolucao_patrimonial']['data'].push(_temp__table_stats['lucro_corrente']['brl']);
-                _dashboard_ops__chart_data['evolucao_patrimonial']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} Trades: ${_ops[o].qtd_trades}`);
+                _chart_data['evolucao_patrimonial']['labels'].push(parseInt(o) + 1);
+                _chart_data['evolucao_patrimonial']['data'].push(_temp__table_stats['lucro_corrente']['brl']);
+                _chart_data['evolucao_patrimonial']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} Trades: ${_ops[o].qtd_trades}`);
             }
         }
         /*------------------------ Termina processamento dos Dados -----------------------*/
@@ -1477,59 +1443,58 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
         // Estatisticas Gerais
         //////////////////////////////////
         // Termina de processar estatisticas de '_temp__table_stats'
-        /* prettier-ignore */ _temp__table_stats['mediaGain'] = divide(_temp__table_stats['mediaGain'], (_dashboard_ops__table_stats['trades__positivo'] + _dashboard_ops__table_stats['trades__empate']));
-        /* prettier-ignore */ _temp__table_stats['mediaLoss'] = divide(_temp__table_stats['mediaLoss'], _dashboard_ops__table_stats['trades__negativo']);
+        /* prettier-ignore */ _temp__table_stats['mediaGain']                = divide(_temp__table_stats['mediaGain'], (_table_stats['trades__positivo'] + _table_stats['trades__empate']));
+        /* prettier-ignore */ _temp__table_stats['mediaLoss']                = divide(_temp__table_stats['mediaLoss'], _table_stats['trades__negativo']);
 
-        // Termina de processar estatisticas do '_dashboard_ops__table_stats'
+        // Termina de processar estatisticas do '_table_stats'
 
-        /* prettier-ignore */ // _dashboard_ops__table_stats['dias__trades_por_dia']           = divide(_ops.length, _dashboard_ops__table_stats['dias__total']);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__total']                  = _ops.length;
+        /* prettier-ignore */ _table_stats['trades__total']                  = _ops.length;
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__positivo_perc']          = (divide(_dashboard_ops__table_stats['trades__positivo'], _dashboard_ops__table_stats['trades__total']) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__negativo_perc']          = (divide(_dashboard_ops__table_stats['trades__negativo'], _dashboard_ops__table_stats['trades__total']) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__empate_perc']            = (divide(_dashboard_ops__table_stats['trades__empate'], _dashboard_ops__table_stats['trades__total']) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_negativo']       = (_temp__table_stats['sequencias_negativo'].length) ? Math.max(..._temp__table_stats['sequencias_negativo']) : 0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_positivo']       = (_temp__table_stats['sequencias_positivo'].length) ? Math.max(..._temp__table_stats['sequencias_positivo']) : 0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_negativo_medio'] = (_temp__table_stats['sequencias_negativo'].length) ? divide(_temp__table_stats['sequencias_negativo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_negativo'].length) : 0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_positivo_medio'] = (_temp__table_stats['sequencias_positivo'].length) ? divide(_temp__table_stats['sequencias_positivo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_positivo'].length) : 0;
+        /* prettier-ignore */ _table_stats['trades__positivo_perc']          = (divide(_table_stats['trades__positivo'], _table_stats['trades__total']) * 100);
+        /* prettier-ignore */ _table_stats['trades__negativo_perc']          = (divide(_table_stats['trades__negativo'], _table_stats['trades__total']) * 100);
+        /* prettier-ignore */ _table_stats['trades__empate_perc']            = (divide(_table_stats['trades__empate'], _table_stats['trades__total']) * 100);
+        /* prettier-ignore */ _table_stats['trades__max_seq_negativo']       = (_temp__table_stats['sequencias_negativo'].length) ? Math.max(..._temp__table_stats['sequencias_negativo']) : 0;
+        /* prettier-ignore */ _table_stats['trades__max_seq_positivo']       = (_temp__table_stats['sequencias_positivo'].length) ? Math.max(..._temp__table_stats['sequencias_positivo']) : 0;
+        /* prettier-ignore */ _table_stats['trades__max_seq_negativo_medio'] = (_temp__table_stats['sequencias_negativo'].length) ? divide(_temp__table_stats['sequencias_negativo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_negativo'].length) : 0;
+        /* prettier-ignore */ _table_stats['trades__max_seq_positivo_medio'] = (_temp__table_stats['sequencias_positivo'].length) ? divide(_temp__table_stats['sequencias_positivo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_positivo'].length) : 0;
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_brl']              = _temp__table_stats['lucro_corrente']['brl'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_R']                = (_simulation['R'] !== null) ? divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_medio_brl']        = divide(Object.values(_temp__table_stats['lucro_por_periodo']).reduce((a, b) => a + b, 0), Object.keys(_temp__table_stats['lucro_por_periodo']).length);
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_medio_R']          = (_simulation['R'] !== null) ? divide(_dashboard_ops__table_stats['result__lucro_medio_brl'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_medio_perc']       = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats['result__lucro_medio_brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaGain_brl']          = _temp__table_stats['mediaGain'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaLoss_brl']          = _temp__table_stats['mediaLoss'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaGain_R'] 	        = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaGain'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaLoss_R']            = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaLoss'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaGain_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaGain'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaLoss_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaLoss'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_brl']              = _temp__table_stats['lucro_corrente']['brl'];
+        /* prettier-ignore */ _table_stats['result__lucro_R']                = (_simulation['R'] !== null) ? divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_medio_brl']        = divide(Object.values(_temp__table_stats['lucro_por_periodo']).reduce((a, b) => a + b, 0), Object.keys(_temp__table_stats['lucro_por_periodo']).length);
+        /* prettier-ignore */ _table_stats['result__lucro_medio_R']          = (_simulation['R'] !== null) ? divide(_table_stats['result__lucro_medio_brl'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_medio_perc']       = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats['result__lucro_medio_brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaGain_brl']          = _temp__table_stats['mediaGain'];
+        /* prettier-ignore */ _table_stats['result__mediaLoss_brl']          = _temp__table_stats['mediaLoss'];
+        /* prettier-ignore */ _table_stats['result__mediaGain_R'] 	         = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaGain'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaLoss_R']            = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaLoss'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaGain_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaGain'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaLoss_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaLoss'], _simulation['valor_inicial']) * 100) : '--';
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__rrMedio']                 = divide(_temp__table_stats['mediaGain'], Math.abs(_temp__table_stats['mediaLoss']));
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__breakeven']               = (divide(Math.abs(_temp__table_stats['mediaLoss']), (_temp__table_stats['mediaGain'] + Math.abs(_temp__table_stats['mediaLoss']))) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__edge']                    = _dashboard_ops__table_stats['trades__positivo_perc'] - _dashboard_ops__table_stats['stats__breakeven'];
+        /* prettier-ignore */ _table_stats['stats__retornoRiscoMedio']       = divide(_table_stats['stats__retornoRiscoMedio'], _table_stats['trades__total']);
+        /* prettier-ignore */ _table_stats['stats__rrMedio']                 = divide(_temp__table_stats['mediaGain'], Math.abs(_temp__table_stats['mediaLoss']));
+        /* prettier-ignore */ _table_stats['stats__breakeven']               = (divide(Math.abs(_temp__table_stats['mediaLoss']), (_temp__table_stats['mediaGain'] + Math.abs(_temp__table_stats['mediaLoss']))) * 100);
+        /* prettier-ignore */ _table_stats['stats__edge']                    = _table_stats['trades__positivo_perc'] - _table_stats['stats__breakeven'];
         /* prettier-ignore */ // Calculado da forma do Tainan
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__fatorLucro']              = divide((_dashboard_ops__table_stats['trades__positivo_perc'] * _dashboard_ops__table_stats['stats__rrMedio']), (100 - _dashboard_ops__table_stats['trades__positivo_perc']));
-        /* prettier-ignore */ // _dashboard_ops__table_stats['stats__fatorLucro']              = divide((_dashboard_ops__table_stats['trades__positivo_perc'] * _temp__table_stats['mediaGain']), Math.abs(_dashboard_ops__table_stats['trades__negativo_perc'] * _temp__table_stats['mediaLoss']));
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__expect_brl']              = divide(_temp__table_stats['lucro_corrente']['brl'], _dashboard_ops__table_stats['trades__total']);
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__expect_R']                = (_simulation['R'] !== null) ? divide(_dashboard_ops__table_stats['stats__expect_brl'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__expect_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats['stats__expect_brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__dp_brl']                  = desvpad(_temp__table_stats['lista_resultados'])['desvpad'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__dp_R']                    = (_simulation['R'] !== null) ? desvpad(_temp__table_stats['lista_resultados_R'])['desvpad'] : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__dp_perc']                 = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats['stats__dp_brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__sqn']                     = (_simulation['R'] !== null) ? (divide(_dashboard_ops__table_stats['stats__expect_R'], _dashboard_ops__table_stats['stats__dp_R']) * Math.sqrt(_dashboard_ops__table_stats['trades__total'])) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__valorInicial_com_lucro']  = (_simulation['valor_inicial'] !== null) ? (_simulation['valor_inicial'] + _temp__table_stats['lucro_corrente']['brl']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__stops_ruina']             = (_simulation['valor_inicial'] !== null && _simulation['R'] !== null) ? Math.floor(divide(_dashboard_ops__table_stats['stats__valorInicial_com_lucro'], _simulation['R'])) : '--';
+        /* prettier-ignore */ _table_stats['stats__fatorLucro']              = divide((_table_stats['trades__positivo_perc'] * _table_stats['stats__rrMedio']), (100 - _table_stats['trades__positivo_perc']));
+        /* prettier-ignore */ _table_stats['stats__expect_brl']              = divide(_temp__table_stats['lucro_corrente']['brl'], _table_stats['trades__total']);
+        /* prettier-ignore */ _table_stats['stats__expect_R']                = (_simulation['R'] !== null) ? divide(_table_stats['stats__expect_brl'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['stats__expect_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats['stats__expect_brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['stats__dp_brl']                  = desvpad(_temp__table_stats['lista_resultados'])['desvpad'];
+        /* prettier-ignore */ _table_stats['stats__dp_R']                    = (_simulation['R'] !== null) ? desvpad(_temp__table_stats['lista_resultados_R'])['desvpad'] : '--';
+        /* prettier-ignore */ _table_stats['stats__dp_perc']                 = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats['stats__dp_brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['stats__sqn']                     = (_simulation['R'] !== null) ? (divide(_table_stats['stats__expect_R'], _table_stats['stats__dp_R']) * Math.sqrt(_table_stats['trades__total'])) : '--';
+        /* prettier-ignore */ _table_stats['stats__valorInicial_com_lucro']  = (_simulation['valor_inicial'] !== null) ? (_simulation['valor_inicial'] + _temp__table_stats['lucro_corrente']['brl']) : '--';
+        /* prettier-ignore */ _table_stats['stats__stops_ruina']             = (_simulation['valor_inicial'] !== null && _simulation['R'] !== null) ? Math.floor(divide(_table_stats['stats__valorInicial_com_lucro'], _simulation['R'])) : '--';
 
         _temp__table_stats['sorted_drawdowns'].sort((a, b) => a.brl - b.brl);
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__drawdown_qtd']            = _temp__table_stats['drawdowns'].length;
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__drawdown_max']            = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['brl'] : 0.0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__drawdown_max_periodo']    = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['periodo'] : 0.0;
+        /* prettier-ignore */ _table_stats['stats__drawdown_qtd']            = _temp__table_stats['drawdowns'].length;
+        /* prettier-ignore */ _table_stats['stats__drawdown_max']            = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['brl'] : 0.0;
+        /* prettier-ignore */ _table_stats['stats__drawdown_max_periodo']    = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['periodo'] : 0.0;
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__erro']                   = ((!_simulation.ignora_erro) ? _dashboard_ops__table_stats['trades__erro'] : '--');
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__erro_perc']              = ((!_simulation.ignora_erro) ? (divide(_dashboard_ops__table_stats['trades__erro'], _dashboard_ops__table_stats['trades__total']) * 100) : '--');
+        /* prettier-ignore */ _table_stats['trades__erro']                   = ((!_simulation.ignora_erro) ? _table_stats['trades__erro'] : '--');
+        /* prettier-ignore */ _table_stats['trades__erro_perc']              = ((!_simulation.ignora_erro) ? (divide(_table_stats['trades__erro'], _table_stats['trades__total']) * 100) : '--');
 
         //////////////////////////////////
         // Estatisticas para os Gráficos
@@ -1539,89 +1504,39 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             // Gráfico de Evolução Patrimonial
             //////////////////////////////////
             // Média móvel simples da evolução patrimonial
-            SMA(_dashboard_ops__chart_data['evolucao_patrimonial']['data'], _dashboard_ops__chart_data['evolucao_patrimonial']['sma20'], 20);
+            SMA(_chart_data['evolucao_patrimonial']['data'], _chart_data['evolucao_patrimonial']['sma20'], 20);
             // 2 Bandas de Desvio Padrão
-            BBollinger(_dashboard_ops__chart_data['evolucao_patrimonial'], 1, NaN, 2);
+            BBollinger(_chart_data['evolucao_patrimonial'], 1, null, 2);
             //////////////////////////////////
             // Gráfico de Resultados Normalizados
             //////////////////////////////////
             // Gráfico de barras dos resultados + bandas superior e inferior do desvio padrao + linha de risco
-            BBollinger(_dashboard_ops__chart_data['resultados_normalizado'], 1, NaN, 1);
+            BBollinger(_chart_data['resultados_normalizado'], 1, null, 1);
             //////////////////////////////////
             // Gráfico de Resultados por Hora
             //////////////////////////////////
-            let days_of_week = ['Domingo', 'Segunda-Feira', 'Terça-Feira', 'Quarta-Feira', 'Quinta-Feira', 'Sexta-Feira', 'Sábado'],
+            let days_of_week = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
                 sorted_horas__unicas = Object.keys(_temp__table_stats['horas__unicas']).sort();
             for (let h = 0; h < sorted_horas__unicas.length; h++) {
-                _dashboard_ops__chart_data['resultado_por_hora']['labels'].push(days_of_week[sorted_horas__unicas[h]]);
-                _dashboard_ops__chart_data['resultado_por_hora']['data_result'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[h]]['result']);
-                _dashboard_ops__chart_data['resultado_por_hora']['data_qtd'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[h]]['qtd']);
+                _chart_data['resultado_por_hora']['labels'].push(days_of_week[sorted_horas__unicas[h]]);
+                _chart_data['resultado_por_hora']['data_result'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[h]]['result']);
+                _chart_data['resultado_por_hora']['data_qtd'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[h]]['qtd']);
             }
-            //////////////////////////////////
-            // Gráfico Sequencia de Result.
-            //////////////////////////////////
-            let sequencia_sep_counter = {},
-                sequencia_sep_counter__max_key = 0;
-            for (let s = 0; s < _temp__table_stats['sequencias_positivo'].length; s++) {
-                if (!(_temp__table_stats['sequencias_positivo'][s] in sequencia_sep_counter)) sequencia_sep_counter[_temp__table_stats['sequencias_positivo'][s]] = 0;
-                sequencia_sep_counter[_temp__table_stats['sequencias_positivo'][s]]++;
-            }
-            sequencia_sep_counter__max_key = Math.max(...Object.keys(sequencia_sep_counter));
-            for (let s = 1; s <= sequencia_sep_counter__max_key; s++) {
-                if (s in sequencia_sep_counter) _dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos'].push(sequencia_sep_counter[s]);
-                else _dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos'].push(0);
-            }
-            sequencia_sep_counter = {};
-            sequencia_sep_counter__max_key = 0;
-            for (let s = 0; s < _temp__table_stats['sequencias_negativo'].length; s++) {
-                if (!(_temp__table_stats['sequencias_negativo'][s] in sequencia_sep_counter)) sequencia_sep_counter[_temp__table_stats['sequencias_negativo'][s]] = 0;
-                sequencia_sep_counter[_temp__table_stats['sequencias_negativo'][s]]++;
-            }
-            sequencia_sep_counter__max_key = Math.max(...Object.keys(sequencia_sep_counter));
-            for (let s = 1; s <= sequencia_sep_counter__max_key; s++) {
-                if (s in sequencia_sep_counter) _dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos'].push(sequencia_sep_counter[s] * -1);
-                else _dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos'].push(0);
-            }
-            _dashboard_ops__chart_data['sequencia_de_resultados']['labels'] =
-                _dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos'].length > _dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos'].length
-                    ? Object.keys(_dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos']).map((o) => parseInt(o) + 1)
-                    : Object.keys(_dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos']).map((o) => parseInt(o) + 1);
             //////////////////////////////////
             // Gráfico Historico de Drawdowns
             //////////////////////////////////
-            _dashboard_ops__chart_data['drawdowns']['data'] = _temp__table_stats['drawdowns'].map((o) => o.brl);
-            _dashboard_ops__chart_data['drawdowns']['labels'] = Object.keys(_dashboard_ops__chart_data['drawdowns']['data']).map((o) => parseInt(o) + 1);
-            BBollinger(_dashboard_ops__chart_data['drawdowns'], 1, NaN, 2, true, 'sup');
-            //////////////////////////////////
-            // Enche o dataset base com vazio para regular o zoom dos graficos com poucos elementos
-            //////////////////////////////////
-            if (_dashboard_ops__chart_data['evolucao_patrimonial']['labels'].length < 150) {
-                let diff_to_fill = 150 - _dashboard_ops__chart_data['evolucao_patrimonial']['labels'].length;
-                for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['evolucao_patrimonial']['labels'].push('');
-            }
-            if (_dashboard_ops__chart_data['resultados_normalizado']['labels'].length < 50) {
-                let diff_to_fill = 50 - _dashboard_ops__chart_data['resultados_normalizado']['labels'].length;
-                for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['resultados_normalizado']['labels'].push('');
-            }
-            if (_dashboard_ops__chart_data['resultado_por_hora']['labels'].length < 7) {
-                let diff_to_fill = 7 - _dashboard_ops__chart_data['resultado_por_hora']['labels'].length;
-                for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['resultado_por_hora']['labels'].push('');
-            }
-            if (_dashboard_ops__chart_data['sequencia_de_resultados']['labels'].length < 10) {
-                let diff_to_fill = 10 - _dashboard_ops__chart_data['sequencia_de_resultados']['labels'].length;
-                for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['sequencia_de_resultados']['labels'].push('');
-            }
-            if (_dashboard_ops__chart_data['drawdowns']['labels'].length < 10) {
-                let diff_to_fill = 10 - _dashboard_ops__chart_data['drawdowns']['labels'].length;
-                for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['drawdowns']['labels'].push('');
-            }
+            _chart_data['drawdowns']['data'] = _temp__table_stats['drawdowns'].map((o) => o.brl);
+            _chart_data['drawdowns']['labels'] = Object.keys(_chart_data['drawdowns']['data']).map((o) => parseInt(o) + 1);
+            BBollinger(_chart_data['drawdowns'], 1, null, 2, true, 'sup');
         }
         /*------------------------------- Retorno dos Dados ------------------------------*/
         return {
-            dashboard_ops__table_stats: _dashboard_ops__table_stats,
-            dashboard_ops__table_stats__byCenario: _dashboard_ops__table_stats__byCenario,
-            dashboard_ops__table_trades: _dashboard_ops__table_trades,
-            dashboard_ops__chart_data: _dashboard_ops__chart_data,
+            checksum: generateHash(6),
+            table_stats: _table_stats,
+            table_stats__byCenario: _table_stats__byCenario,
+            table_trades: _table_trades,
+            table_trades__periodo_calc: _simulation.periodo_calc,
+            chart_data: _chart_data,
         };
     } else if (_simulation.periodo_calc === 3) {
         /*------------------------------------ Por Mes -----------------------------------*/
@@ -1630,13 +1545,15 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             // Resultados do Trade
             //////////////////////////////////
             if (_options.get_tradeTableData) {
-                _dashboard_ops__table_trades.push({
+                _table_trades.push({
                     // Sequencia do trade, na ordem que vem do BD
                     mes__seq: _temp__table_stats['i_seq']++,
                     // Data do trade
                     mes__data: _ops[o].data,
                     // Contratos usados
                     mes__cts: _ops[o].cts_usado,
+                    // Média de Retorno sobre risco do mes
+                    mes__retornoRisco_medio: _ops[o].retornoRisco,
                     // Trades feitos no mes
                     mes__qtd_trades: _ops[o].qtd_trades,
                     // Se houve erro no mes
@@ -1662,11 +1579,12 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             if (!(month in _temp__table_stats['horas__unicas'])) _temp__table_stats['horas__unicas'][month] = { result: 0.0, qtd: 0 };
             _temp__table_stats['horas__unicas'][month]['result'] += _ops[o].result_liquido['brl'];
             _temp__table_stats['horas__unicas'][month]['qtd']++;
+            _table_stats['stats__retornoRiscoMedio'] += _ops[o].retornoRisco;
             // Para o lucro em S
-            _dashboard_ops__table_stats['result__lucro_S'] += _ops[o].result_bruto['S'];
+            _table_stats['result__lucro_S'] += _ops[o].result_bruto['S'];
             // Se for uma operação 'Positiva'
             if (_ops[o].resultado_op === 1) {
-                _dashboard_ops__table_stats['trades__positivo']++;
+                _table_stats['trades__positivo']++;
                 _temp__table_stats['mediaGain'] += _ops[o].result_liquido['brl'];
                 if (_temp__table_stats['sequencias_positivo'][_temp__table_stats['sequencias_positivo__index']] === undefined)
                     _temp__table_stats['sequencias_positivo'][_temp__table_stats['sequencias_positivo__index']] = 0;
@@ -1676,7 +1594,7 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             }
             // Se for uma operação 'Negativa'
             else if (_ops[o].resultado_op === -1) {
-                _dashboard_ops__table_stats['trades__negativo']++;
+                _table_stats['trades__negativo']++;
                 _temp__table_stats['mediaLoss'] += _ops[o].result_liquido['brl'];
                 if (_temp__table_stats['sequencias_negativo'][_temp__table_stats['sequencias_negativo__index']] === undefined)
                     _temp__table_stats['sequencias_negativo'][_temp__table_stats['sequencias_negativo__index']] = 0;
@@ -1686,11 +1604,11 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             }
             // Se for uma operação 'Empate (0x0)'
             else if (_ops[o].resultado_op === 0) {
-                _dashboard_ops__table_stats['trades__empate']++;
+                _table_stats['trades__empate']++;
                 _temp__table_stats['mediaGain'] += _ops[o].result_liquido['brl'];
             }
             // Se for uma operação com Erro
-            if (_ops[o].erro === 1) _dashboard_ops__table_stats['trades__erro']++;
+            if (_ops[o].erro === 1) _table_stats['trades__erro']++;
             // Calcula o lucro corrente após cada operação
             _temp__table_stats['lucro_corrente']['brl'] += _ops[o].result_liquido['brl'];
             // Calcula o Lucro por Mes
@@ -1698,14 +1616,14 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             _temp__table_stats['lucro_por_periodo'][_ops[o].data] += _ops[o].result_liquido['brl'];
             // Para o Drawdown
             // Atualiza o topo historico
-            if (_temp__table_stats['lucro_corrente']['brl'] > _dashboard_ops__table_stats['stats__drawdown_topoHistorico']) {
-                _dashboard_ops__table_stats['stats__drawdown_topoHistorico'] = _temp__table_stats['lucro_corrente']['brl'];
-                _dashboard_ops__table_stats['stats__drawdown'] = 0;
-                _dashboard_ops__table_stats['stats__drawdown_periodo'] = 0;
+            if (_temp__table_stats['lucro_corrente']['brl'] > _table_stats['stats__drawdown_topoHistorico']) {
+                _table_stats['stats__drawdown_topoHistorico'] = _temp__table_stats['lucro_corrente']['brl'];
+                _table_stats['stats__drawdown'] = 0;
+                _table_stats['stats__drawdown_periodo'] = 0;
                 if (_temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']] !== undefined) _temp__table_stats['drawdowns_index']++;
             }
             // Se estiver abaixo do topo, está em drawdown
-            else if (_temp__table_stats['lucro_corrente']['brl'] < _dashboard_ops__table_stats['stats__drawdown_topoHistorico']) {
+            else if (_temp__table_stats['lucro_corrente']['brl'] < _table_stats['stats__drawdown_topoHistorico']) {
                 if (_temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']] === undefined) {
                     _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']] = {
                         brl: 0,
@@ -1716,15 +1634,15 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
                         periodo: 0,
                     };
                 }
-                let lucro__topo_diff = Math.abs(_dashboard_ops__table_stats['stats__drawdown_topoHistorico'] - Math.abs(_temp__table_stats['lucro_corrente']['brl']));
+                let lucro__topo_diff = Math.abs(_table_stats['stats__drawdown_topoHistorico'] - Math.abs(_temp__table_stats['lucro_corrente']['brl']));
                 if (lucro__topo_diff > _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']]['brl']) {
                     _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']]['brl'] = lucro__topo_diff;
                     _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns_index']]['brl'] = lucro__topo_diff;
                 }
                 _temp__table_stats['drawdowns'][_temp__table_stats['drawdowns_index']]['periodo']++;
                 _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns_index']]['periodo']++;
-                _dashboard_ops__table_stats['stats__drawdown'] = lucro__topo_diff;
-                _dashboard_ops__table_stats['stats__drawdown_periodo']++;
+                _table_stats['stats__drawdown'] = lucro__topo_diff;
+                _table_stats['stats__drawdown_periodo']++;
             }
             // Para o DP
             _temp__table_stats['lista_resultados'].push(_ops[o].result_liquido['brl']);
@@ -1734,13 +1652,13 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             //////////////////////////////////
             if (_options.get_graficoData) {
                 // Para o gráfico de Resultados por Trade
-                _dashboard_ops__chart_data['resultados_normalizado']['labels'].push(parseInt(o) + 1);
-                _dashboard_ops__chart_data['resultados_normalizado']['data'].push(_ops[o].result_liquido['brl']);
-                _dashboard_ops__chart_data['resultados_normalizado']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} Trades: ${_ops[o].qtd_trades}`);
+                _chart_data['resultados_normalizado']['labels'].push(parseInt(o) + 1);
+                _chart_data['resultados_normalizado']['data'].push(_ops[o].result_liquido['brl']);
+                _chart_data['resultados_normalizado']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} Trades: ${_ops[o].qtd_trades}`);
                 // Para o gráfico de Evolução Patrimonial
-                _dashboard_ops__chart_data['evolucao_patrimonial']['labels'].push(parseInt(o) + 1);
-                _dashboard_ops__chart_data['evolucao_patrimonial']['data'].push(_temp__table_stats['lucro_corrente']['brl']);
-                _dashboard_ops__chart_data['evolucao_patrimonial']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} Trades: ${_ops[o].qtd_trades}`);
+                _chart_data['evolucao_patrimonial']['labels'].push(parseInt(o) + 1);
+                _chart_data['evolucao_patrimonial']['data'].push(_temp__table_stats['lucro_corrente']['brl']);
+                _chart_data['evolucao_patrimonial']['date'].push(`${format(parseISO(_ops[o].data), 'dd/MM/yyyy')} Trades: ${_ops[o].qtd_trades}`);
             }
         }
         /*------------------------ Termina processamento dos Dados -----------------------*/
@@ -1748,59 +1666,58 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
         // Estatisticas Gerais
         //////////////////////////////////
         // Termina de processar estatisticas de '_temp__table_stats'
-        /* prettier-ignore */ _temp__table_stats['mediaGain'] = divide(_temp__table_stats['mediaGain'], (_dashboard_ops__table_stats['trades__positivo'] + _dashboard_ops__table_stats['trades__empate']));
-        /* prettier-ignore */ _temp__table_stats['mediaLoss'] = divide(_temp__table_stats['mediaLoss'], _dashboard_ops__table_stats['trades__negativo']);
+        /* prettier-ignore */ _temp__table_stats['mediaGain']                = divide(_temp__table_stats['mediaGain'], (_table_stats['trades__positivo'] + _table_stats['trades__empate']));
+        /* prettier-ignore */ _temp__table_stats['mediaLoss']                = divide(_temp__table_stats['mediaLoss'], _table_stats['trades__negativo']);
 
-        // Termina de processar estatisticas do '_dashboard_ops__table_stats'
+        // Termina de processar estatisticas do '_table_stats'
 
-        /* prettier-ignore */ // _dashboard_ops__table_stats['dias__trades_por_dia']           = divide(_ops.length, _dashboard_ops__table_stats['dias__total']);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__total']                  = _ops.length;
+        /* prettier-ignore */ _table_stats['trades__total']                  = _ops.length;
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__positivo_perc']          = (divide(_dashboard_ops__table_stats['trades__positivo'], _dashboard_ops__table_stats['trades__total']) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__negativo_perc']          = (divide(_dashboard_ops__table_stats['trades__negativo'], _dashboard_ops__table_stats['trades__total']) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__empate_perc']            = (divide(_dashboard_ops__table_stats['trades__empate'], _dashboard_ops__table_stats['trades__total']) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_negativo']       = (_temp__table_stats['sequencias_negativo'].length) ? Math.max(..._temp__table_stats['sequencias_negativo']) : 0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_positivo']       = (_temp__table_stats['sequencias_positivo'].length) ? Math.max(..._temp__table_stats['sequencias_positivo']) : 0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_negativo_medio'] = (_temp__table_stats['sequencias_negativo'].length) ? divide(_temp__table_stats['sequencias_negativo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_negativo'].length) : 0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__max_seq_positivo_medio'] = (_temp__table_stats['sequencias_positivo'].length) ? divide(_temp__table_stats['sequencias_positivo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_positivo'].length) : 0;
+        /* prettier-ignore */ _table_stats['trades__positivo_perc']          = (divide(_table_stats['trades__positivo'], _table_stats['trades__total']) * 100);
+        /* prettier-ignore */ _table_stats['trades__negativo_perc']          = (divide(_table_stats['trades__negativo'], _table_stats['trades__total']) * 100);
+        /* prettier-ignore */ _table_stats['trades__empate_perc']            = (divide(_table_stats['trades__empate'], _table_stats['trades__total']) * 100);
+        /* prettier-ignore */ _table_stats['trades__max_seq_negativo']       = (_temp__table_stats['sequencias_negativo'].length) ? Math.max(..._temp__table_stats['sequencias_negativo']) : 0;
+        /* prettier-ignore */ _table_stats['trades__max_seq_positivo']       = (_temp__table_stats['sequencias_positivo'].length) ? Math.max(..._temp__table_stats['sequencias_positivo']) : 0;
+        /* prettier-ignore */ _table_stats['trades__max_seq_negativo_medio'] = (_temp__table_stats['sequencias_negativo'].length) ? divide(_temp__table_stats['sequencias_negativo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_negativo'].length) : 0;
+        /* prettier-ignore */ _table_stats['trades__max_seq_positivo_medio'] = (_temp__table_stats['sequencias_positivo'].length) ? divide(_temp__table_stats['sequencias_positivo'].reduce((a, b) => a + b, 0), _temp__table_stats['sequencias_positivo'].length) : 0;
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_brl']              = _temp__table_stats['lucro_corrente']['brl'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_R']                = (_simulation['R'] !== null) ? divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_medio_brl']        = divide(Object.values(_temp__table_stats['lucro_por_periodo']).reduce((a, b) => a + b, 0), Object.keys(_temp__table_stats['lucro_por_periodo']).length);
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_medio_R']          = (_simulation['R'] !== null) ? divide(_dashboard_ops__table_stats['result__lucro_medio_brl'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__lucro_medio_perc']       = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats['result__lucro_medio_brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaGain_brl']          = _temp__table_stats['mediaGain'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaLoss_brl']          = _temp__table_stats['mediaLoss'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaGain_R'] 	        = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaGain'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaLoss_R']            = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaLoss'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaGain_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaGain'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['result__mediaLoss_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaLoss'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_brl']              = _temp__table_stats['lucro_corrente']['brl'];
+        /* prettier-ignore */ _table_stats['result__lucro_R']                = (_simulation['R'] !== null) ? divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['lucro_corrente']['brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_medio_brl']        = divide(Object.values(_temp__table_stats['lucro_por_periodo']).reduce((a, b) => a + b, 0), Object.keys(_temp__table_stats['lucro_por_periodo']).length);
+        /* prettier-ignore */ _table_stats['result__lucro_medio_R']          = (_simulation['R'] !== null) ? divide(_table_stats['result__lucro_medio_brl'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__lucro_medio_perc']       = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats['result__lucro_medio_brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaGain_brl']          = _temp__table_stats['mediaGain'];
+        /* prettier-ignore */ _table_stats['result__mediaLoss_brl']          = _temp__table_stats['mediaLoss'];
+        /* prettier-ignore */ _table_stats['result__mediaGain_R'] 	         = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaGain'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaLoss_R']            = (_simulation['R'] !== null) ? divide(_temp__table_stats['mediaLoss'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaGain_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaGain'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['result__mediaLoss_perc']         = (_simulation['valor_inicial'] !== null) ? (divide(_temp__table_stats['mediaLoss'], _simulation['valor_inicial']) * 100) : '--';
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__rrMedio']                 = divide(_temp__table_stats['mediaGain'], Math.abs(_temp__table_stats['mediaLoss']));
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__breakeven']               = (divide(Math.abs(_temp__table_stats['mediaLoss']), (_temp__table_stats['mediaGain'] + Math.abs(_temp__table_stats['mediaLoss']))) * 100);
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__edge']                    = _dashboard_ops__table_stats['trades__positivo_perc'] - _dashboard_ops__table_stats['stats__breakeven'];
+        /* prettier-ignore */ _table_stats['stats__retornoRiscoMedio']       = divide(_table_stats['stats__retornoRiscoMedio'], _table_stats['trades__total']);
+        /* prettier-ignore */ _table_stats['stats__rrMedio']                 = divide(_temp__table_stats['mediaGain'], Math.abs(_temp__table_stats['mediaLoss']));
+        /* prettier-ignore */ _table_stats['stats__breakeven']               = (divide(Math.abs(_temp__table_stats['mediaLoss']), (_temp__table_stats['mediaGain'] + Math.abs(_temp__table_stats['mediaLoss']))) * 100);
+        /* prettier-ignore */ _table_stats['stats__edge']                    = _table_stats['trades__positivo_perc'] - _table_stats['stats__breakeven'];
         /* prettier-ignore */ // Calculado da forma do Tainan
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__fatorLucro']              = divide((_dashboard_ops__table_stats['trades__positivo_perc'] * _dashboard_ops__table_stats['stats__rrMedio']), (100 - _dashboard_ops__table_stats['trades__positivo_perc']));
-        /* prettier-ignore */ // _dashboard_ops__table_stats['stats__fatorLucro']              = divide((_dashboard_ops__table_stats['trades__positivo_perc'] * _temp__table_stats['mediaGain']), Math.abs(_dashboard_ops__table_stats['trades__negativo_perc'] * _temp__table_stats['mediaLoss']));
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__expect_brl']              = divide(_temp__table_stats['lucro_corrente']['brl'], _dashboard_ops__table_stats['trades__total']);
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__expect_R']                = (_simulation['R'] !== null) ? divide(_dashboard_ops__table_stats['stats__expect_brl'], _simulation['R']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__expect_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats['stats__expect_brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__dp_brl']                  = desvpad(_temp__table_stats['lista_resultados'])['desvpad'];
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__dp_R']                    = (_simulation['R'] !== null) ? desvpad(_temp__table_stats['lista_resultados_R'])['desvpad'] : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__dp_perc']                 = (_simulation['valor_inicial'] !== null) ? (divide(_dashboard_ops__table_stats['stats__dp_brl'], _simulation['valor_inicial']) * 100) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__sqn']                     = (_simulation['R'] !== null) ? (divide(_dashboard_ops__table_stats['stats__expect_R'], _dashboard_ops__table_stats['stats__dp_R']) * Math.sqrt(_dashboard_ops__table_stats['trades__total'])) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__valorInicial_com_lucro']  = (_simulation['valor_inicial'] !== null) ? (_simulation['valor_inicial'] + _temp__table_stats['lucro_corrente']['brl']) : '--';
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__stops_ruina']             = (_simulation['valor_inicial'] !== null && _simulation['R'] !== null) ? Math.floor(divide(_dashboard_ops__table_stats['stats__valorInicial_com_lucro'], _simulation['R'])) : '--';
+        /* prettier-ignore */ _table_stats['stats__fatorLucro']              = divide((_table_stats['trades__positivo_perc'] * _table_stats['stats__rrMedio']), (100 - _table_stats['trades__positivo_perc']));
+        /* prettier-ignore */ _table_stats['stats__expect_brl']              = divide(_temp__table_stats['lucro_corrente']['brl'], _table_stats['trades__total']);
+        /* prettier-ignore */ _table_stats['stats__expect_R']                = (_simulation['R'] !== null) ? divide(_table_stats['stats__expect_brl'], _simulation['R']) : '--';
+        /* prettier-ignore */ _table_stats['stats__expect_perc']             = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats['stats__expect_brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['stats__dp_brl']                  = desvpad(_temp__table_stats['lista_resultados'])['desvpad'];
+        /* prettier-ignore */ _table_stats['stats__dp_R']                    = (_simulation['R'] !== null) ? desvpad(_temp__table_stats['lista_resultados_R'])['desvpad'] : '--';
+        /* prettier-ignore */ _table_stats['stats__dp_perc']                 = (_simulation['valor_inicial'] !== null) ? (divide(_table_stats['stats__dp_brl'], _simulation['valor_inicial']) * 100) : '--';
+        /* prettier-ignore */ _table_stats['stats__sqn']                     = (_simulation['R'] !== null) ? (divide(_table_stats['stats__expect_R'], _table_stats['stats__dp_R']) * Math.sqrt(_table_stats['trades__total'])) : '--';
+        /* prettier-ignore */ _table_stats['stats__valorInicial_com_lucro']  = (_simulation['valor_inicial'] !== null) ? (_simulation['valor_inicial'] + _temp__table_stats['lucro_corrente']['brl']) : '--';
+        /* prettier-ignore */ _table_stats['stats__stops_ruina']             = (_simulation['valor_inicial'] !== null && _simulation['R'] !== null) ? Math.floor(divide(_table_stats['stats__valorInicial_com_lucro'], _simulation['R'])) : '--';
 
         _temp__table_stats['sorted_drawdowns'].sort((a, b) => a.brl - b.brl);
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__drawdown_qtd']            = _temp__table_stats['drawdowns'].length;
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__drawdown_max']            = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['brl'] : 0.0;
-        /* prettier-ignore */ _dashboard_ops__table_stats['stats__drawdown_max_periodo']    = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['periodo'] : 0.0;
+        /* prettier-ignore */ _table_stats['stats__drawdown_qtd']            = _temp__table_stats['drawdowns'].length;
+        /* prettier-ignore */ _table_stats['stats__drawdown_max']            = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['brl'] : 0.0;
+        /* prettier-ignore */ _table_stats['stats__drawdown_max_periodo']    = (_temp__table_stats['sorted_drawdowns'].length) ? _temp__table_stats['sorted_drawdowns'][_temp__table_stats['drawdowns'].length-1]['periodo'] : 0.0;
 
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__erro']                   = ((!_simulation.ignora_erro) ? _dashboard_ops__table_stats['trades__erro'] : '--');
-        /* prettier-ignore */ _dashboard_ops__table_stats['trades__erro_perc']              = ((!_simulation.ignora_erro) ? (divide(_dashboard_ops__table_stats['trades__erro'], _dashboard_ops__table_stats['trades__total']) * 100) : '--');
+        /* prettier-ignore */ _table_stats['trades__erro']                   = ((!_simulation.ignora_erro) ? _table_stats['trades__erro'] : '--');
+        /* prettier-ignore */ _table_stats['trades__erro_perc']              = ((!_simulation.ignora_erro) ? (divide(_table_stats['trades__erro'], _table_stats['trades__total']) * 100) : '--');
 
         //////////////////////////////////
         // Estatisticas para os Gráficos
@@ -1810,89 +1727,39 @@ const generate__DashboardOps = (ops = [], filters = {}, simulation = {}, options
             // Gráfico de Evolução Patrimonial
             //////////////////////////////////
             // Média móvel simples da evolução patrimonial
-            SMA(_dashboard_ops__chart_data['evolucao_patrimonial']['data'], _dashboard_ops__chart_data['evolucao_patrimonial']['sma20'], 20);
+            SMA(_chart_data['evolucao_patrimonial']['data'], _chart_data['evolucao_patrimonial']['sma20'], 20);
             // 2 Bandas de Desvio Padrão
-            BBollinger(_dashboard_ops__chart_data['evolucao_patrimonial'], 1, NaN, 2);
+            BBollinger(_chart_data['evolucao_patrimonial'], 1, null, 2);
             //////////////////////////////////
             // Gráfico de Resultados Normalizados
             //////////////////////////////////
             // Gráfico de barras dos resultados + bandas superior e inferior do desvio padrao + linha de risco
-            BBollinger(_dashboard_ops__chart_data['resultados_normalizado'], 1, NaN, 1);
+            BBollinger(_chart_data['resultados_normalizado'], 1, null, 1);
             //////////////////////////////////
             // Gráfico de Resultados por Hora
             //////////////////////////////////
             let months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
                 sorted_horas__unicas = Object.keys(_temp__table_stats['horas__unicas']).sort();
             for (let m = 0; m < sorted_horas__unicas.length; m++) {
-                _dashboard_ops__chart_data['resultado_por_hora']['labels'].push(months[sorted_horas__unicas[m]]);
-                _dashboard_ops__chart_data['resultado_por_hora']['data_result'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[m]]['result']);
-                _dashboard_ops__chart_data['resultado_por_hora']['data_qtd'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[m]]['qtd']);
+                _chart_data['resultado_por_hora']['labels'].push(months[sorted_horas__unicas[m]]);
+                _chart_data['resultado_por_hora']['data_result'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[m]]['result']);
+                _chart_data['resultado_por_hora']['data_qtd'].push(_temp__table_stats['horas__unicas'][sorted_horas__unicas[m]]['qtd']);
             }
-            //////////////////////////////////
-            // Gráfico Sequencia de Result.
-            //////////////////////////////////
-            let sequencia_sep_counter = {},
-                sequencia_sep_counter__max_key = 0;
-            for (let s = 0; s < _temp__table_stats['sequencias_positivo'].length; s++) {
-                if (!(_temp__table_stats['sequencias_positivo'][s] in sequencia_sep_counter)) sequencia_sep_counter[_temp__table_stats['sequencias_positivo'][s]] = 0;
-                sequencia_sep_counter[_temp__table_stats['sequencias_positivo'][s]]++;
-            }
-            sequencia_sep_counter__max_key = Math.max(...Object.keys(sequencia_sep_counter));
-            for (let s = 1; s <= sequencia_sep_counter__max_key; s++) {
-                if (s in sequencia_sep_counter) _dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos'].push(sequencia_sep_counter[s]);
-                else _dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos'].push(0);
-            }
-            sequencia_sep_counter = {};
-            sequencia_sep_counter__max_key = 0;
-            for (let s = 0; s < _temp__table_stats['sequencias_negativo'].length; s++) {
-                if (!(_temp__table_stats['sequencias_negativo'][s] in sequencia_sep_counter)) sequencia_sep_counter[_temp__table_stats['sequencias_negativo'][s]] = 0;
-                sequencia_sep_counter[_temp__table_stats['sequencias_negativo'][s]]++;
-            }
-            sequencia_sep_counter__max_key = Math.max(...Object.keys(sequencia_sep_counter));
-            for (let s = 1; s <= sequencia_sep_counter__max_key; s++) {
-                if (s in sequencia_sep_counter) _dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos'].push(sequencia_sep_counter[s] * -1);
-                else _dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos'].push(0);
-            }
-            _dashboard_ops__chart_data['sequencia_de_resultados']['labels'] =
-                _dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos'].length > _dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos'].length
-                    ? Object.keys(_dashboard_ops__chart_data['sequencia_de_resultados']['data_positivos']).map((o) => parseInt(o) + 1)
-                    : Object.keys(_dashboard_ops__chart_data['sequencia_de_resultados']['data_negativos']).map((o) => parseInt(o) + 1);
             //////////////////////////////////
             // Gráfico Historico de Drawdowns
             //////////////////////////////////
-            _dashboard_ops__chart_data['drawdowns']['data'] = _temp__table_stats['drawdowns'].map((o) => o.brl);
-            _dashboard_ops__chart_data['drawdowns']['labels'] = Object.keys(_dashboard_ops__chart_data['drawdowns']['data']).map((o) => parseInt(o) + 1);
-            BBollinger(_dashboard_ops__chart_data['drawdowns'], 1, NaN, 2, true, 'sup');
-        }
-        //////////////////////////////////
-        // Enche o dataset base com vazio para regular o zoom dos graficos com poucos elementos
-        //////////////////////////////////
-        if (_dashboard_ops__chart_data['evolucao_patrimonial']['labels'].length < 30) {
-            let diff_to_fill = 30 - _dashboard_ops__chart_data['evolucao_patrimonial']['labels'].length;
-            for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['evolucao_patrimonial']['labels'].push('');
-        }
-        if (_dashboard_ops__chart_data['resultados_normalizado']['labels'].length < 50) {
-            let diff_to_fill = 50 - _dashboard_ops__chart_data['resultados_normalizado']['labels'].length;
-            for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['resultados_normalizado']['labels'].push('');
-        }
-        if (_dashboard_ops__chart_data['resultado_por_hora']['labels'].length < 10) {
-            let diff_to_fill = 10 - _dashboard_ops__chart_data['resultado_por_hora']['labels'].length;
-            for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['resultado_por_hora']['labels'].push('');
-        }
-        if (_dashboard_ops__chart_data['sequencia_de_resultados']['labels'].length < 10) {
-            let diff_to_fill = 10 - _dashboard_ops__chart_data['sequencia_de_resultados']['labels'].length;
-            for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['sequencia_de_resultados']['labels'].push('');
-        }
-        if (_dashboard_ops__chart_data['drawdowns']['labels'].length < 10) {
-            let diff_to_fill = 10 - _dashboard_ops__chart_data['drawdowns']['labels'].length;
-            for (let es = 0; es < diff_to_fill; es++) _dashboard_ops__chart_data['drawdowns']['labels'].push('');
+            _chart_data['drawdowns']['data'] = _temp__table_stats['drawdowns'].map((o) => o.brl);
+            _chart_data['drawdowns']['labels'] = Object.keys(_chart_data['drawdowns']['data']).map((o) => parseInt(o) + 1);
+            BBollinger(_chart_data['drawdowns'], 1, null, 2, true, 'sup');
         }
         /*------------------------------- Retorno dos Dados ------------------------------*/
         return {
-            dashboard_ops__table_stats: _dashboard_ops__table_stats,
-            dashboard_ops__table_stats__byCenario: _dashboard_ops__table_stats__byCenario,
-            dashboard_ops__table_trades: _dashboard_ops__table_trades,
-            dashboard_ops__chart_data: _dashboard_ops__chart_data,
+            checksum: generateHash(6),
+            table_stats: _table_stats,
+            table_stats__byCenario: _table_stats__byCenario,
+            table_trades: _table_trades,
+            table_trades__periodo_calc: _simulation.periodo_calc,
+            chart_data: _chart_data,
         };
     }
 };

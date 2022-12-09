@@ -29,6 +29,38 @@
     }
 }
 
+.datagrid_ops__container {
+    flex: 6;
+}
+
+.table_stats__extra {
+    flex: 2;
+}
+
+.datagrid_ops__chart_evolucaoFinanceira {
+    flex: 1;
+    height: 450px;
+    max-height: 450px;
+}
+
+.datagrid_ops__chart_resultadosTrades {
+    flex: 1;
+    height: 450px;
+    max-height: 450px;
+}
+
+.datagrid_ops__chart_drawdowns {
+    flex: 1;
+    height: 450px;
+    max-height: 450px;
+}
+
+.datagrid_ops__chart_resultadosHora {
+    flex: 1;
+    height: 450px;
+    max-height: 450px;
+}
+
 .dataset_atualizadoEm {
     font-size: 10px;
     font-weight: bold;

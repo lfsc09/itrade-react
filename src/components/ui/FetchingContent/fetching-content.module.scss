@@ -1,0 +1,19 @@
+.wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    color: rgba(0, 0, 0, 0.4);
+}
+
+.text {
+    margin-left: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 0.08333em;
+}

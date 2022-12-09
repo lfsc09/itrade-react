@@ -3,18 +3,19 @@ import React from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
 import NavbarTop from '../../components/back/NavbarTop';
-import NavSide from '../../components/back/NavSide';
+import FetchingContent from '../../components/ui/FetchingContent';
 import NoContent from '../../components/ui/NoContent';
 import styles from './back.module.scss';
-import DaytradeAtivos from './daytrade/Ativos';
-import DaytradeAtivosNovo from './daytrade/Ativos/Novo';
-import DaytradeCenarios from './daytrade/Cenarios';
-import DaytradeDashboard from './daytrade/Dashboard';
-import DaytradeDatasets from './daytrade/Datasets';
-import DaytradeDatasetsNovo from './daytrade/Datasets/Novo';
-import DaytradeGerenciamentos from './daytrade/Gerenciamentos';
-import DaytradeGerenciamentosNovo from './daytrade/Gerenciamentos/Novo';
-import DaytradeOperacoesNovo from './daytrade/Operacoes/Novo';
+
+const DaytradeAtivos = React.lazy(() => import('./daytrade/Ativos'));
+const DaytradeAtivosNovo = React.lazy(() => import('./daytrade/Ativos/Novo'));
+const DaytradeCenarios = React.lazy(() => import('./daytrade/Cenarios'));
+const DaytradeDashboard = React.lazy(() => import('./daytrade/Dashboard'));
+const DaytradeDatasets = React.lazy(() => import('./daytrade/Datasets'));
+const DaytradeDatasetsNovo = React.lazy(() => import('./daytrade/Datasets/Novo'));
+const DaytradeGerenciamentos = React.lazy(() => import('./daytrade/Gerenciamentos'));
+const DaytradeGerenciamentosNovo = React.lazy(() => import('./daytrade/Gerenciamentos/Novo'));
+const DaytradeOperacoesNovo = React.lazy(() => import('./daytrade/Operacoes/Novo'));
 
 const content_switch = (url, urlParams) => {
     if (url.match(/^.*\/daytrade\/dashboard$/)) return <DaytradeDashboard />;
@@ -40,7 +41,7 @@ const BackWrapper = () => {
         <div className={styles.wrapper}>
             <Stack spacing={2} className={styles.container}>
                 <NavbarTop />
-                {content_switch(location.pathname, urlParams)}
+                <React.Suspense fallback={<FetchingContent />}>{content_switch(location.pathname, urlParams)}</React.Suspense>
             </Stack>
         </div>
     );

@@ -2,7 +2,7 @@ import { AutoFixHigh, CheckBox, CheckBoxOutlineBlank, FilterList } from '@mui/ic
 import { Autocomplete, Box, Button, Checkbox, Divider, FormControlLabel, FormGroup, IconButton, ListItemText, Paper, Stack, Switch, TextField, Typography } from '@mui/material';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { batch, useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,6 +13,10 @@ import { axiosCon } from '../../../../helpers/axios-con';
 import { isObjectEmpty } from '../../../../helpers/global';
 import { generate__DashboardOps } from '../../../../helpers/rv-statistics';
 import { handleLogout } from '../../../../store/auth/auth-action';
+import ChartDrawdowns from './ChartDrawdowns';
+import ChartEvolucaoFinanceira from './ChartEvolucaoFinanceira';
+import ChartResultadosHora from './ChartResultadosHora';
+import ChartResultadosTrades from './ChartResultadosTrades';
 import styles from './dashboard.module.scss';
 import DatagridOps from './DatagridOps';
 import DatagridStats from './DatagridStats';
@@ -162,6 +166,8 @@ const Dashboard = () => {
         if (dataset.length) setDataset_Checksum((prevState) => dataset.reduce((t, d) => t + '_' + d.id, ''));
     }, [dataset]);
 
+    // console.log(statistics?.chart_data?.evolucao_patrimonial);
+
     return (
         <>
             <MessageController overlay={true} />
@@ -246,7 +252,7 @@ const Dashboard = () => {
                             </Button>
                         </Stack>
                     </Paper>
-                    {statistics !== null && !isObjectEmpty(statistics.dashboard_ops__table_stats) ? (
+                    {statistics !== null && !isObjectEmpty(statistics.table_stats) ? (
                         <DatagridStats stats={statistics} periodoCalc={dataState.simulations?.periodo_calc} />
                     ) : (
                         <NoContent
@@ -256,16 +262,86 @@ const Dashboard = () => {
                             addedClasses={{ wrapper: `${styles.no_content__wrapper}`, container: `${styles.no_content__container}` }}
                         />
                     )}
-                    {statistics !== null && statistics.dashboard_ops__table_trades.length ? (
-                        <DatagridOps rows={statistics.dashboard_ops__table_trades} periodoCalc={dataState.simulations?.periodo_calc} />
-                    ) : (
-                        <NoContent
-                            type='empty-data'
-                            empty_text='Sem Dados'
-                            withContainer={true}
-                            addedClasses={{ wrapper: `${styles.no_content__wrapper}`, container: `${styles.no_content__container}` }}
-                        />
-                    )}
+                    <Stack direction='row' spacing={2}>
+                        <div className={styles.table_stats__extra}>
+                            <NoContent
+                                type='empty-data'
+                                empty_text='Sem Dados'
+                                withContainer={true}
+                                addedClasses={{ wrapper: `${styles.no_content__wrapper}`, container: `${styles.no_content__container}` }}
+                            />
+                        </div>
+                        <div className={styles.datagrid_ops__container}>
+                            {statistics !== null && statistics.table_trades.length > 0 ? (
+                                <DatagridOps rows={statistics.table_trades} periodoCalc={statistics.table_trades__periodo_calc} />
+                            ) : (
+                                <NoContent
+                                    type='empty-data'
+                                    empty_text='Sem Dados'
+                                    withContainer={true}
+                                    addedClasses={{ wrapper: `${styles.no_content__wrapper}`, container: `${styles.no_content__container}` }}
+                                />
+                            )}
+                        </div>
+                    </Stack>
+                    <Stack direction='column' spacing={2} sx={{ height: '100%', flexGrow: '1', justifyContent: 'center' }}>
+                        <Stack direction='row' spacing={2}>
+                            <div className={styles.datagrid_ops__chart_evolucaoFinanceira}>
+                                {statistics !== null && !isObjectEmpty(statistics.chart_data.evolucao_patrimonial) ? (
+                                    <ChartEvolucaoFinanceira chartData={statistics.chart_data.evolucao_patrimonial} statisticsChecksum={statistics.checksum} />
+                                ) : (
+                                    <NoContent
+                                        type='empty-data'
+                                        empty_text='Sem Dados'
+                                        withContainer={true}
+                                        addedClasses={{ wrapper: `${styles.no_content__wrapper}`, container: `${styles.no_content__container}` }}
+                                    />
+                                )}
+                            </div>
+                            <div className={styles.datagrid_ops__chart_resultadosTrades}>
+                                {statistics !== null && !isObjectEmpty(statistics.chart_data.resultados_normalizado) ? (
+                                    <ChartResultadosTrades chartData={statistics.chart_data.resultados_normalizado} statisticsChecksum={statistics.checksum} />
+                                ) : (
+                                    <NoContent
+                                        type='empty-data'
+                                        empty_text='Sem Dados'
+                                        withContainer={true}
+                                        addedClasses={{ wrapper: `${styles.no_content__wrapper}`, container: `${styles.no_content__container}` }}
+                                    />
+                                )}
+                            </div>
+                        </Stack>
+                        <Stack direction='row' spacing={2}>
+                            <div className={styles.datagrid_ops__chart_drawdowns}>
+                                {statistics !== null && !isObjectEmpty(statistics.chart_data.drawdowns) ? (
+                                    <ChartDrawdowns chartData={statistics.chart_data.drawdowns} statisticsChecksum={statistics.checksum} />
+                                ) : (
+                                    <NoContent
+                                        type='empty-data'
+                                        empty_text='Sem Dados'
+                                        withContainer={true}
+                                        addedClasses={{ wrapper: `${styles.no_content__wrapper}`, container: `${styles.no_content__container}` }}
+                                    />
+                                )}
+                            </div>
+                            <div className={styles.datagrid_ops__chart_resultadosHora}>
+                                {statistics !== null && !isObjectEmpty(statistics.chart_data.resultado_por_hora) ? (
+                                    <ChartResultadosHora
+                                        chartData={statistics.chart_data.resultado_por_hora}
+                                        statisticsChecksum={statistics.checksum}
+                                        periodoCalc={statistics.table_trades__periodo_calc}
+                                    />
+                                ) : (
+                                    <NoContent
+                                        type='empty-data'
+                                        empty_text='Sem Dados'
+                                        withContainer={true}
+                                        addedClasses={{ wrapper: `${styles.no_content__wrapper}`, container: `${styles.no_content__container}` }}
+                                    />
+                                )}
+                            </div>
+                        </Stack>
+                    </Stack>
                 </Stack>
             </Box>
         </>

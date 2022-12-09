@@ -32,7 +32,7 @@ const desvpad = (r_list, type = 'populacao') => {
 /*
     Gera a média móvel simples da lista de entrada 'i_list', para a lista 'mm_list', usando a quantidade de periodos passada.
 */
-const SMA = (i_list, mm_list, period = 20, empty_value = NaN) => {
+const SMA = (i_list, mm_list, period = 20, empty_value = null) => {
     // Irá percorrer a lista olhando blocos de tamanho 'period'
     for (let index_I = 0 - (period - 1), index_F = 0; index_F < i_list.length; index_I++, index_F++) {
         if (index_I >= 0) {
@@ -52,7 +52,7 @@ const SMA = (i_list, mm_list, period = 20, empty_value = NaN) => {
         - banda_superior: Lista que conterá a banda de 'dist_banda' desvio acima da media.
         - banda_inferior: Lista que conterá a banda de 'dist_banda' desvio abaixo da media.
 */
-const BBollinger = (obj, min_period = 1, empty_value = NaN, dist_banda = 1, all_bands = false, which_band = 'all') => {
+const BBollinger = (obj, min_period = 1, empty_value = null, dist_banda = 1, all_bands = false, which_band = 'all') => {
     let desv_list = [];
     for (let i_data = 0; i_data < obj['data'].length; i_data++) {
         desv_list.push(obj['data'][i_data]);
