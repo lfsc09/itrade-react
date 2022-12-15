@@ -1,5 +1,5 @@
 import { Add, Delete, DriveFileRenameOutline, NavigateNext } from '@mui/icons-material';
-import { Box, Breadcrumbs, Button, ButtonGroup, Divider, LinearProgress, Paper, Stack, Typography } from '@mui/material';
+import { Box, Breadcrumbs, Button, Divider, LinearProgress, Paper, Stack, Typography } from '@mui/material';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
@@ -14,20 +14,6 @@ import { add } from '../../../../store/api-messages/api-messages-slice';
 import { handleLogout } from '../../../../store/auth/auth-action';
 import { reducer as datagridReducer, INI_STATE as DGR_INI_STATE, TYPES as DGR_TYPES } from './datagridReducer';
 import styles from './gerenciamentos.module.scss';
-
-const acoesCell = ({ value }) => {
-    return (
-        <ButtonGroup variant='contained' size='small' className={styles.btn_group}>
-            {value
-                .sort((a, b) => b.acao - a.acao)
-                .map((gerenc, i) => (
-                    <Button key={i} className={`${styles.btn} ${gerenc.acao > 0 ? styles.positive : styles.negative}`}>
-                        {Math.abs(gerenc.acao)}S{gerenc.escalada !== 0 ? ` E${gerenc.escalada}` : ''}
-                    </Button>
-                ))}
-        </ButtonGroup>
-    );
-};
 
 const Gerenciamentos = () => {
     /***********

@@ -23,6 +23,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# deploy build with FTP
+deploy-build.js
+
 # others
 dummy-data.js
 

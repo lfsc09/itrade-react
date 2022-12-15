@@ -13,7 +13,7 @@ export const handleLogout = () => {
 export const readTokenFromLocal = () => {
     return (dispatch) => {
         const token = localStorage.getItem('token:itrade-dongs');
-        if (token) {
+        if (token && token !== 'undefined' && token !== 'null') {
             const user = jwtDecode(token);
             const token_exp_date = new Date(user.exp * 1000);
             if (user.host === 'itrade-dongs' && token_exp_date >= new Date()) {
@@ -23,6 +23,9 @@ export const readTokenFromLocal = () => {
                 localStorage.removeItem('token:itrade-dongs');
                 dispatch(setUserFromLocalToken({ token: null, user: null }));
             }
-        } else dispatch(setUserFromLocalToken({ token: null, user: null }));
+        } else {
+            localStorage.removeItem('token:itrade-dongs');
+            dispatch(setUserFromLocalToken({ token: null, user: null }));
+        }
     };
 };

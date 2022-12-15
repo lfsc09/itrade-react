@@ -4,7 +4,7 @@ import axios from 'axios';
 const progressBar = new ProgressBar();
 
 const axiosCon = axios.create({
-    baseUrl: 'http://dev.api.itrade-dongs.net',
+    baseUrl: process.env.REACT_APP_API_URL,
 });
 
 // Interceptador da Requisição

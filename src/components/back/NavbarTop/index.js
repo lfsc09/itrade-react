@@ -1,5 +1,5 @@
 import { Analytics, CloudUpload, Euro, Grading, Layers, LocalAtm, Logout, Science, Search, Storage } from '@mui/icons-material';
-import { AppBar, Autocomplete, Box, Container, Divider, IconButton, Paper, Stack, TextField, Toolbar, Typography } from '@mui/material';
+import { Autocomplete, Box, Container, Divider, IconButton, Paper, Stack, TextField, Toolbar, Typography } from '@mui/material';
 import { matchSorter } from 'match-sorter';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';

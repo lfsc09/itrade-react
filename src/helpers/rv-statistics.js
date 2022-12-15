@@ -581,7 +581,6 @@ const groupData_byPeriodo = (ops, filters, simulation, options = {}) => {
                     }
                     if (!(index in new_list)) {
                         new_list[index] = {
-                            erro: ops[e].erro,
                             data: day_used,
                             qtd_trades: 1,
                             erro: ops[e].erro,
@@ -694,7 +693,6 @@ const groupData_byPeriodo = (ops, filters, simulation, options = {}) => {
                     }
                     if (!(index in new_list)) {
                         new_list[index] = {
-                            erro: ops[e].erro,
                             data: month_used,
                             qtd_trades: 1,
                             erro: ops[e].erro,

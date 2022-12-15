@@ -30,11 +30,6 @@ const resultCell_BRL = ({ value }) => {
     else if (value < 0) return <span className={`${gstyles.text_bold} ${gstyles.text_danger} ${gstyles.text_small}`}>{`R$ ${value.toFixed(2)}`}</span>;
     else return <span className={`${gstyles.text_bold} ${gstyles.text_muted} ${gstyles.text_small}`}>{`R$ ${value.toFixed(2)}`}</span>;
 };
-const resultCell_S = ({ value }) => {
-    if (value > 0) return <span className={`${gstyles.text_bold} ${gstyles.text_success} ${gstyles.text_small}`}>{`${value.toFixed(1)}S`}</span>;
-    else if (value < 0) return <span className={`${gstyles.text_bold} ${gstyles.text_danger} ${gstyles.text_small}`}>{`R$ ${value.toFixed(1)}S`}</span>;
-    else return <span className={`${gstyles.text_bold} ${gstyles.text_muted} ${gstyles.text_small}`}>{`R$ ${value.toFixed(1)}S`}</span>;
-};
 
 const erroCell = ({ value }) => {
     if (value === 1) return <ReportProblem color='error' fontSize='small' />;

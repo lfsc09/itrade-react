@@ -72,7 +72,7 @@ const ChartEvolucaoFinanceira = ({ chartData, statisticsChecksum }) => {
     }, [statisticsChecksum]);
 
     return (
-        <Paper sx={{ pt: 1, pr: 2, height: '100%' }}>
+        <Paper sx={{ pt: 1, pr: 2 }}>
             <div className={styles.title}>
                 <Typography variant='overline'>Evolução Patrimonial</Typography>
             </div>

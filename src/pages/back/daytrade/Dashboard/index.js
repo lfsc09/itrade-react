@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { batch, useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 
 import gStyles from '../../../../assets/back/scss/global.module.scss';
 import MessageController from '../../../../components/ui/MessageController';
@@ -30,11 +29,6 @@ const Dashboard = () => {
      * DISPATCH
      ***********/
     const dispatch = useDispatch();
-
-    /***********
-     * NAVIGATE
-     ***********/
-    const navigate = useNavigate();
 
     /*********
      * STATES
