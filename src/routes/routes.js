@@ -48,7 +48,7 @@ const MainRoutes = () => {
                         <Route path='*' element={<Navigate replace to='/daytrade/operacoes/novo' />} />
                     </Route>
                     <Route path='daytrade/importar_operacoes' element={<BackWrapper />} />
-                    <Route path='*' element={<Navigate replace to='daytrade/dashboard' />} />
+                    <Route path='*' element={<Navigate replace to='/daytrade/dashboard' />} />
                 </>
             )}
         </Routes>

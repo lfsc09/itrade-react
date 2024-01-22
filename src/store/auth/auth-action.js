@@ -5,7 +5,7 @@ import { logout, setUserFromLocalToken } from './auth-slice';
 
 export const handleLogout = () => {
     return (dispatch) => {
-        localStorage.removeItem('token');
+        localStorage.removeItem('token:itrade-dongs');
         dispatch(logout());
     };
 };
