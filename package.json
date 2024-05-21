@@ -1,6 +1,5 @@
 {
     "name": "itrade-react",
-    "homepage": "https://itrade-dongs.net/itrade",
     "version": "0.1.0",
     "private": true,
     "dependencies": {
@@ -62,7 +61,6 @@
             "last 1 safari version"
         ]
     },
-    "proxy": "http://dev.api.itrade-dongs.net",
     "devDependencies": {
         "ftp-deploy": "^2.4.3"
     }
