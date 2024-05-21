@@ -18,7 +18,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import Editor from 'ckeditor5-custom-build/build/ckeditor';
+import Editor from '@ckeditor/ckeditor5-build-classic';
 import { useFormik } from 'formik';
 import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useState } from 'react';
