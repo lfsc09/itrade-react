@@ -222,29 +222,9 @@ Para a URL com subdominio poder ser corretamente incluido na hora do BUILD, nos 
 
 ## Deploy
 
-##### <ins>FTP-DEPLOY</ins>
-
-É utilizado este plugin do Node, para realizar o envio por FTP dos arquivos da BUILD para o servidor.
-
-Foi criado o script **deploy-build.example.js** como exemplo que deve ser preenchido.
-
-</br>
-
-##### <ins>PACKAGE.JSON</ins>
-
-No package.json do projeto React, deve ser incluido:
-
+```bash
+docker compose up
 ```
-{
-    ...
-    "scripts": {
-        "deploy": "node deploy-build",
-        ...
-    }
-}
-```
-
-</br>
 
 ## No servidor WEB
 
