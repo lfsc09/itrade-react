@@ -4,7 +4,7 @@ import axios from 'axios';
 const progressBar = new ProgressBar();
 
 const axiosCon = axios.create({
-    baseUrl: process.env.REACT_APP_API_URL,
+    baseURL: process.env.REACT_APP_BASE_URL,
 });
 
 // Interceptador da Requisição
