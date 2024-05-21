@@ -37,7 +37,6 @@
         "yup": "^0.32.11"
     },
     "scripts": {
-        "deploy": "node deploy-build",
         "start": "react-scripts start",
         "build": "react-scripts build",
         "test": "react-scripts test",
