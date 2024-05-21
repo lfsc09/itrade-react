@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  itrade-dongs-react:
+    image: itrade-dongs-react
+    build: .
+    environment:
+      NODE_ENV: production
+    ports:
+      - 8000:80
