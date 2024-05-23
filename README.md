@@ -1,90 +1,96 @@
-## Criando um Novo Projeto React
+[![Static Badge](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/lfsc09/itrade-react/blob/main/LICENSE)
+![Static Badge](https://img.shields.io/badge/docker--compose-3.8-blue)
+![Static Badge](https://img.shields.io/badge/MUI-package--lock.json-blue)
 
-https://mui.com/pt/material-ui/getting-started/installation/
+***Use `package-lock.json` when building since newer versions of the libraries, expecially `MUI` will break the code.***
 
-`npx create-react-app project-name`
-
-</br>
-
-## Plugins Utilizados
-
-### Plugins Essenciais
-
-##### <ins>SASS</ins>
-
-Plugin para utilização de arquivos .scss
-
-`npm install sass`
+*Code was written a couple of years ago, and was not updated since then.*
 
 </br>
 
-##### <ins>React Router DOM</ins>
+## Plugins
 
-Roteamento de Componentes (URLs) - Client Side
+### Essential plugins
 
-`npm install react-router-dom`
+#### <ins>SASS</ins>
 
-</br>
+To use `.scss`.
 
-##### <ins>REDUX</ins> (https://redux-toolkit.js.org/introduction/getting-started)
-
-Plugin Redux
-
-`npm install @reduxjs/toolkit react-redux`
-
-</br>
-
-##### <ins>AXIOS</ins> (https://axios-http.com/docs/api_intro)
-
-Plugin wrapper de Request http
-
-`npm install axios`
-
-</br>
-
-##### <ins>JWT-TOKEN</ins>
-
-Plugin para decode do Token JWT
-
-`npm install jwt-decode`
-
-</br>
-
-### Plugins MUI
-
-##### <ins>Material-UI</ins> (https://mui.com/pt/material-ui/getting-started/installation/)
-
-`npm install @mui/material @emotion/react @emotion/styled`
-
-###### <ins>_Para os componentes ainda em Testes_</ins>
-
-`npm install @mui/lab`
-
-</br>
-
-##### <ins>Material-UI (Icons)</ins>
-
-`npm install @mui/icons-material`
-
-</br>
-
-##### <ins>MATERIAL-TABLE</ins> (https://material-table.com/#/)
-
-`npm install material-table`
-
-###### <ins>_Caso não esteja ja usando MUI instalar o core_</ins>
-
-`npm install @material-ui/core`
-
-</br>
-
-##### <ins>FONTES-ROBOT</ins> (https://mui.com/pt/material-ui/getting-started/installation/)
-
+```bash
+npm install sass
 ```
+
+#### <ins>React Router DOM</ins>
+
+Client routing.
+
+```bash
+npm install react-router-dom
+```
+
+#### <ins>REDUX</ins> (https://redux-toolkit.js.org/introduction/getting-started)
+
+```bash
+npm install @reduxjs/toolkit react-redux
+```
+
+#### <ins>AXIOS</ins> (https://axios-http.com/docs/api_intro)
+
+HTTP request.
+
+```bash
+npm install axios
+```
+
+#### <ins>JWT-TOKEN</ins>
+
+For JWT Token decode.
+
+```bash
+npm install jwt-decode
+```
+
+</br>
+
+### MUI plugins
+
+#### <ins>Material-UI</ins> (https://mui.com/pt/material-ui/getting-started/installation/)
+
+```bash
+npm install @mui/material @emotion/react @emotion/styled
+```
+
+##### _Para os componentes ainda em Testes_
+
+```bash
+npm install @mui/lab
+```
+
+#### <ins>Material-UI (Icons)</ins>
+
+```bash
+npm install @mui/icons-material
+```
+
+#### <ins>Material-Table</ins> (https://material-table.com/#/)
+
+```bash
+npm install material-table
+```
+
+##### _Caso não esteja ja usando MUI instalar o core_
+
+```bash
+npm install @material-ui/core
+```
+
+#### <ins>Robot Fonts</ins> (https://mui.com/pt/material-ui/getting-started/installation/)
+
+```html
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
 ```
 
-```
+```html
 <style>
     * {
         margin: 0;
@@ -95,144 +101,109 @@ Plugin para decode do Token JWT
 
 </br>
 
-### Plugins Extra
+### Extra Plugins
 
-##### <ins>FORMIK</ins> (https://formik.org/docs/overview)
+#### <ins>Formik</ins> (https://formik.org/docs/overview)
 
-Plugin Validação de Formulários
+Form validation.
 
-`npm install formik`
-
-###### <ins>_Yup_</ins> (https://github.com/jquense/yup)
-
-`npm install yup`
-
-</br>
-
-##### <ins>DATE-FNS</ins>
-
-Plugin para formatação de Datas
-
-`npm install date-fns`
-
-</br>
-
-##### <ins>FRAMER MOTION</ins> (https://www.framer.com/motion/)
-
-Plugin para Animações
-
-`npm install framer-motion`
-
-</br>
-
-##### <ins>CRIPTO-JS</ins> (https://www.code-sample.com/2019/12/react-encryption-decryption-data-text.html)
-
-Plugin para bibliotecas de encriptação/desencriptação
-
-`npm install cripto-js`
-
-</br>
-
-##### <ins>CKEDITOR5</ins> (https://ckeditor.com/docs/ckeditor5/latest)
-
-Plugin para Editor de Texto
-
-###### <ins>Para build normal</ins>
-
-`npm install @ckeditor/ckeditor5-react @ckeditor/ckeditor5-build-classic`
-
-###### <ins>Para custom builds, criadas a partir do site deles</ins>
-
-`Arquivo baixado separadamente do site deve ser extraido direto no root do projeto`
-
-`Adicionar manualmente no package.json e package-lock.json`
-
-```
-{
-    ...
-    ckeditor5-custom-build: 'file:ckeditor5'
-}
+```bash
+npm install formik
 ```
 
-</br>
+#### <ins>Yup</ins> (https://github.com/jquense/yup)
 
-##### <ins>PROGRESS-BAR</ins> (https://github.com/badrap/bar-of-progress)
-
-Plugin Progress Bar on Top, estilo Github
-
-`npm install @badrap/bar-of-progress`
-
-</br>
-
-##### <ins>CLONEDEEP</ins> (https://lodash.com/docs/#cloneDeep)
-
-Plugin para clonagem deep por valor de objetos JS
-
-`npm install lodash.clonedeep`
-
-</br>
-
-##### <ins>MATCH-SORTER</ins> (https://github.com/kentcdodds/match-sorter)
-
-Plugin de ordenação de Arrays, utilizado pelo o Menu Top para ordenação das opções do menu
-
-`npm install match-sorter`
-
-</br>
-
-##### <ins>RECHART</ins> (https://recharts.org/en-US/api)
-
-Plugin dos gráficos
-
-`npm install recharts`
-
-</br>
-
-## Variáveis de Ambiente
-
-##### <ins>.ENV</ins>
-
-Foi criado arquivos <ins>_.env.development_</ins> e <ins>_.env.production_</ins> para ter as variaveis que possuem valores diferentes de acordo com o ambiente executado. (_Ao realizar o BUILD é utilizado o <ins>.env.production</ins>_)
-
-###### <ins>Variáveis</ins>
-
+```bash
+npm install yup
 ```
-{
-    REACT_APP_API_URL: 'Utilizada pelo AXIOS como baseURL'
-}
+
+#### <ins>Date-fns</ins>
+
+Date formatting.
+
+```bash
+npm install date-fns
+```
+
+#### <ins>Framer Motion</ins> (https://www.framer.com/motion/)
+
+Animation plugin.
+
+```bash
+npm install framer-motion
+```
+
+#### <ins>Cripto-JS</ins> (https://www.code-sample.com/2019/12/react-encryption-decryption-data-text.html)
+
+Encryption/Decription libraries.
+
+```bash
+npm install cripto-js
+```
+
+#### <ins>CKEditor</ins> (https://ckeditor.com/docs/ckeditor5/latest)
+
+Text editor interface.
+
+##### <ins>Default build</ins>
+
+```bash
+npm install @ckeditor/ckeditor5-react @ckeditor/ckeditor5-build-classic
+```
+
+#### <ins>Progress-bar</ins> (https://github.com/badrap/bar-of-progress)
+
+Top page progress bar.
+
+```bash
+npm install @badrap/bar-of-progress
+```
+
+#### <ins>Clonedeep</ins> (https://lodash.com/docs/#cloneDeep)
+
+For cloning objects in JS.
+
+```bash
+npm install lodash.clonedeep
+```
+
+#### <ins>Match-sorter</ins> (https://github.com/kentcdodds/match-sorter)
+
+For custom array sorting based on multiple and similar values.
+
+```bash
+npm install match-sorter
+```
+
+#### <ins>Rechart</ins> (https://recharts.org/en-US/api)
+
+Chart plugin.
+
+```bash
+npm install recharts
 ```
 
 </br>
 
-##### <ins>PACKAGE.JSON</ins>
+## Environment Variables
 
-No package.json do projeto React, deve ser incluido:
-
+```properties
+REACT_APP_BASE_URL: http://<url_to_api>
 ```
-{
-    ...
-    "homepage": "https://itrade-dongs.net/itrade",
-    ...
-}
-```
-
-Para a URL com subdominio poder ser corretamente incluido na hora do BUILD, nos arquivos CSS e JS. Senão não carrega corretamente os arquivos em produção.
 
 </br>
 
 ## Deploy
 
 ```bash
-docker compose up
+docker compose up -d
 ```
 
-## No servidor WEB
+### If not using Docker
 
-##### <ins>.HTACCESS</ins>
+If using Apache, include this `.htaccess` in the project root, so `React Routes` can work.
 
-Deve-se incluir no ROOT este arquivo, para possibilitar o REACT ROUTES trabalhar
-
-```
+```apache
 <IfModule mod_rewrite.c>
     Options -Indexes
 
